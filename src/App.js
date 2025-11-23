@@ -9,6 +9,8 @@ import Nav from './components/Navigation/Nav';
 import Login from './page/auth/Login';
 import Register from './page/auth/Register';
 import CandidateHome from './page/candidate/CandidateHome';
+import CompanyList from './page/candidate/CompanyList';
+import MyRecords from './page/candidate/MyRecords';
 
 function App() {
   return (
@@ -21,8 +23,8 @@ function App() {
           
           {/* Candidate Routes */}
           <Route path="/candidate" element={<CandidateHome />} />
-          <Route path="/candidate/companies" element={<div>Companies Page</div>} />
-          <Route path="/candidate/my-records" element={<div>My Records Page</div>} />
+          <Route path="/candidate/companies" element={<CompanyList />} />
+          <Route path="/candidate/my-records" element={<MyRecords />} />
           <Route path="/candidate/my-applications" element={<div>My Applications Page</div>} />
           <Route path="/candidate/profile" element={<div>Profile Page</div>} />
           <Route path="/candidate/settings" element={<div>Settings Page</div>} />
