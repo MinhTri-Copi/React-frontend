@@ -6,22 +6,33 @@ import {
   Link,
 } from "react-router-dom";
 import Nav from './components/Navigation/Nav';
-import Login from './components/UserLogin.js/Login';
+import Login from './page/auth/Login';
+import Register from './page/auth/Register';
+import CandidateHome from './page/candidate/CandidateHome';
+
 function App() {
   return (
     <Router>
       <div className="App">
         {/* <Nav /> */}
         <Routes>
-          <Route path="/news" element={<div>News</div>} />
-          <Route path="/about" element={<div>Abouts</div>} />
-          <Route path="/contact" element={<div>Contact</div>} />
-          <Route path="/home" element={<div>Homea</div>} />
-          <Route path = "*" element={<div>Access Define</div>} /> 
-          <Route path = "/login" element={<div><Login/></div>} /> 
-
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          {/* Candidate Routes */}
+          <Route path="/candidate" element={<CandidateHome />} />
+          <Route path="/candidate/companies" element={<div>Companies Page</div>} />
+          <Route path="/candidate/my-records" element={<div>My Records Page</div>} />
+          <Route path="/candidate/my-applications" element={<div>My Applications Page</div>} />
+          <Route path="/candidate/profile" element={<div>Profile Page</div>} />
+          <Route path="/candidate/settings" element={<div>Settings Page</div>} />
+          
+          {/* Other Routes */}
+          <Route path="/admin" element={<div>Admin Dashboard</div>} />
+          <Route path="/hr" element={<div>HR Dashboard</div>} />
+          <Route path="/" element={<Login />} />
+          <Route path="*" element={<div>Access Denied</div>} /> 
         </Routes>
-        
       </div>
     </Router>
   );
