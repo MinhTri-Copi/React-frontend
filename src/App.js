@@ -13,6 +13,7 @@ import CompanyList from './page/candidate/CompanyList';
 import MyRecords from './page/candidate/MyRecords';
 import JobList from './page/candidate/JobList';
 import JobDetail from './page/candidate/JobDetail';
+import MyApplications from './page/candidate/MyApplications';
 
 function App() {
   return (
@@ -29,7 +30,7 @@ function App() {
           <Route path="/candidate/jobs/:id" element={<JobDetail />} />
           <Route path="/candidate/companies" element={<CompanyList />} />
           <Route path="/candidate/my-records" element={<MyRecords />} />
-          <Route path="/candidate/my-applications" element={<div>My Applications Page</div>} />
+          <Route path="/candidate/my-applications" element={<MyApplications />} />
           <Route path="/candidate/profile" element={<div>Profile Page</div>} />
           <Route path="/candidate/settings" element={<div>Settings Page</div>} />
           

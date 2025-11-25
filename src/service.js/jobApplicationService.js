@@ -13,9 +13,19 @@ const checkApplied = async (userId, jobPostingId) => {
     });
 };
 
+const getMyApplications = async (userId) => {
+    return await axios.get('http://localhost:8082/api/job-applications', {
+        params: { userId }
+    });
+};
+
 export {
     applyJob,
-    checkApplied
+    checkApplied,
+    getMyApplications
 };
+
+
+
 
 
