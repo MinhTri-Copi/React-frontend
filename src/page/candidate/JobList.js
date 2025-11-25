@@ -242,7 +242,7 @@ const JobList = () => {
 
                                                 <div className="job-tags">
                                                     {job.majors && job.majors.slice(0, 4).map((major, index) => (
-                                                        <span key={index} className="tag">{major.TenHinhThuc}</span>
+                                                        <span key={index} className="tag">{major.TenNghanhNghe}</span>
                                                     ))}
                                                     {job.majors && job.majors.length > 4 && (
                                                         <span className="tag more">+{job.majors.length - 4}</span>
