@@ -14,6 +14,7 @@ import MyRecords from './page/candidate/MyRecords';
 import JobList from './page/candidate/JobList';
 import JobDetail from './page/candidate/JobDetail';
 import MyApplications from './page/candidate/MyApplications';
+import HrDashboard from './page/hr/HrDashboard';
 
 function App() {
   return (
@@ -36,7 +37,7 @@ function App() {
           
           {/* Other Routes */}
           <Route path="/admin" element={<div>Admin Dashboard</div>} />
-          <Route path="/hr" element={<div>HR Dashboard</div>} />
+          <Route path="/hr" element={<HrDashboard />} />
           <Route path="/" element={<Login />} />
           <Route path="*" element={<div>Access Denied</div>} /> 
         </Routes>
