@@ -11,6 +11,7 @@ import Register from './page/auth/Register';
 import CandidateHome from './page/candidate/CandidateHome';
 import CompanyList from './page/candidate/CompanyList';
 import MyRecords from './page/candidate/MyRecords';
+import JobList from './page/candidate/JobList';
 
 function App() {
   return (
@@ -23,6 +24,8 @@ function App() {
           
           {/* Candidate Routes */}
           <Route path="/candidate" element={<CandidateHome />} />
+          <Route path="/candidate/jobs" element={<JobList />} />
+          <Route path="/candidate/jobs/:id" element={<div>Job Detail Page</div>} />
           <Route path="/candidate/companies" element={<CompanyList />} />
           <Route path="/candidate/my-records" element={<MyRecords />} />
           <Route path="/candidate/my-applications" element={<div>My Applications Page</div>} />

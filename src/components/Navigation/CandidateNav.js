@@ -42,7 +42,15 @@ const CandidateNav = () => {
                             end
                         >
                             <i className="fas fa-home"></i>
-                            Việc làm
+                            Trang chủ
+                        </NavLink>
+                        
+                        <NavLink 
+                            to="/candidate/jobs" 
+                            className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
+                        >
+                            <i className="fas fa-briefcase"></i>
+                            Tin tuyển dụng
                         </NavLink>
                         
                         <NavLink 
