@@ -60,11 +60,55 @@ const updateJobPosting = async (userId, jobId, data) => {
     }
 };
 
+const getJobApplications = async (userId, statusId = 'all', page = 1, limit = 10, search = '') => {
+    try {
+        const res = await axios.get(`http://localhost:8082/api/hr/applications?userId=${userId}&statusId=${statusId}&page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error fetching job applications:', error);
+        throw error;
+    }
+};
+
+const getApplicationStatistics = async (userId) => {
+    try {
+        const res = await axios.get(`http://localhost:8082/api/hr/applications/statistics?userId=${userId}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error fetching application statistics:', error);
+        throw error;
+    }
+};
+
+const getApplicationDetail = async (userId, applicationId) => {
+    try {
+        const res = await axios.get(`http://localhost:8082/api/hr/applications/detail?userId=${userId}&applicationId=${applicationId}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error fetching application detail:', error);
+        throw error;
+    }
+};
+
+const updateApplicationStatus = async (userId, applicationId, statusId) => {
+    try {
+        const res = await axios.put(`http://localhost:8082/api/hr/applications/${applicationId}?userId=${userId}`, { statusId });
+        return res.data;
+    } catch (error) {
+        console.error('Error updating application status:', error);
+        throw error;
+    }
+};
+
 export { 
     getHrDashboard, 
     getMyJobPostings, 
     getJobPostingDetail,
     deleteJobPosting,
     createJobPosting,
-    updateJobPosting 
+    updateJobPosting,
+    getJobApplications,
+    getApplicationStatistics,
+    getApplicationDetail,
+    updateApplicationStatus
 };

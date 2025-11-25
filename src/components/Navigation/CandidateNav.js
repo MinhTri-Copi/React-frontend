@@ -9,14 +9,15 @@ const CandidateNav = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Get user from localStorage
-        const userData = localStorage.getItem('user');
+        // Get user from sessionStorage or localStorage
+        const userData = sessionStorage.getItem('user') || localStorage.getItem('user');
         if (userData) {
             setUser(JSON.parse(userData));
         }
     }, []);
 
     const handleLogout = () => {
+        sessionStorage.removeItem('user');
         localStorage.removeItem('user');
         toast.success('Đăng xuất thành công!');
         navigate('/login');
@@ -81,36 +82,37 @@ const CandidateNav = () => {
                     {/* User profile */}
                     <div className="navbar-user">
                         {user ? (
-                            <div className="user-dropdown">
-                                <div 
-                                    className="user-info" 
-                                    onClick={() => setShowDropdown(!showDropdown)}
-                                >
-                                    <div className="user-avatar">
-                                        {user.Hoten ? user.Hoten.charAt(0).toUpperCase() : 'U'}
-                                    </div>
-                                    <span className="user-name">{user.Hoten}</span>
-                                    <i className={`fas fa-chevron-${showDropdown ? 'up' : 'down'}`}></i>
-                                </div>
-
-                                {showDropdown && (
-                                    <div className="dropdown-menu">
-                                        <NavLink to="/candidate/profile" className="dropdown-item">
-                                            <i className="fas fa-user"></i>
-                                            Thông tin cá nhân
-                                        </NavLink>
-                                        <NavLink to="/candidate/settings" className="dropdown-item">
-                                            <i className="fas fa-cog"></i>
-                                            Cài đặt
-                                        </NavLink>
-                                        <div className="dropdown-divider"></div>
-                                        <div className="dropdown-item" onClick={handleLogout}>
-                                            <i className="fas fa-sign-out-alt"></i>
-                                            Đăng xuất
+                            <>
+                                <div className="user-dropdown">
+                                    <div 
+                                        className="user-info" 
+                                        onClick={() => setShowDropdown(!showDropdown)}
+                                    >
+                                        <div className="user-avatar">
+                                            {user.Hoten ? user.Hoten.charAt(0).toUpperCase() : 'U'}
                                         </div>
+                                        <span className="user-name">{user.Hoten}</span>
+                                        <i className={`fas fa-chevron-${showDropdown ? 'up' : 'down'}`}></i>
                                     </div>
-                                )}
-                            </div>
+
+                                    {showDropdown && (
+                                        <div className="dropdown-menu">
+                                            <NavLink to="/candidate/profile" className="dropdown-item">
+                                                <i className="fas fa-user"></i>
+                                                Thông tin cá nhân
+                                            </NavLink>
+                                            <NavLink to="/candidate/settings" className="dropdown-item">
+                                                <i className="fas fa-cog"></i>
+                                                Cài đặt
+                                            </NavLink>
+                                        </div>
+                                    )}
+                                </div>
+                                <button className="btn-logout" onClick={handleLogout}>
+                                    <i className="fas fa-sign-out-alt"></i>
+                                    <span>Đăng xuất</span>
+                                </button>
+                            </>
                         ) : (
                             <button 
                                 className="btn-login" 

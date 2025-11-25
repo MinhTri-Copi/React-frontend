@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { getHrDashboard } from '../../service.js/hrService';
 import './HrDashboard.scss';
 import JobManagement from './JobManagement';
+import CandidateManagement from './CandidateManagement';
 
 const sidebarItems = [
     { id: 'analytics', label: 'Thống kê', icon: 'fas fa-chart-line' },
@@ -71,11 +72,20 @@ const HrDashboard = () => {
             navigate('/hr');
         } else if (itemId === 'jobs') {
             navigate('/hr');
+        } else if (itemId === 'candidates') {
+            navigate('/hr/candidates');
         } else if (itemId === 'applications') {
             navigate('/hr/applications');
         } else {
             toast.info('Tính năng đang được phát triển!');
         }
+    };
+
+    const handleLogout = () => {
+        sessionStorage.removeItem('user');
+        localStorage.removeItem('user');
+        toast.success('Đã đăng xuất thành công!');
+        navigate('/login');
     };
 
     return (
@@ -103,11 +113,19 @@ const HrDashboard = () => {
                             </button>
                         ))}
                     </nav>
+                    <div className="sidebar-footer">
+                        <button className="logout-btn" onClick={handleLogout}>
+                            <i className="fas fa-sign-out-alt"></i>
+                            <span>Đăng xuất</span>
+                        </button>
+                    </div>
                 </aside>
 
                 <div className="hr-main">
                     {activeMenu === 'jobs' ? (
                         <JobManagement userId={user?.id} />
+                    ) : activeMenu === 'candidates' ? (
+                        <CandidateManagement />
                     ) : isLoading ? (
                         <div className="loading-state">
                             <i className="fas fa-spinner fa-spin"></i>
