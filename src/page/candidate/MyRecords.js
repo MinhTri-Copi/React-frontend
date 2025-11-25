@@ -24,10 +24,10 @@ const MyRecords = () => {
     const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
-        // Get user from localStorage
-        const userData = localStorage.getItem('user');
-        if (userData) {
-            const parsedUser = JSON.parse(userData);
+        // Prefer sessionStorage, fallback to localStorage
+        const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
+        if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
             fetchRecords(parsedUser.id);
         }

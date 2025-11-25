@@ -27,8 +27,10 @@ const Login = () => {
             if (res && res.data && res.data.EC === 0) {
                 toast.success(res.data.EM);
                 
-                // Save user info to localStorage
-                localStorage.setItem('user', JSON.stringify(res.data.DT));
+                // Save user info to storage
+                const userData = JSON.stringify(res.data.DT);
+                localStorage.setItem('user', userData);
+                sessionStorage.setItem('user', userData);
                 
                 // Navigate based on role
                 if (res.data.DT && res.data.DT.roleId) {

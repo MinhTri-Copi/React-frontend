@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getJobPostingById } from '../../service.js/jobPostingService';
+import { getMyRecords } from '../../service.js/recordService';
+import { applyJob as applyJobService, checkApplied as checkAppliedService } from '../../service.js/jobApplicationService';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import './JobDetail.scss';
 
@@ -10,10 +12,59 @@ const JobDetail = () => {
     const navigate = useNavigate();
     const [job, setJob] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState(null);
+    const [records, setRecords] = useState([]);
+    const [recordsLoading, setRecordsLoading] = useState(false);
+    const [showApplyModal, setShowApplyModal] = useState(false);
+    const [selectedRecordId, setSelectedRecordId] = useState('');
+    const [coverLetter, setCoverLetter] = useState('');
+    const [isApplying, setIsApplying] = useState(false);
+    const [hasApplied, setHasApplied] = useState(false);
+    const [applicantInfo, setApplicantInfo] = useState({
+        fullName: '',
+        email: '',
+        phone: '',
+        desiredLocation: ''
+    });
 
     useEffect(() => {
         fetchJobDetail();
     }, [id]);
+
+    useEffect(() => {
+        const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
+        if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+            setUser(parsedUser);
+            setApplicantInfo((prev) => ({
+                ...prev,
+                fullName: parsedUser.Hoten || '',
+                email: parsedUser.email || ''
+            }));
+            checkAppliedStatus(parsedUser.id);
+        } else {
+            setUser(null);
+            setApplicantInfo({
+                fullName: '',
+                email: '',
+                phone: '',
+                desiredLocation: ''
+            });
+            setHasApplied(false);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [id]);
+
+    useEffect(() => {
+        if (showApplyModal && user) {
+            if (records.length === 0) {
+                fetchUserRecords(user.id);
+            } else if (!selectedRecordId && records.length > 0) {
+                setSelectedRecordId(records[0].id);
+            }
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showApplyModal, user, records]);
 
     const fetchJobDetail = async () => {
         setIsLoading(true);
@@ -34,6 +85,38 @@ const JobDetail = () => {
         }
     };
 
+    const fetchUserRecords = async (userId) => {
+        setRecordsLoading(true);
+        try {
+            let res = await getMyRecords(userId);
+            if (res && res.data && res.data.EC === 0) {
+                const recordList = res.data.DT || [];
+                setRecords(recordList);
+                if (recordList.length > 0) {
+                    setSelectedRecordId(recordList[0].id);
+                }
+            } else {
+                toast.error(res.data.EM);
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error('Không thể tải danh sách hồ sơ!');
+        } finally {
+            setRecordsLoading(false);
+        }
+    };
+
+    const checkAppliedStatus = async (userId) => {
+        try {
+            let res = await checkAppliedService(userId, id);
+            if (res && res.data && res.data.EC === 0) {
+                setHasApplied(res.data.DT.hasApplied);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -47,9 +130,64 @@ const JobDetail = () => {
         return `${min.toLocaleString('vi-VN')} - ${max.toLocaleString('vi-VN')} VNĐ`;
     };
 
-    const handleApply = () => {
-        // TODO: Implement apply logic later
-        toast.info('Chức năng ứng tuyển đang được phát triển!');
+    const handleApplicantInfoChange = (field, value) => {
+        setApplicantInfo((prev) => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    const handleOpenApplyModal = () => {
+        if (!user) {
+            toast.info('Vui lòng đăng nhập để ứng tuyển!');
+            navigate('/login');
+            return;
+        }
+        if (hasApplied) {
+            toast.info('Bạn đã ứng tuyển công việc này!');
+            return;
+        }
+        setShowApplyModal(true);
+    };
+
+    const handleCloseApplyModal = () => {
+        setShowApplyModal(false);
+        setCoverLetter('');
+        setIsApplying(false);
+    };
+
+    const handleSubmitApplication = async () => {
+        if (!selectedRecordId) {
+            toast.error('Vui lòng chọn hồ sơ để ứng tuyển!');
+            return;
+        }
+
+        setIsApplying(true);
+        try {
+            let res = await applyJobService({
+                userId: user.id,
+                jobPostingId: job.id,
+                recordId: Number(selectedRecordId),
+                coverLetter,
+                applicantName: applicantInfo.fullName,
+                applicantEmail: applicantInfo.email,
+                applicantPhone: applicantInfo.phone,
+                desiredLocation: applicantInfo.desiredLocation
+            });
+
+            if (res && res.data && res.data.EC === 0) {
+                toast.success('Ứng tuyển thành công!');
+                setHasApplied(true);
+                handleCloseApplyModal();
+            } else {
+                toast.error(res?.data?.EM || 'Ứng tuyển thất bại!');
+            }
+        } catch (error) {
+            console.log(error);
+            toast.error('Có lỗi xảy ra khi ứng tuyển!');
+        } finally {
+            setIsApplying(false);
+        }
     };
 
     const handleBack = () => {
@@ -71,6 +209,9 @@ const JobDetail = () => {
     if (!job) {
         return null;
     }
+
+    const isJobOpen = !job.TrangthaiId || job.TrangthaiId === 1;
+    const canApply = isJobOpen && !hasApplied;
 
     return (
         <div className="job-detail-page">
@@ -123,9 +264,13 @@ const JobDetail = () => {
                                         </div>
                                     )}
                                 </div>
-                                <button className="btn-apply-large" onClick={handleApply}>
+                                <button 
+                                    className={`btn-apply-large ${!canApply ? 'disabled' : ''}`} 
+                                    onClick={handleOpenApplyModal}
+                                    disabled={!canApply}
+                                >
                                     <i className="fas fa-paper-plane"></i>
-                                    Ứng tuyển ngay
+                                    {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
                                 </button>
                             </div>
                         </div>
@@ -216,9 +361,13 @@ const JobDetail = () => {
                             <div className="job-sidebar-column">
                                 {/* Apply Card */}
                                 <div className="sidebar-card apply-card">
-                                    <button className="btn-apply-sidebar" onClick={handleApply}>
+                                    <button 
+                                        className={`btn-apply-sidebar ${!canApply ? 'disabled' : ''}`} 
+                                        onClick={handleOpenApplyModal}
+                                        disabled={!canApply}
+                                    >
                                         <i className="fas fa-paper-plane"></i>
-                                        Ứng tuyển ngay
+                                        {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
                                     </button>
                                     <div className="deadline-info">
                                         <i className="fas fa-calendar-alt"></i>
@@ -339,6 +488,148 @@ const JobDetail = () => {
                     </div>
                 </div>
             </div>
+
+            {showApplyModal && (
+                <div className="apply-modal-overlay">
+                    <div className="apply-modal">
+                        <button className="modal-close" onClick={handleCloseApplyModal}>
+                            <i className="fas fa-times"></i>
+                        </button>
+                        <h3>Ứng tuyển {job.Tieude}</h3>
+                        <p className="modal-job-title">Vui lòng chuẩn bị đầy đủ thông tin để gửi đến nhà tuyển dụng</p>
+
+                        <div className="modal-section cv-section">
+                            <div className="section-header">
+                                <h4>
+                                    <i className="fas fa-file-signature"></i>
+                                    Chọn Hồ sơ để ứng tuyển
+                                </h4>
+                                <span>(*) Bắt buộc</span>
+                            </div>
+
+                            <div className="cv-card">
+                                <div className="cv-icon">
+                                    <i className="fas fa-file-upload"></i>
+                                </div>
+                                <div className="cv-content">
+                                    <p>Chọn hồ sơ đã tạo để gửi tới nhà tuyển dụng.</p>
+                                    <small>Hỗ trợ định dạng .doc, .docx, .pdf với kích thước dưới 5MB.</small>
+
+                                    {recordsLoading ? (
+                                        <div className="loading-inline">
+                                            <i className="fas fa-spinner fa-spin"></i>
+                                            <span>Đang tải hồ sơ...</span>
+                                        </div>
+                                    ) : records.length > 0 ? (
+                                        <div className="cv-actions">
+                                            <select
+                                                value={selectedRecordId}
+                                                onChange={(e) => setSelectedRecordId(Number(e.target.value))}
+                                            >
+                                                {records.map((record) => (
+                                                    <option key={record.id} value={record.id}>
+                                                        {record.Tieude}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <button
+                                                className="btn-manage-record"
+                                                type="button"
+                                                onClick={() => navigate('/candidate/my-records')}
+                                            >
+                                                Quản lý hồ sơ
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="no-records">
+                                            <p>Bạn chưa có hồ sơ nào. Vui lòng tạo hồ sơ trước khi ứng tuyển.</p>
+                                            <button 
+                                                className="btn-create-record"
+                                                type="button"
+                                                onClick={() => navigate('/candidate/my-records')}
+                                            >
+                                                Tạo hồ sơ ngay
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="modal-section applicant-section">
+                            <div className="section-header">
+                                <h4>Thông tin liên hệ</h4>
+                                <span>(*) Thông tin bắt buộc</span>
+                            </div>
+
+                            <div className="form-grid">
+                                <div className="input-group">
+                                    <label>Họ và tên *</label>
+                                    <input
+                                        type="text"
+                                        value={applicantInfo.fullName}
+                                        onChange={(e) => handleApplicantInfoChange('fullName', e.target.value)}
+                                        placeholder="Họ tên hiển thị với NTD"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Email *</label>
+                                    <input
+                                        type="email"
+                                        value={applicantInfo.email}
+                                        onChange={(e) => handleApplicantInfoChange('email', e.target.value)}
+                                        placeholder="Email hiển thị với NTD"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Số điện thoại *</label>
+                                    <input
+                                        type="tel"
+                                        value={applicantInfo.phone}
+                                        onChange={(e) => handleApplicantInfoChange('phone', e.target.value)}
+                                        placeholder="Số điện thoại hiển thị với NTD"
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label>Địa điểm làm việc mong muốn *</label>
+                                    <input
+                                        type="text"
+                                        value={applicantInfo.desiredLocation}
+                                        onChange={(e) => handleApplicantInfoChange('desiredLocation', e.target.value)}
+                                        placeholder="Ví dụ: Quận Đống Đa - Hà Nội"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="modal-section cover-letter-section">
+                            <div className="section-header">
+                                <h4>Thư giới thiệu</h4>
+                                <span>(Tùy chọn)</span>
+                            </div>
+                            <textarea
+                                placeholder="Một thư giới thiệu ngắn gọn, chỉnh chu sẽ giúp bạn ghi điểm với nhà tuyển dụng..."
+                                value={coverLetter}
+                                onChange={(e) => setCoverLetter(e.target.value)}
+                                rows={4}
+                            ></textarea>
+                        </div>
+
+                        <div className="modal-actions">
+                            <button className="btn-cancel" onClick={handleCloseApplyModal}>
+                                Hủy
+                            </button>
+                            <button
+                                className="btn-submit"
+                                onClick={handleSubmitApplication}
+                                disabled={isApplying || records.length === 0}
+                            >
+                                {isApplying ? 'Đang gửi...' : 'Nộp hồ sơ ứng tuyển'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
