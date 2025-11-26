@@ -5,7 +5,8 @@ import {
     getJobApplications, 
     getApplicationStatistics, 
     getApplicationDetail,
-    updateApplicationStatus 
+    updateApplicationStatus,
+    getActiveJobPostings
 } from '../../service.js/hrService';
 import ApplicationDetailModal from './ApplicationDetailModal';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
@@ -22,6 +23,8 @@ const CandidateManagement = () => {
     });
     const [loading, setLoading] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState('all');
+    const [selectedJobId, setSelectedJobId] = useState('all');
+    const [activeJobs, setActiveJobs] = useState([]);
     const [searchKeyword, setSearchKeyword] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
@@ -40,15 +43,33 @@ const CandidateManagement = () => {
             const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
             fetchStatistics(parsedUser.id);
-            fetchApplications(parsedUser.id, selectedStatus, currentPage);
+            fetchActiveJobs(parsedUser.id);
+            fetchApplications(parsedUser.id, selectedStatus, selectedJobId, currentPage);
         }
     }, []);
 
     useEffect(() => {
         if (user) {
-            fetchApplications(user.id, selectedStatus, currentPage, searchKeyword);
+            fetchApplications(user.id, selectedStatus, selectedJobId, currentPage, searchKeyword);
         }
-    }, [selectedStatus, currentPage, searchKeyword]);
+    }, [selectedStatus, selectedJobId, currentPage, searchKeyword]);
+
+    const fetchActiveJobs = async (userId) => {
+        try {
+            const res = await getActiveJobPostings(userId);
+            console.log('Active jobs response:', res); // Debug log
+            if (res.EC === 0) {
+                setActiveJobs(res.DT);
+                console.log('Active jobs set:', res.DT); // Debug log
+            } else {
+                console.error('Error from API:', res.EM);
+                setActiveJobs([]);
+            }
+        } catch (error) {
+            console.error('Error fetching active jobs:', error);
+            setActiveJobs([]);
+        }
+    };
 
     const fetchStatistics = async (userId) => {
         try {
@@ -61,10 +82,10 @@ const CandidateManagement = () => {
         }
     };
 
-    const fetchApplications = async (userId, status, page, search = '') => {
+    const fetchApplications = async (userId, status, jobId, page, search = '') => {
         try {
             setLoading(true);
-            const res = await getJobApplications(userId, status, page, limit, search);
+            const res = await getJobApplications(userId, status, jobId, page, limit, search);
             if (res.EC === 0) {
                 setApplications(res.DT.applications);
                 setTotalPages(res.DT.totalPages);
@@ -184,6 +205,15 @@ const CandidateManagement = () => {
                 <p>Xem xét và duyệt hồ sơ ứng viên ứng tuyển</p>
             </div>
 
+            {/* No Active Jobs Warning */}
+            {activeJobs && activeJobs.length === 0 && (
+                <div className="no-active-jobs-warning">
+                    <i className="fas fa-exclamation-triangle"></i>
+                    <h3>Không có tin tuyển dụng có ứng viên</h3>
+                    <p>Hiện tại chưa có tin tuyển dụng nào nhận được hồ sơ ứng tuyển. Vui lòng quay lại sau khi có ứng viên ứng tuyển.</p>
+                </div>
+            )}
+
             {/* Statistics Cards */}
             <div className="cm-statistics">
                 <div className="stat-card total">
@@ -240,6 +270,31 @@ const CandidateManagement = () => {
                         </button>
                     )}
                 </div>
+                
+                {/* Job Posting Filter - Only show if there are active jobs */}
+                {activeJobs && activeJobs.length > 0 && (
+                    <div className="job-filter-dropdown">
+                        <label htmlFor="jobFilter">
+                            <i className="fas fa-briefcase"></i> Lọc theo tin tuyển dụng:
+                        </label>
+                        <select 
+                            id="jobFilter"
+                            value={selectedJobId} 
+                            onChange={(e) => {
+                                setSelectedJobId(e.target.value);
+                                setCurrentPage(1);
+                            }}
+                        >
+                            <option value="all">Tất cả tin tuyển dụng</option>
+                            {activeJobs.map(job => (
+                                <option key={job.id} value={job.id}>
+                                    {job.Tieude} - {job.Company?.Tencongty} ({job.Diadiem})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
                 <div className="filter-buttons">
                     <button 
                         className={selectedStatus === 'all' ? 'active' : ''}

@@ -60,9 +60,19 @@ const updateJobPosting = async (userId, jobId, data) => {
     }
 };
 
-const getJobApplications = async (userId, statusId = 'all', page = 1, limit = 10, search = '') => {
+const getActiveJobPostings = async (userId) => {
     try {
-        const res = await axios.get(`http://localhost:8082/api/hr/applications?userId=${userId}&statusId=${statusId}&page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+        const res = await axios.get(`http://localhost:8082/api/hr/active-jobs?userId=${userId}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error fetching active job postings:', error);
+        throw error;
+    }
+};
+
+const getJobApplications = async (userId, statusId = 'all', jobPostingId = 'all', page = 1, limit = 10, search = '') => {
+    try {
+        const res = await axios.get(`http://localhost:8082/api/hr/applications?userId=${userId}&statusId=${statusId}&jobPostingId=${jobPostingId}&page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
         return res.data;
     } catch (error) {
         console.error('Error fetching job applications:', error);
@@ -107,6 +117,7 @@ export {
     deleteJobPosting,
     createJobPosting,
     updateJobPosting,
+    getActiveJobPostings,
     getJobApplications,
     getApplicationStatistics,
     getApplicationDetail,
