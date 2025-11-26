@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './JobManagement.scss';
-import { getMyJobPostings, getJobPostingDetail, deleteJobPosting, createJobPosting, updateJobPosting } from '../../service.js/hrService';
+import { getMyJobPostings, getJobPostingDetail, deleteJobPosting, createJobPosting, updateJobPosting, getMyCompanies } from '../../service.js/hrService';
 import { getAllMajors, getAllFormats, getAllJobPostingStatuses } from '../../service.js/utilityService';
 import { toast } from 'react-toastify';
 import ReactPaginate from 'react-paginate';
@@ -42,23 +42,17 @@ const JobManagement = ({ userId }) => {
 
     const fetchFormOptions = async () => {
         try {
-            const [majorsRes, formatsRes, statusesRes] = await Promise.all([
+            const [majorsRes, formatsRes, statusesRes, companiesRes] = await Promise.all([
                 getAllMajors(),
                 getAllFormats(),
-                getAllJobPostingStatuses()
+                getAllJobPostingStatuses(),
+                getMyCompanies(userId)
             ]);
 
             if (majorsRes && majorsRes.EC === 0) setMajors(majorsRes.DT);
             if (formatsRes && formatsRes.EC === 0) setFormats(formatsRes.DT);
             if (statusesRes && statusesRes.EC === 0) setStatuses(statusesRes.DT);
-
-            // Get companies from user's HR dashboard data
-            const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
-            if (storedUser) {
-                const parsedUser = JSON.parse(storedUser);
-                // We'll need to get companies from dashboard or recruiter data
-                // For now, we'll fetch from the jobs data
-            }
+            if (companiesRes && companiesRes.EC === 0) setCompanies(companiesRes.DT);
         } catch (error) {
             console.error('Error fetching form options:', error);
         }
@@ -74,17 +68,6 @@ const JobManagement = ({ userId }) => {
                 setJobs(res.DT.jobs);
                 setTotalPages(res.DT.pagination.totalPages);
                 setTotalRows(res.DT.pagination.totalRows);
-
-                // Extract unique companies from jobs
-                const uniqueCompanies = [];
-                const companyMap = new Map();
-                res.DT.jobs.forEach(job => {
-                    if (job.Company && !companyMap.has(job.Company.id)) {
-                        companyMap.set(job.Company.id, true);
-                        uniqueCompanies.push(job.Company);
-                    }
-                });
-                setCompanies(uniqueCompanies);
             } else {
                 toast.error(res.EM || 'Không thể tải danh sách tin tuyển dụng!');
             }

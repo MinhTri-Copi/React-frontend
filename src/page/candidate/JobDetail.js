@@ -15,6 +15,7 @@ const JobDetail = () => {
     const [user, setUser] = useState(null);
     const [records, setRecords] = useState([]);
     const [recordsLoading, setRecordsLoading] = useState(false);
+    const [recordsFetched, setRecordsFetched] = useState(false);
     const [showApplyModal, setShowApplyModal] = useState(false);
     const [selectedRecordId, setSelectedRecordId] = useState('');
     const [coverLetter, setCoverLetter] = useState('');
@@ -56,15 +57,11 @@ const JobDetail = () => {
     }, [id]);
 
     useEffect(() => {
-        if (showApplyModal && user) {
-            if (records.length === 0) {
-                fetchUserRecords(user.id);
-            } else if (!selectedRecordId && records.length > 0) {
-                setSelectedRecordId(records[0].id);
-            }
+        if (showApplyModal && user && !recordsFetched) {
+            fetchUserRecords(user.id);
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [showApplyModal, user, records]);
+    }, [showApplyModal, user]);
 
     const fetchJobDetail = async () => {
         setIsLoading(true);
@@ -103,6 +100,7 @@ const JobDetail = () => {
             toast.error('Không thể tải danh sách hồ sơ!');
         } finally {
             setRecordsLoading(false);
+            setRecordsFetched(true);
         }
     };
 
@@ -154,6 +152,7 @@ const JobDetail = () => {
         setShowApplyModal(false);
         setCoverLetter('');
         setIsApplying(false);
+        setRecordsFetched(false);
     };
 
     const handleSubmitApplication = async () => {
@@ -548,6 +547,7 @@ const JobDetail = () => {
                                                 type="button"
                                                 onClick={() => navigate('/candidate/my-records')}
                                             >
+                                                <i className="fas fa-plus-circle"></i>
                                                 Tạo hồ sơ ngay
                                             </button>
                                         </div>

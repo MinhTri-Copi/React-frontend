@@ -60,6 +60,16 @@ const updateJobPosting = async (userId, jobId, data) => {
     }
 };
 
+const getMyCompanies = async (userId) => {
+    try {
+        const res = await axios.get(`http://localhost:8082/api/hr/my-companies?userId=${userId}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error fetching my companies:', error);
+        throw error;
+    }
+};
+
 const getActiveJobPostings = async (userId) => {
     try {
         const res = await axios.get(`http://localhost:8082/api/hr/active-jobs?userId=${userId}`);
@@ -137,6 +147,7 @@ export {
     deleteJobPosting,
     createJobPosting,
     updateJobPosting,
+    getMyCompanies,
     getActiveJobPostings,
     getJobApplications,
     getApplicationStatistics,
