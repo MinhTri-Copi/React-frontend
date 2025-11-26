@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getHrDashboard } from '../../service.js/hrService';
 import './HrDashboard.scss';
 import JobManagement from './JobManagement';
 import CandidateManagement from './CandidateManagement';
+import CompanyProfile from './CompanyProfile';
 
 const sidebarItems = [
     { id: 'analytics', label: 'Thống kê', icon: 'fas fa-chart-line' },
@@ -20,6 +21,21 @@ const HrDashboard = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [activeMenu, setActiveMenu] = useState('analytics');
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Set active menu based on URL
+    useEffect(() => {
+        const path = location.pathname;
+        if (path === '/hr/candidates') {
+            setActiveMenu('candidates');
+        } else if (path === '/hr/company-profile') {
+            setActiveMenu('company');
+        } else if (path === '/hr/applications') {
+            setActiveMenu('applications');
+        } else {
+            setActiveMenu('analytics');
+        }
+    }, [location.pathname]);
 
     useEffect(() => {
         const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
@@ -74,6 +90,8 @@ const HrDashboard = () => {
             navigate('/hr');
         } else if (itemId === 'candidates') {
             navigate('/hr/candidates');
+        } else if (itemId === 'company') {
+            navigate('/hr/company-profile');
         } else if (itemId === 'applications') {
             navigate('/hr/applications');
         } else {
@@ -126,6 +144,8 @@ const HrDashboard = () => {
                         <JobManagement userId={user?.id} />
                     ) : activeMenu === 'candidates' ? (
                         <CandidateManagement />
+                    ) : activeMenu === 'company' ? (
+                        <CompanyProfile />
                     ) : isLoading ? (
                         <div className="loading-state">
                             <i className="fas fa-spinner fa-spin"></i>

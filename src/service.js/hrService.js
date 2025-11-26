@@ -110,6 +110,26 @@ const updateApplicationStatus = async (userId, applicationId, statusId) => {
     }
 };
 
+const getCompanyProfile = async (userId) => {
+    try {
+        const res = await axios.get(`http://localhost:8082/api/hr/company-profile?userId=${userId}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error fetching company profile:', error);
+        throw error;
+    }
+};
+
+const updateCompanyProfile = async (userId, companyData) => {
+    try {
+        const res = await axios.put(`http://localhost:8082/api/hr/company-profile`, { userId, companyData });
+        return res.data;
+    } catch (error) {
+        console.error('Error updating company profile:', error);
+        throw error;
+    }
+};
+
 export { 
     getHrDashboard, 
     getMyJobPostings, 
@@ -121,5 +141,7 @@ export {
     getJobApplications,
     getApplicationStatistics,
     getApplicationDetail,
-    updateApplicationStatus
+    updateApplicationStatus,
+    getCompanyProfile,
+    updateCompanyProfile
 };

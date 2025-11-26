@@ -57,16 +57,12 @@ const CandidateManagement = () => {
     const fetchActiveJobs = async (userId) => {
         try {
             const res = await getActiveJobPostings(userId);
-            console.log('Active jobs response:', res); // Debug log
             if (res.EC === 0) {
                 setActiveJobs(res.DT);
-                console.log('Active jobs set:', res.DT); // Debug log
             } else {
-                console.error('Error from API:', res.EM);
                 setActiveJobs([]);
             }
         } catch (error) {
-            console.error('Error fetching active jobs:', error);
             setActiveJobs([]);
         }
     };
@@ -204,16 +200,6 @@ const CandidateManagement = () => {
                 <h1>Quản lý ứng viên</h1>
                 <p>Xem xét và duyệt hồ sơ ứng viên ứng tuyển</p>
             </div>
-
-            {/* No Active Jobs Warning */}
-            {activeJobs && activeJobs.length === 0 && (
-                <div className="no-active-jobs-warning">
-                    <i className="fas fa-exclamation-triangle"></i>
-                    <h3>Không có tin tuyển dụng có ứng viên</h3>
-                    <p>Hiện tại chưa có tin tuyển dụng nào nhận được hồ sơ ứng tuyển. Vui lòng quay lại sau khi có ứng viên ứng tuyển.</p>
-                </div>
-            )}
-
             {/* Statistics Cards */}
             <div className="cm-statistics">
                 <div className="stat-card total">
