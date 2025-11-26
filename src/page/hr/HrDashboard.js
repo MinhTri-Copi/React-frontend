@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getHrDashboard } from '../../service.js/hrService';
 import './HrDashboard.scss';
 import JobManagement from './JobManagement';
 import CandidateManagement from './CandidateManagement';
 import CompanyProfile from './CompanyProfile';
+import HrStatistics from './HrStatistics';
 
 const sidebarItems = [
     { id: 'analytics', label: 'Thống kê', icon: 'fas fa-chart-line' },
@@ -17,8 +17,6 @@ const sidebarItems = [
 
 const HrDashboard = () => {
     const [user, setUser] = useState(null);
-    const [data, setData] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
     const [activeMenu, setActiveMenu] = useState('analytics');
     const navigate = useNavigate();
     const location = useLocation();
@@ -32,8 +30,10 @@ const HrDashboard = () => {
             setActiveMenu('company');
         } else if (path === '/hr/applications') {
             setActiveMenu('applications');
-        } else {
-            setActiveMenu('analytics');
+        } else if (path === '/hr') {
+            // Don't override if already set to 'jobs' or 'analytics'
+            // Only set to 'analytics' on initial load
+            setActiveMenu(prev => (prev === 'jobs' || prev === 'analytics') ? prev : 'analytics');
         }
     }, [location.pathname]);
 
@@ -47,47 +47,22 @@ const HrDashboard = () => {
                 return;
             }
             setUser(parsedUser);
-            fetchDashboard(parsedUser.id);
+            // fetchDashboard is no longer needed - HrStatistics handles its own data
         } else {
             navigate('/login');
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const fetchDashboard = async (userId) => {
-        setIsLoading(true);
-        try {
-            const res = await getHrDashboard(userId);
-            if (res && res.data && res.data.EC === 0) {
-                setData(res.data.DT);
-            } else {
-                toast.error(res?.data?.EM || 'Không thể tải dữ liệu dashboard!');
-            }
-        } catch (error) {
-            console.log(error);
-            toast.error('Có lỗi xảy ra khi tải dữ liệu!');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const renderStatusSummary = () => {
-        if (!data?.statusSummary) return null;
-        const entries = Object.entries(data.statusSummary);
-        return entries.map(([status, count]) => (
-            <div className="status-chip" key={status}>
-                <span className="status-name">{status}</span>
-                <span className="status-count">{count}</span>
-            </div>
-        ));
-    };
-
     const handleMenuClick = (itemId) => {
         setActiveMenu(itemId);
         if (itemId === 'analytics') {
             navigate('/hr');
         } else if (itemId === 'jobs') {
-            navigate('/hr');
+            // Only navigate if not already on /hr
+            if (location.pathname !== '/hr') {
+                navigate('/hr');
+            }
         } else if (itemId === 'candidates') {
             navigate('/hr/candidates');
         } else if (itemId === 'company') {
@@ -146,120 +121,8 @@ const HrDashboard = () => {
                         <CandidateManagement />
                     ) : activeMenu === 'company' ? (
                         <CompanyProfile />
-                    ) : isLoading ? (
-                        <div className="loading-state">
-                            <i className="fas fa-spinner fa-spin"></i>
-                            <p>Đang tải dữ liệu dashboard...</p>
-                        </div>
                     ) : activeMenu === 'analytics' ? (
-                        <div className="dashboard-container">
-                            <div className="stats-grid">
-                                <div className="stat-card primary">
-                                    <div className="stat-icon">
-                                        <i className="fas fa-briefcase"></i>
-                                    </div>
-                                    <div>
-                                        <p>Tổng tin tuyển dụng</p>
-                                        <h3>{data?.stats?.totalJobs || 0}</h3>
-                                    </div>
-                                </div>
-                                <div className="stat-card success">
-                                    <div className="stat-icon">
-                                        <i className="fas fa-check-circle"></i>
-                                    </div>
-                                    <div>
-                                        <p>Đang mở</p>
-                                        <h3>{data?.stats?.activeJobs || 0}</h3>
-                                    </div>
-                                </div>
-                                <div className="stat-card warning">
-                                    <div className="stat-icon">
-                                        <i className="fas fa-archive"></i>
-                                    </div>
-                                    <div>
-                                        <p>Đã đóng</p>
-                                        <h3>{data?.stats?.closedJobs || 0}</h3>
-                                    </div>
-                                </div>
-                                <div className="stat-card accent">
-                                    <div className="stat-icon">
-                                        <i className="fas fa-paper-plane"></i>
-                                    </div>
-                                    <div>
-                                        <p>Tổng đơn ứng tuyển</p>
-                                        <h3>{data?.stats?.totalApplications || 0}</h3>
-                                        <small>+{data?.stats?.newApplications || 0} trong 7 ngày qua</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="status-summary">
-                                <h3>Tình trạng tin tuyển dụng</h3>
-                                <div className="status-list">
-                                    {renderStatusSummary()}
-                                </div>
-                            </div>
-
-                            <div className="dashboard-panels">
-                                <div className="panel">
-                                    <div className="panel-header">
-                                        <h3>Tin tuyển dụng gần đây</h3>
-                                        <button onClick={() => navigate('/hr/jobs')}>
-                                            Quản lý tin
-                                            <i className="fas fa-arrow-right"></i>
-                                        </button>
-                                    </div>
-                                    {data?.recentJobs && data.recentJobs.length > 0 ? (
-                                        <div className="panel-body">
-                                            {data.recentJobs.map(job => (
-                                                <div className="job-row" key={job.id}>
-                                                    <div>
-                                                        <h4>{job.Tieude}</h4>
-                                                        <p>{job.Company?.Tencongty} • {job.Format?.TenHinhThuc}</p>
-                                                    </div>
-                                                    <div className="job-meta">
-                                                        <span>{job.JobPostingStatus?.TenTrangThai || 'Chưa xác định'}</span>
-                                                        <small>Đăng ngày {job.Ngaydang ? new Date(job.Ngaydang).toLocaleDateString('vi-VN') : '--'}</small>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="empty-panel">Chưa có tin tuyển dụng nào.</div>
-                                    )}
-                                </div>
-
-                                <div className="panel">
-                                    <div className="panel-header">
-                                        <h3>Đơn ứng tuyển mới nhất</h3>
-                                        <button onClick={() => navigate('/hr/applications')}>
-                                            Quản lý đơn
-                                            <i className="fas fa-arrow-right"></i>
-                                        </button>
-                                    </div>
-                                    {data?.recentApplications && data.recentApplications.length > 0 ? (
-                                        <div className="panel-body">
-                                            {data.recentApplications.map(app => (
-                                                <div className="application-row" key={app.id}>
-                                                    <div className="candidate-info">
-                                                        <h4>{app.Record?.User?.Hoten || 'Ứng viên'}</h4>
-                                                        <p>{app.JobPosting?.Tieude}</p>
-                                                    </div>
-                                                    <div className="application-meta">
-                                                        <span className={`status-badge status-${app.ApplicationStatus?.id || 0}`}>
-                                                            {app.ApplicationStatus?.TenTrangThai}
-                                                        </span>
-                                                        <small>Nộp ngày {app.Ngaynop ? new Date(app.Ngaynop).toLocaleDateString('vi-VN') : '--'}</small>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="empty-panel">Chưa có đơn ứng tuyển nào.</div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                        <HrStatistics />
                     ) : (
                         <div className="feature-under-development">
                             <i className="fas fa-tools"></i>
