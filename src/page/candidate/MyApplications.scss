@@ -159,6 +159,53 @@
                             background: #eff6ff;
                         }
                     }
+
+                    .btn-test {
+                        flex: 1;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 8px;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+
+                        &.btn-start {
+                            background: linear-gradient(135deg, #34d399, #059669);
+                            color: white;
+                            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                        }
+
+                        &.btn-resume {
+                            background: linear-gradient(135deg, #fbbf24, #f97316);
+                            color: white;
+                            box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+                        }
+
+                        &.btn-completed {
+                            background: #f3f4f6;
+                            color: #6b7280;
+                            cursor: not-allowed;
+                        }
+
+                        &.btn-pending {
+                            background: #e0e7ff;
+                            color: #4338ca;
+                            cursor: not-allowed;
+                        }
+
+                        &:disabled {
+                            opacity: 0.6;
+                            cursor: not-allowed;
+                        }
+
+                        &:not(:disabled):hover {
+                            transform: translateY(-2px);
+                        }
+                    }
                 }
             }
 

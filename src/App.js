@@ -14,6 +14,7 @@ import MyRecords from './page/candidate/MyRecords';
 import JobList from './page/candidate/JobList';
 import JobDetail from './page/candidate/JobDetail';
 import MyApplications from './page/candidate/MyApplications';
+import TestTaking from './page/candidate/TestTaking';
 import HrDashboard from './page/hr/HrDashboard';
 
 function App() {
@@ -32,6 +33,7 @@ function App() {
           <Route path="/candidate/companies" element={<CompanyList />} />
           <Route path="/candidate/my-records" element={<MyRecords />} />
           <Route path="/candidate/my-applications" element={<MyApplications />} />
+          <Route path="/candidate/tests/:submissionId" element={<TestTaking />} />
           <Route path="/candidate/profile" element={<div>Profile Page</div>} />
           <Route path="/candidate/settings" element={<div>Settings Page</div>} />
           

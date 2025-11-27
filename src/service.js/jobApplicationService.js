@@ -19,10 +19,25 @@ const getMyApplications = async (userId) => {
     });
 };
 
+const startTest = async (userId, applicationId) => {
+    return await axios.post('http://localhost:8082/api/job-applications/tests/start', {
+        userId,
+        applicationId
+    });
+};
+
+const getTestSubmissionDetail = async (submissionId, userId) => {
+    return await axios.get(`http://localhost:8082/api/job-applications/tests/submissions/${submissionId}`, {
+        params: { userId }
+    });
+};
+
 export {
     applyJob,
     checkApplied,
-    getMyApplications
+    getMyApplications,
+    startTest,
+    getTestSubmissionDetail
 };
 
 

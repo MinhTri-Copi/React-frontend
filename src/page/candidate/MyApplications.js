@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CandidateNav from '../../components/Navigation/CandidateNav';
-import { getMyApplications } from '../../service.js/jobApplicationService';
+import { getMyApplications, startTest } from '../../service.js/jobApplicationService';
 import { toast } from 'react-toastify';
 import './MyApplications.scss';
 
@@ -8,6 +9,8 @@ const MyApplications = () => {
     const [user, setUser] = useState(null);
     const [applications, setApplications] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [startingTestId, setStartingTestId] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
@@ -38,6 +41,56 @@ const MyApplications = () => {
     const formatDate = (dateString) => {
         if (!dateString) return '';
         return new Date(dateString).toLocaleDateString('vi-VN');
+    };
+
+    const canStartTest = (app) => {
+        const statusId = app.applicationStatusId || app.ApplicationStatus?.id;
+        const hasTest = app.JobPosting?.Test;
+        if (statusId !== 4 || !hasTest) return { show: false };
+
+        const submission = app.TestSubmissions && app.TestSubmissions.length > 0 ? app.TestSubmissions[0] : null;
+
+        if (submission && submission.Trangthai === 'dacham') {
+            return { show: true, disabled: true, label: 'Đã hoàn thành', variant: 'completed' };
+        }
+
+        if (submission && submission.Trangthai === 'danglam') {
+            return { show: true, disabled: false, label: 'Tiếp tục làm bài', variant: 'resume', submissionId: submission.id };
+        }
+
+        if (submission && submission.Trangthai === 'danop') {
+            return { show: true, disabled: true, label: 'Đang chấm điểm', variant: 'pending' };
+        }
+
+        return { show: true, disabled: false, label: 'Làm bài test', variant: 'start', submissionId: submission?.id };
+    };
+
+    const handleStartTest = async (application) => {
+        if (!user) return;
+        const status = canStartTest(application);
+        if (status.disabled && !status.submissionId) return;
+        setStartingTestId(application.id);
+        try {
+            let response;
+            if (status.submissionId && status.variant === 'resume') {
+                navigate(`/candidate/tests/${status.submissionId}?userId=${user.id}`);
+                return;
+            }
+            response = await startTest(user.id, application.id);
+            if (response.data && response.data.EC === 0) {
+                const submission = response.data.DT;
+                toast.success('Bắt đầu bài test thành công!');
+                navigate(`/candidate/tests/${submission.id}?userId=${user.id}`);
+            } else {
+                toast.error(response.data?.EM || 'Không thể bắt đầu bài test!');
+            }
+        } catch (error) {
+            console.error(error);
+            toast.error('Có lỗi xảy ra khi bắt đầu bài test!');
+        } finally {
+            setStartingTestId(null);
+            fetchApplications(user.id);
+        }
     };
 
     const formatSalary = (min, max) => {
@@ -110,6 +163,23 @@ const MyApplications = () => {
                                             <a href={`/candidate/jobs/${app.JobPosting?.id}`}>
                                                 Xem chi tiết job
                                             </a>
+                                            {(() => {
+                                                const testState = canStartTest(app);
+                                                if (!testState.show) return null;
+                                                const isLoadingBtn = startingTestId === app.id;
+                                                const btnLabel = isLoadingBtn ? 'Đang mở bài test...' : testState.label;
+                                                const isDisabled = testState.disabled || isLoadingBtn;
+                                                return (
+                                                    <button
+                                                        className={`btn-test btn-${testState.variant || 'start'}`}
+                                                        disabled={isDisabled}
+                                                        onClick={() => handleStartTest(app)}
+                                                    >
+                                                        <i className="fas fa-pencil-alt"></i>
+                                                        {btnLabel}
+                                                    </button>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 </div>
