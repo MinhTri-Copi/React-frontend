@@ -1,0 +1,278 @@
+.test-management-container {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+
+    .test-management-loading {
+        text-align: center;
+        padding: 50px;
+        font-size: 18px;
+        color: #666;
+    }
+
+    .test-management-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+
+        h2 {
+            font-size: 28px;
+            color: #2c3e50;
+            margin: 0;
+        }
+
+        .btn-create-test {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+
+            i {
+                margin-right: 8px;
+            }
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            }
+        }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        i {
+            font-size: 80px;
+            color: #ddd;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+    }
+
+    .tests-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 24px;
+        margin-bottom: 30px;
+    }
+
+    .test-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        overflow: hidden;
+
+        &:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .test-card-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+
+            h3 {
+                margin: 0;
+                font-size: 20px;
+                font-weight: 600;
+                flex: 1;
+                padding-right: 10px;
+            }
+
+            .badge {
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+                white-space: nowrap;
+
+                &.badge-active {
+                    background: #10b981;
+                }
+
+                &.badge-inactive {
+                    background: #6b7280;
+                }
+
+                &.badge-expired {
+                    background: #ef4444;
+                }
+
+                &.badge-pending {
+                    background: #f59e0b;
+                }
+            }
+        }
+
+        .test-card-body {
+            padding: 20px;
+
+            .test-info {
+                margin-bottom: 20px;
+
+                .info-item {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 12px;
+                    color: #555;
+                    font-size: 14px;
+
+                    i {
+                        width: 20px;
+                        color: #667eea;
+                        margin-right: 10px;
+                    }
+
+                    span {
+                        flex: 1;
+                    }
+                }
+            }
+
+            .test-stats {
+                display: flex;
+                justify-content: space-around;
+                padding: 15px 0;
+                border-top: 1px solid #eee;
+                border-bottom: 1px solid #eee;
+
+                .stat-item {
+                    text-align: center;
+
+                    .stat-value {
+                        display: block;
+                        font-size: 24px;
+                        font-weight: 700;
+                        color: #667eea;
+                        margin-bottom: 5px;
+                    }
+
+                    .stat-label {
+                        display: block;
+                        font-size: 12px;
+                        color: #888;
+                        text-transform: uppercase;
+                    }
+                }
+            }
+        }
+
+        .test-card-footer {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: center;
+
+            .btn-view-detail {
+                background: white;
+                color: #667eea;
+                border: 2px solid #667eea;
+                padding: 10px 24px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                width: 100%;
+
+                i {
+                    margin-right: 8px;
+                }
+
+                &:hover {
+                    background: #667eea;
+                    color: white;
+                }
+            }
+        }
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 30px;
+
+        .pagination {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            gap: 8px;
+
+            li {
+                a {
+                    padding: 10px 15px;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    color: #555;
+                    font-weight: 500;
+
+                    &:hover {
+                        background: #667eea;
+                        color: white;
+                        border-color: #667eea;
+                    }
+                }
+
+                &.active a {
+                    background: #667eea;
+                    color: white;
+                    border-color: #667eea;
+                }
+
+                &.disabled a {
+                    cursor: not-allowed;
+                    opacity: 0.5;
+                }
+            }
+        }
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .test-management-container {
+        padding: 15px;
+
+        .test-management-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
+
+            h2 {
+                font-size: 24px;
+            }
+
+            .btn-create-test {
+                width: 100%;
+            }
+        }
+
+        .tests-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+}
+
