@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import ReactPaginate from 'react-paginate';
 import { toast } from 'react-toastify';
 import { getTestSubmissions } from '../../service.js/hrService';
+import GradeModal from './GradeModal';
 import './TestSubmissionList.scss';
 
 const STATUS_FILTERS = [
@@ -20,6 +21,8 @@ const TestSubmissionList = ({ userId }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [pagination, setPagination] = useState({ totalRows: 0, totalPages: 0, currentPage: 1, limit: 10 });
     const [isLoading, setIsLoading] = useState(false);
+    const [showGradeModal, setShowGradeModal] = useState(false);
+    const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
 
     useEffect(() => {
         if (!userId) return;
@@ -77,6 +80,20 @@ const TestSubmissionList = ({ userId }) => {
     const formatDateTime = (value) => {
         if (!value) return 'N/A';
         return new Date(value).toLocaleString('vi-VN');
+    };
+
+    const handleOpenGradeModal = (submissionId) => {
+        setSelectedSubmissionId(submissionId);
+        setShowGradeModal(true);
+    };
+
+    const handleCloseGradeModal = () => {
+        setShowGradeModal(false);
+        setSelectedSubmissionId(null);
+    };
+
+    const handleGraded = () => {
+        fetchSubmissions(); // Refresh list after grading
     };
 
     const statusBadgeClass = useMemo(() => ({
@@ -232,11 +249,11 @@ const TestSubmissionList = ({ userId }) => {
                                         <td>
                                             <button
                                                 className="btn-grade"
-                                                onClick={() => toast.info('Nút chấm bài sẽ được mở khi quy trình hoàn tất!')}
-                                                disabled
+                                                onClick={() => handleOpenGradeModal(sub.id)}
+                                                disabled={sub.Trangthai !== 'danop' && sub.Trangthai !== 'dacham'}
                                             >
                                                 <i className="fas fa-pen"></i>
-                                                Chấm bài
+                                                {sub.Trangthai === 'dacham' ? 'Xem lại' : 'Chấm bài'}
                                             </button>
                                         </td>
                                     </tr>
@@ -272,6 +289,17 @@ const TestSubmissionList = ({ userId }) => {
                     </>
                 )}
             </div>
+
+            {/* Grade Modal */}
+            {showGradeModal && selectedSubmissionId && (
+                <GradeModal
+                    show={showGradeModal}
+                    onClose={handleCloseGradeModal}
+                    submissionId={selectedSubmissionId}
+                    hrUserId={userId}
+                    onGraded={handleGraded}
+                />
+            )}
         </div>
     );
 };

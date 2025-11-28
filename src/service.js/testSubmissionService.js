@@ -51,11 +51,19 @@ const getSubmissionResult = async (userId, submissionId, isHR = false) => {
     });
 };
 
+/**
+ * Auto-grade submission using AI/NLP
+ */
+const autoGradeSubmission = async (submissionId) => {
+    return await axios.post(`${BASE_URL}/test-submissions/${submissionId}/auto-grade`);
+};
+
 export {
     submitTest,
     getSubmissionForGrading,
     gradeAnswer,
     finalizeGrading,
-    getSubmissionResult
+    getSubmissionResult,
+    autoGradeSubmission
 };
 
