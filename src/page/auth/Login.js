@@ -71,9 +71,25 @@ const Login = () => {
 
     return (
         <div className="login-background">
-            <div className="login-container">
-                <div className="login-content row">
-                    <div className="col-12 text-login">Đăng Nhập</div>
+            <div className="login-layout">
+                {/* Left side - Image */}
+                <div className="login-image-section">
+                    <img 
+                        src="http://localhost:8082/images/anh-nen.jpg" 
+                        alt="IT Jobs Background" 
+                        className="login-background-image"
+                        onError={(e) => {
+                            // Fallback to frontend public folder if backend image fails
+                            e.target.src = '/images/anh-nen.jpg';
+                        }}
+                    />
+                </div>
+                
+                {/* Right side - Login Form */}
+                <div className="login-form-section">
+                    <div className="login-container">
+                        <div className="login-content row">
+                            <div className="col-12 text-login">Đăng Nhập</div>
                     
                     <div className="col-12 form-group login-input">
                         <label>Email:</label>
@@ -142,6 +158,8 @@ const Login = () => {
                                 {' '}Đăng ký ngay
                             </span>
                         </span>
+                    </div>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -3,46 +3,101 @@
     max-width: 1400px;
     margin: 0 auto;
 
+    .cp-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1.5rem;
+        margin-bottom: 30px;
+        padding: 24px;
+        border-radius: 16px;
+        min-height: 140px;
+        background: linear-gradient(135deg, #008060, #2bab60);
+        color: white;
+        box-shadow: 0 8px 24px rgba(0, 128, 96, 0.2);
+
+        .cp-header-left {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+
+            .company-logo {
+                width: 80px;
+                height: 80px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 16px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                i {
+                    font-size: 2.5rem;
+                }
+            }
+
+            .company-title {
+                h1 {
+                    margin: 0 0 0.5rem 0;
+                    font-size: 2rem;
+                    font-weight: 700;
+                }
+
+                .company-industry {
+                    margin: 0;
+                    opacity: 0.9;
+                }
+            }
+        }
+
+        .cp-header-right {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+
+            .btn-create-test {
+                background: white;
+                color: #008060;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 12px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+
+                &:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+                }
+            }
+        }
+
+        @media (max-width: 768px) {
+            flex-direction: column;
+            align-items: flex-start;
+
+            .cp-header-right {
+                width: 100%;
+                justify-content: flex-start;
+
+                .btn-create-test {
+                    width: 100%;
+                    justify-content: center;
+                }
+            }
+        }
+    }
+
     .test-management-loading {
         text-align: center;
         padding: 50px;
         font-size: 18px;
         color: #666;
-    }
-
-    .test-management-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-
-        h2 {
-            font-size: 28px;
-            color: #2c3e50;
-            margin: 0;
-        }
-
-        .btn-create-test {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-
-            i {
-                margin-right: 8px;
-            }
-
-            &:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-            }
-        }
     }
 
     .empty-state {
@@ -86,7 +141,7 @@
 
         .test-card-header {
             padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #008060, #2bab60);
             color: white;
             display: flex;
             justify-content: space-between;
@@ -98,6 +153,12 @@
                 font-weight: 600;
                 flex: 1;
                 padding-right: 10px;
+            }
+
+            .header-badges {
+                display: flex;
+                gap: 8px;
+                align-items: center;
             }
 
             .badge {
@@ -122,6 +183,21 @@
                 &.badge-pending {
                     background: #f59e0b;
                 }
+
+                &.badge-warning {
+                    background: #fbbf24;
+                    color: #78350f;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 32px;
+                    height: 32px;
+                    padding: 0;
+
+                    i {
+                        margin: 0;
+                    }
+                }
             }
         }
 
@@ -140,7 +216,7 @@
 
                     i {
                         width: 20px;
-                        color: #667eea;
+                        color: #008060;
                         margin-right: 10px;
                     }
 
@@ -164,7 +240,7 @@
                         display: block;
                         font-size: 24px;
                         font-weight: 700;
-                        color: #667eea;
+                        color: #008060;
                         margin-bottom: 5px;
                     }
 
@@ -182,26 +258,44 @@
             padding: 15px 20px;
             background: #f8f9fa;
             display: flex;
+            gap: 10px;
             justify-content: center;
 
             .btn-view-detail {
                 background: white;
-                color: #667eea;
-                border: 2px solid #667eea;
+                color: #008060;
+                border: 2px solid #008060;
                 padding: 10px 24px;
                 border-radius: 8px;
                 font-size: 14px;
                 font-weight: 600;
                 cursor: pointer;
                 transition: all 0.3s ease;
-                width: 100%;
+                flex: 1;
 
                 i {
                     margin-right: 8px;
                 }
 
                 &:hover {
-                    background: #667eea;
+                    background: #008060;
+                    color: white;
+                }
+            }
+
+            .btn-delete-test {
+                background: white;
+                color: #ef4444;
+                border: 2px solid #ef4444;
+                padding: 10px 16px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+
+                &:hover {
+                    background: #ef4444;
                     color: white;
                 }
             }
@@ -230,16 +324,16 @@
                     font-weight: 500;
 
                     &:hover {
-                        background: #667eea;
+                        background: #008060;
                         color: white;
-                        border-color: #667eea;
+                        border-color: #008060;
                     }
                 }
 
                 &.active a {
-                    background: #667eea;
+                    background: #008060;
                     color: white;
-                    border-color: #667eea;
+                    border-color: #008060;
                 }
 
                 &.disabled a {

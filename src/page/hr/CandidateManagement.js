@@ -196,9 +196,16 @@ const CandidateManagement = () => {
 
     return (
         <div className="candidate-management">
-            <div className="cm-header">
-                <h1>Quản lý ứng viên</h1>
-                <p>Xem xét và duyệt hồ sơ ứng viên ứng tuyển</p>
+            <div className="cp-header">
+                <div className="cp-header-left">
+                    <div className="company-logo">
+                        <i className="fas fa-user-tie"></i>
+                    </div>
+                    <div className="company-title">
+                        <h1>Quản lý ứng viên</h1>
+                        <p className="company-industry">Theo dõi, đánh giá và duyệt hồ sơ ứng tuyển</p>
+                    </div>
+                </div>
             </div>
             {/* Statistics Cards */}
             <div className="cm-statistics">

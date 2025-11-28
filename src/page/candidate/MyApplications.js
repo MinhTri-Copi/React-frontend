@@ -5,6 +5,34 @@ import { getMyApplications, startTest } from '../../service.js/jobApplicationSer
 import { toast } from 'react-toastify';
 import './MyApplications.scss';
 
+const TEST_STATUS_MESSAGES = {
+    pending: 'Bài test chưa đến thời gian bắt đầu.',
+    expired: 'Bài test đã kết thúc.',
+    inactive: 'Bài test hiện không khả dụng.'
+};
+
+const getTestStatusInfo = (test) => {
+    if (!test) return { status: 'inactive' };
+
+    if (test.Trangthai === 0) {
+        return { status: 'inactive' };
+    }
+
+    const now = new Date();
+    const startDate = test.Ngaybatdau ? new Date(test.Ngaybatdau) : null;
+    const endDate = test.Ngayhethan ? new Date(test.Ngayhethan) : null;
+
+    if (startDate && now < startDate) {
+        return { status: 'pending', startDate };
+    }
+
+    if (endDate && now > endDate) {
+        return { status: 'expired', endDate };
+    }
+
+    return { status: 'active' };
+};
+
 const MyApplications = () => {
     const [user, setUser] = useState(null);
     const [applications, setApplications] = useState([]);
@@ -45,30 +73,57 @@ const MyApplications = () => {
 
     const canStartTest = (app) => {
         const statusId = app.applicationStatusId || app.ApplicationStatus?.id;
+        const testInfo = getTestStatusInfo(app.JobPosting?.Test);
         const hasTest = app.JobPosting?.Test;
-        if (statusId !== 4 || !hasTest) return { show: false };
+        if (statusId !== 4 || !hasTest) return { show: false, testStatus: testInfo.status };
 
         const submission = app.TestSubmissions && app.TestSubmissions.length > 0 ? app.TestSubmissions[0] : null;
 
         if (submission && submission.Trangthai === 'dacham') {
-            return { show: true, disabled: true, label: 'Đã hoàn thành', variant: 'completed' };
+            return { show: true, disabled: true, label: 'Đã hoàn thành', variant: 'completed', testStatus: testInfo.status };
         }
 
         if (submission && submission.Trangthai === 'danglam') {
-            return { show: true, disabled: false, label: 'Tiếp tục làm bài', variant: 'resume', submissionId: submission.id };
+            return {
+                show: true,
+                disabled: false,
+                label: 'Tiếp tục làm bài',
+                variant: 'resume',
+                submissionId: submission.id,
+                testStatus: testInfo.status
+            };
         }
 
         if (submission && submission.Trangthai === 'danop') {
-            return { show: true, disabled: true, label: 'Đang chấm điểm', variant: 'pending' };
+            return { show: true, disabled: true, label: 'Đang chấm điểm', variant: 'pending', testStatus: testInfo.status };
         }
 
-        return { show: true, disabled: false, label: 'Làm bài test', variant: 'start', submissionId: submission?.id };
+        return {
+            show: true,
+            disabled: false,
+            label: 'Làm bài test',
+            variant: 'start',
+            submissionId: submission?.id,
+            testStatus: testInfo.status
+        };
     };
 
     const handleStartTest = async (application) => {
         if (!user) return;
         const status = canStartTest(application);
+        if (!status.show) return;
         if (status.disabled && !status.submissionId) return;
+
+        if (status.testStatus && status.testStatus !== 'active') {
+            const message = TEST_STATUS_MESSAGES[status.testStatus] || 'Bài test hiện không khả dụng.';
+            if (status.testStatus === 'pending') {
+                toast.info(message);
+            } else {
+                toast.error(message);
+            }
+            return;
+        }
+
         setStartingTestId(application.id);
         try {
             let response;

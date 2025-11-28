@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CandidateNav from '../../components/Navigation/CandidateNav';
+import Footer from '../../components/Footer/Footer';
 import { toast } from 'react-toastify';
 import { 
     getMyRecords, 
@@ -198,6 +199,43 @@ const MyRecords = () => {
                         </button>
                     </div>
 
+                    {/* Statistics */}
+                    {records && records.length > 0 && (
+                        <div className="stats-section">
+                            <div className="stat-card">
+                                <div className="stat-icon">
+                                    <i className="fas fa-file-alt"></i>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-value">{records.length}</div>
+                                    <div className="stat-label">Tổng số hồ sơ</div>
+                                </div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-icon">
+                                    <i className="fas fa-paper-plane"></i>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-value">
+                                        {records.reduce((sum, r) => sum + (r.applicationCount || 0), 0)}
+                                    </div>
+                                    <div className="stat-label">Lượt ứng tuyển</div>
+                                </div>
+                            </div>
+                            <div className="stat-card">
+                                <div className="stat-icon">
+                                    <i className="fas fa-check-circle"></i>
+                                </div>
+                                <div className="stat-info">
+                                    <div className="stat-value">
+                                        {records.filter(r => r.File_url).length}
+                                    </div>
+                                    <div className="stat-label">Hồ sơ có file</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Records List */}
                     {isLoading ? (
                         <div className="loading-container">
@@ -225,6 +263,12 @@ const MyRecords = () => {
                                                         <span className="record-file">
                                                             <i className="fas fa-paperclip"></i>
                                                             Có file đính kèm
+                                                        </span>
+                                                    )}
+                                                    {record.applicationCount > 0 && (
+                                                        <span className="record-usage">
+                                                            <i className="fas fa-paper-plane"></i>
+                                                            Đã dùng {record.applicationCount} lần
                                                         </span>
                                                     )}
                                                 </div>
@@ -360,6 +404,8 @@ const MyRecords = () => {
                     </div>
                 </div>
             )}
+            
+            <Footer />
         </div>
     );
 };

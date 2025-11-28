@@ -5,18 +5,22 @@ import { toast } from 'react-toastify';
 import ReactPaginate from 'react-paginate';
 import TestFormModal from './TestFormModal';
 import TestDetailModal from './TestDetailModal';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 
 const TestManagement = ({ userId }) => {
     const [tests, setTests] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
+    const [totalTests, setTotalTests] = useState(0);
     const limit = 10;
 
     // Modal states
     const [showFormModal, setShowFormModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedTest, setSelectedTest] = useState(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [testToDelete, setTestToDelete] = useState(null);
 
     useEffect(() => {
         fetchTests(currentPage);
@@ -29,7 +33,11 @@ const TestManagement = ({ userId }) => {
 
             if (res && res.EC === 0) {
                 setTests(res.DT.tests);
-                setTotalPages(res.DT.pagination.totalPages);
+                const pagination = res.DT.pagination || {};
+                setTotalPages(pagination.totalPages || 0);
+                setTotalTests(
+                    typeof pagination.totalRows === 'number' ? pagination.totalRows : (res.DT.tests?.length || 0)
+                );
             } else {
                 toast.error(res.EM || 'Không thể tải danh sách bài test!');
             }
@@ -77,6 +85,23 @@ const TestManagement = ({ userId }) => {
         toast.success('Tạo bài test thành công!');
     };
 
+    const handleDeleteTest = (test) => {
+        setTestToDelete(test);
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDelete = async () => {
+        // TODO: Implement delete API call
+        toast.info('Chức năng xóa bài test đang được phát triển');
+        setShowDeleteConfirm(false);
+        setTestToDelete(null);
+    };
+
+    const cancelDelete = () => {
+        setShowDeleteConfirm(false);
+        setTestToDelete(null);
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return 'Không giới hạn';
         const date = new Date(dateString);
@@ -89,18 +114,23 @@ const TestManagement = ({ userId }) => {
         const endDate = test.Ngayhethan ? new Date(test.Ngayhethan) : null;
 
         if (!test.Trangthai) {
-            return <span className="badge badge-inactive">Không hoạt động</span>;
+            return { badge: <span className="badge badge-inactive">Không hoạt động</span>, status: 'inactive' };
         }
 
         if (endDate && now > endDate) {
-            return <span className="badge badge-expired">Hết hạn</span>;
+            return { badge: <span className="badge badge-expired">Hết hạn</span>, status: 'expired' };
         }
 
         if (startDate && now < startDate) {
-            return <span className="badge badge-pending">Chưa bắt đầu</span>;
+            return { badge: <span className="badge badge-pending">Chưa bắt đầu</span>, status: 'pending' };
         }
 
-        return <span className="badge badge-active">Đang hoạt động</span>;
+        return { badge: <span className="badge badge-active">Đang hoạt động</span>, status: 'active' };
+    };
+
+    const canEditOrDelete = (test) => {
+        const statusInfo = getStatusBadge(test);
+        return statusInfo.status === 'pending';
     };
 
     if (isLoading) {
@@ -109,11 +139,21 @@ const TestManagement = ({ userId }) => {
 
     return (
         <div className="test-management-container">
-            <div className="test-management-header">
-                <h2>Quản lý Bài Test</h2>
-                <button className="btn-create-test" onClick={handleCreateTest}>
-                    <i className="fas fa-plus"></i> Tạo bài test mới
-                </button>
+            <div className="cp-header">
+                <div className="cp-header-left">
+                    <div className="company-logo">
+                        <i className="fas fa-clipboard-list"></i>
+                    </div>
+                    <div className="company-title">
+                        <h1>Quản lý bài test</h1>
+                        <p className="company-industry">Thiết kế và theo dõi các bài đánh giá ứng viên</p>
+                    </div>
+                </div>
+                <div className="cp-header-right">
+                    <button className="btn-create-test" onClick={handleCreateTest}>
+                        <i className="fas fa-plus"></i> Tạo bài test mới
+                    </button>
+                </div>
             </div>
 
             {tests.length === 0 ? (
@@ -127,59 +167,81 @@ const TestManagement = ({ userId }) => {
             ) : (
                 <>
                     <div className="tests-grid">
-                        {tests.map(test => (
-                            <div key={test.id} className="test-card">
-                                <div className="test-card-header">
-                                    <h3>{test.Tieude}</h3>
-                                    {getStatusBadge(test)}
-                                </div>
+                        {tests.map(test => {
+                            const statusInfo = getStatusBadge(test);
+                            const editable = canEditOrDelete(test);
+                            const hasNoQuestions = !test.questionCount || test.questionCount === 0;
 
-                                <div className="test-card-body">
-                                    <div className="test-info">
-                                        <div className="info-item">
-                                            <i className="fas fa-briefcase"></i>
-                                            <span>{test.JobPosting?.Tieude}</span>
-                                        </div>
-                                        <div className="info-item">
-                                            <i className="fas fa-building"></i>
-                                            <span>{test.JobPosting?.Company?.Tencongty}</span>
-                                        </div>
-                                        <div className="info-item">
-                                            <i className="fas fa-clock"></i>
-                                            <span>{test.Thoigiantoida} phút</span>
-                                        </div>
-                                        <div className="info-item">
-                                            <i className="fas fa-calendar"></i>
-                                            <span>Hết hạn: {formatDate(test.Ngayhethan)}</span>
+                            return (
+                                <div key={test.id} className="test-card">
+                                    <div className="test-card-header">
+                                        <h3>{test.Tieude}</h3>
+                                        <div className="header-badges">
+                                            {statusInfo.badge}
+                                            {hasNoQuestions && (
+                                                <span className="badge badge-warning" title="Chưa có câu hỏi">
+                                                    <i className="fas fa-exclamation-triangle"></i>
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 
-                                    <div className="test-stats">
-                                        <div className="stat-item">
-                                            <span className="stat-value">{test.questionCount || 0}</span>
-                                            <span className="stat-label">Câu hỏi</span>
+                                    <div className="test-card-body">
+                                        <div className="test-info">
+                                            <div className="info-item">
+                                                <i className="fas fa-briefcase"></i>
+                                                <span>{test.JobPosting?.Tieude}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <i className="fas fa-building"></i>
+                                                <span>{test.JobPosting?.Company?.Tencongty}</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <i className="fas fa-clock"></i>
+                                                <span>{test.Thoigiantoida} phút</span>
+                                            </div>
+                                            <div className="info-item">
+                                                <i className="fas fa-calendar"></i>
+                                                <span>Hết hạn: {formatDate(test.Ngayhethan)}</span>
+                                            </div>
                                         </div>
-                                        <div className="stat-item">
-                                            <span className="stat-value">{test.Tongdiem}</span>
-                                            <span className="stat-label">Tổng điểm</span>
-                                        </div>
-                                        <div className="stat-item">
-                                            <span className="stat-value">{test.submissionCount || 0}</span>
-                                            <span className="stat-label">Lượt làm</span>
+
+                                        <div className="test-stats">
+                                            <div className="stat-item">
+                                                <span className="stat-value">{test.questionCount || 0}</span>
+                                                <span className="stat-label">Câu hỏi</span>
+                                            </div>
+                                            <div className="stat-item">
+                                                <span className="stat-value">{test.Tongdiem}</span>
+                                                <span className="stat-label">Tổng điểm</span>
+                                            </div>
+                                            <div className="stat-item">
+                                                <span className="stat-value">{test.submissionCount || 0}</span>
+                                                <span className="stat-label">Lượt làm</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="test-card-footer">
-                                    <button 
-                                        className="btn-view-detail"
-                                        onClick={() => handleViewDetail(test)}
-                                    >
-                                        <i className="fas fa-eye"></i> Xem chi tiết
-                                    </button>
+                                    <div className="test-card-footer">
+                                        <button 
+                                            className="btn-view-detail"
+                                            onClick={() => handleViewDetail(test)}
+                                        >
+                                            <i className="fas fa-eye"></i> Xem chi tiết
+                                        </button>
+                                        {editable && (
+                                            <button 
+                                                className="btn-delete-test"
+                                                onClick={() => handleDeleteTest(test)}
+                                                title="Xóa bài test"
+                                            >
+                                                <i className="fas fa-trash"></i>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
 
                     {totalPages > 1 && (
@@ -215,6 +277,17 @@ const TestManagement = ({ userId }) => {
                 test={selectedTest}
                 userId={userId}
                 onUpdate={() => fetchTests(currentPage)}
+            />
+
+            <ConfirmModal
+                show={showDeleteConfirm}
+                onClose={cancelDelete}
+                onConfirm={confirmDelete}
+                title="Xác nhận xóa bài test"
+                message={`Bạn có chắc chắn muốn xóa bài test "${testToDelete?.Tieude}"? Hành động này không thể hoàn tác.`}
+                confirmText="Xóa"
+                cancelText="Hủy"
+                type="danger"
             />
         </div>
     );

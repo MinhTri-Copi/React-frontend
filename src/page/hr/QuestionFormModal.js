@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './QuestionFormModal.scss';
-import { addMultipleQuestions } from '../../service.js/testService';
+import { addMultipleQuestions, updateQuestion } from '../../service.js/testService';
 import { toast } from 'react-toastify';
 
-const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId }) => {
+const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId, mode = 'create', initialData = null }) => {
     const [questions, setQuestions] = useState([{
         Cauhoi: '',
         Dapan: '',
@@ -11,6 +11,24 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId }) => {
         Diem: 10
     }]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        if (show && mode === 'edit' && initialData) {
+            setQuestions([{
+                Cauhoi: initialData.Cauhoi || '',
+                Dapan: initialData.Dapan || '',
+                Loaicauhoi: initialData.Loaicauhoi || 'tuluan',
+                Diem: initialData.Diem || 10
+            }]);
+        } else if (show && mode === 'create') {
+            setQuestions([{
+                Cauhoi: '',
+                Dapan: '',
+                Loaicauhoi: 'tuluan',
+                Diem: 10
+            }]);
+        }
+    }, [show, mode, initialData]);
 
     if (!show) return null;
 
@@ -59,7 +77,15 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId }) => {
 
         try {
             setIsSubmitting(true);
-            const res = await addMultipleQuestions(userId, testId, questions);
+            let res;
+
+            if (mode === 'edit' && initialData) {
+                // Update single question
+                res = await updateQuestion(userId, initialData.id, questions[0]);
+            } else {
+                // Add multiple questions
+                res = await addMultipleQuestions(userId, testId, questions);
+            }
 
             if (res && res.EC === 0) {
                 // Reset form
@@ -70,12 +96,13 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId }) => {
                     Diem: 10
                 }]);
                 onSuccess();
+                toast.success(mode === 'edit' ? 'Cập nhật câu hỏi thành công!' : 'Thêm câu hỏi thành công!');
             } else {
-                toast.error(res.EM || 'Không thể thêm câu hỏi!');
+                toast.error(res.EM || `Không thể ${mode === 'edit' ? 'cập nhật' : 'thêm'} câu hỏi!`);
             }
         } catch (error) {
-            console.error('Error adding questions:', error);
-            toast.error('Có lỗi xảy ra khi thêm câu hỏi!');
+            console.error(`Error ${mode === 'edit' ? 'updating' : 'adding'} questions:`, error);
+            toast.error(`Có lỗi xảy ra khi ${mode === 'edit' ? 'cập nhật' : 'thêm'} câu hỏi!`);
         } finally {
             setIsSubmitting(false);
         }
@@ -85,7 +112,7 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId }) => {
         <div className="question-form-modal-overlay" onClick={onClose}>
             <div className="question-form-modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h2>Thêm Câu Hỏi</h2>
+                    <h2>{mode === 'edit' ? 'Chỉnh Sửa Câu Hỏi' : 'Thêm Câu Hỏi'}</h2>
                     <button className="btn-close" onClick={onClose}>
                         <i className="fas fa-times"></i>
                     </button>
@@ -96,8 +123,8 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId }) => {
                         {questions.map((question, index) => (
                             <div key={index} className="question-form-item">
                                 <div className="question-form-header">
-                                    <h4>Câu hỏi {index + 1}</h4>
-                                    {questions.length > 1 && (
+                                    <h4>{mode === 'edit' ? 'Câu hỏi' : `Câu hỏi ${index + 1}`}</h4>
+                                    {questions.length > 1 && mode !== 'edit' && (
                                         <button
                                             type="button"
                                             className="btn-remove"
@@ -156,13 +183,15 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId }) => {
                             </div>
                         ))}
 
-                        <button
-                            type="button"
-                            className="btn-add-more"
-                            onClick={handleAddMore}
-                        >
-                            <i className="fas fa-plus"></i> Thêm câu hỏi
-                        </button>
+                        {mode !== 'edit' && (
+                            <button
+                                type="button"
+                                className="btn-add-more"
+                                onClick={handleAddMore}
+                            >
+                                <i className="fas fa-plus"></i> Thêm câu hỏi
+                            </button>
+                        )}
                     </div>
 
                     <div className="modal-footer">
@@ -181,11 +210,11 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId }) => {
                         >
                             {isSubmitting ? (
                                 <>
-                                    <i className="fas fa-spinner fa-spin"></i> Đang lưu...
+                                    <i className="fas fa-spinner fa-spin"></i> {mode === 'edit' ? 'Đang cập nhật...' : 'Đang lưu...'}
                                 </>
                             ) : (
                                 <>
-                                    <i className="fas fa-check"></i> Lưu câu hỏi
+                                    <i className="fas fa-check"></i> {mode === 'edit' ? 'Cập nhật' : 'Lưu câu hỏi'}
                                 </>
                             )}
                         </button>

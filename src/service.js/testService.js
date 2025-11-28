@@ -75,11 +75,61 @@ const getTestDetail = async (userId, testId) => {
     }
 };
 
+/**
+ * Cập nhật bài test
+ */
+const updateTest = async (userId, testId, data) => {
+    try {
+        const res = await axios.put(
+            `http://localhost:8082/api/hr/tests/${testId}?userId=${userId}`,
+            data
+        );
+        return res.data;
+    } catch (error) {
+        console.error('Error updating test:', error);
+        throw error;
+    }
+};
+
+/**
+ * Cập nhật câu hỏi
+ */
+const updateQuestion = async (userId, questionId, data) => {
+    try {
+        const res = await axios.put(
+            `http://localhost:8082/api/hr/tests/questions/${questionId}?userId=${userId}`,
+            data
+        );
+        return res.data;
+    } catch (error) {
+        console.error('Error updating question:', error);
+        throw error;
+    }
+};
+
+/**
+ * Xóa câu hỏi
+ */
+const deleteQuestion = async (userId, questionId) => {
+    try {
+        const res = await axios.delete(
+            `http://localhost:8082/api/hr/tests/questions/${questionId}?userId=${userId}`
+        );
+        return res.data;
+    } catch (error) {
+        console.error('Error deleting question:', error);
+        throw error;
+    }
+};
+
 export {
     createTest,
     addQuestion,
     addMultipleQuestions,
     getMyTests,
-    getTestDetail
+    getTestDetail,
+    updateTest,
+    updateQuestion,
+    deleteQuestion
 };
 

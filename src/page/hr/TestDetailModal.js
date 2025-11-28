@@ -1,12 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './TestDetailModal.scss';
 import QuestionFormModal from './QuestionFormModal';
+import TestFormModal from './TestFormModal';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import { toast } from 'react-toastify';
+import { deleteQuestion, getTestDetail } from '../../service.js/testService';
 
 const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
     const [showQuestionForm, setShowQuestionForm] = useState(false);
+    const [showTestEditModal, setShowTestEditModal] = useState(false);
+    const [editingQuestion, setEditingQuestion] = useState(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [questionToDelete, setQuestionToDelete] = useState(null);
+    const [currentTest, setCurrentTest] = useState(test);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [hasManuallyRefreshed, setHasManuallyRefreshed] = useState(false);
+    const [needsParentUpdate, setNeedsParentUpdate] = useState(false);
 
-    if (!show || !test) return null;
+    useEffect(() => {
+        if (show && test) {
+            console.log('📥 TestDetailModal: Setting initial test data', test.id);
+            // Only set from prop if we haven't manually refreshed
+            if (!hasManuallyRefreshed) {
+                setCurrentTest(test);
+            }
+        } else if (!show) {
+            // When modal closes, update parent list if needed
+            if (needsParentUpdate && onUpdate) {
+                console.log('🔄 Modal closed, updating parent list...');
+                onUpdate();
+                setNeedsParentUpdate(false);
+            }
+            // Reset flags when modal closes
+            setHasManuallyRefreshed(false);
+        }
+    }, [show, test, hasManuallyRefreshed, needsParentUpdate, onUpdate]);
+
+    const refreshTestDetail = async () => {
+        if (!test || !test.id) return;
+        
+        try {
+            console.log('🔄 Refreshing test detail for test ID:', test.id);
+            setIsRefreshing(true);
+            const res = await getTestDetail(userId, test.id);
+            console.log('📦 Received updated test data:', res);
+            if (res && res.EC === 0) {
+                console.log('✅ Updating currentTest state with new data');
+                setCurrentTest(res.DT);
+                setHasManuallyRefreshed(true); // Mark that we've manually refreshed
+                // Force a small delay to ensure state update
+                await new Promise(resolve => setTimeout(resolve, 100));
+            } else {
+                console.error('❌ Failed to fetch test detail:', res.EM);
+            }
+        } catch (error) {
+            console.error('❌ Error refreshing test detail:', error);
+        } finally {
+            setIsRefreshing(false);
+        }
+    };
+
+    if (!show || !currentTest) return null;
 
     const formatDate = (dateString) => {
         if (!dateString) return 'Không giới hạn';
@@ -15,13 +69,94 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
     };
 
     const handleAddQuestions = () => {
+        setEditingQuestion(null);
         setShowQuestionForm(true);
     };
 
-    const handleQuestionsAdded = () => {
+    const handleQuestionsAdded = async () => {
+        console.log('🎯 Questions added/updated, refreshing...');
         setShowQuestionForm(false);
-        onUpdate();
-        toast.success('Thêm câu hỏi thành công!');
+        setEditingQuestion(null);
+        
+        // Wait a bit for modal to close
+        await new Promise(resolve => setTimeout(resolve, 150));
+        
+        // Refresh modal data
+        await refreshTestDetail();
+        
+        console.log('✅ Questions refreshed successfully');
+        // Mark that parent needs update when modal closes
+        setNeedsParentUpdate(true);
+        // Toast đã được hiển thị trong QuestionFormModal
+    };
+
+    const handleEditTest = () => {
+        setShowTestEditModal(true);
+    };
+
+    const handleTestUpdated = async () => {
+        console.log('🎯 Test updated, closing edit modal and refreshing...');
+        setShowTestEditModal(false);
+        
+        // Wait a bit for modal to close
+        await new Promise(resolve => setTimeout(resolve, 150));
+        
+        // Refresh the detail data
+        await refreshTestDetail();
+        
+        console.log('✅ Test detail refreshed successfully');
+        // Mark that parent needs update when modal closes
+        setNeedsParentUpdate(true);
+    };
+
+    const handleEditQuestion = (question) => {
+        setEditingQuestion(question);
+        setShowQuestionForm(true);
+    };
+
+    const handleDeleteQuestion = (question) => {
+        setQuestionToDelete(question);
+        setShowDeleteConfirm(true);
+    };
+
+    const confirmDeleteQuestion = async () => {
+        if (!questionToDelete) return;
+
+        try {
+            const res = await deleteQuestion(userId, questionToDelete.id);
+            if (res && res.EC === 0) {
+                toast.success('Xóa câu hỏi thành công!');
+                setShowDeleteConfirm(false);
+                setQuestionToDelete(null);
+                
+                // Wait a bit
+                await new Promise(resolve => setTimeout(resolve, 150));
+                
+                // Refresh modal data
+                await refreshTestDetail();
+                
+                console.log('✅ Question deleted and refreshed');
+                // Mark that parent needs update when modal closes
+                setNeedsParentUpdate(true);
+            } else {
+                toast.error(res.EM || 'Không thể xóa câu hỏi!');
+            }
+        } catch (error) {
+            console.error('Error deleting question:', error);
+            toast.error('Có lỗi xảy ra khi xóa câu hỏi!');
+        }
+    };
+
+    const cancelDeleteQuestion = () => {
+        setShowDeleteConfirm(false);
+        setQuestionToDelete(null);
+    };
+
+    const canEdit = () => {
+        if (!currentTest) return false;
+        const now = new Date();
+        const startDate = currentTest.Ngaybatdau ? new Date(currentTest.Ngaybatdau) : null;
+        return !startDate || now < startDate;
     };
 
     return (
@@ -29,46 +164,62 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
             <div className="test-detail-modal-overlay" onClick={onClose}>
                 <div className="test-detail-modal-content" onClick={(e) => e.stopPropagation()}>
                     <div className="modal-header">
-                        <h2>{test.Tieude}</h2>
-                        <button className="btn-close" onClick={onClose}>
-                            <i className="fas fa-times"></i>
-                        </button>
+                        <div className="header-left">
+                            <h2>
+                                {currentTest.Tieude}
+                                {isRefreshing && (
+                                    <span style={{marginLeft: '10px', fontSize: '14px', opacity: 0.8}}>
+                                        <i className="fas fa-sync fa-spin"></i> Đang cập nhật...
+                                    </span>
+                                )}
+                            </h2>
+                        </div>
+                        <div className="header-right">
+                            {canEdit() && (
+                                <button className="btn-edit-test" onClick={handleEditTest} title="Chỉnh sửa bài test">
+                                    <i className="fas fa-edit"></i> Chỉnh sửa
+                                </button>
+                            )}
+                            <button className="btn-close" onClick={onClose}>
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="modal-body">
+                    <div className="modal-body" style={{opacity: isRefreshing ? 0.6 : 1, transition: 'opacity 0.3s'}}>
                         {/* Thông tin bài test */}
                         <div className="test-info-section">
                             <h3>Thông tin bài test</h3>
                             <div className="info-grid">
                                 <div className="info-item">
                                     <span className="label">Tin tuyển dụng:</span>
-                                    <span className="value">{test.JobPosting?.Tieude}</span>
+                                    <span className="value">{currentTest.JobPosting?.Tieude}</span>
                                 </div>
                                 <div className="info-item">
                                     <span className="label">Công ty:</span>
-                                    <span className="value">{test.JobPosting?.Company?.Tencongty}</span>
+                                    <span className="value">{currentTest.JobPosting?.Company?.Tencongty}</span>
                                 </div>
                                 <div className="info-item">
                                     <span className="label">Thời gian làm bài:</span>
-                                    <span className="value">{test.Thoigiantoida} phút</span>
+                                    <span className="value">{currentTest.Thoigiantoida} phút</span>
                                 </div>
                                 <div className="info-item">
                                     <span className="label">Tổng điểm:</span>
-                                    <span className="value">{test.Tongdiem}</span>
+                                    <span className="value">{currentTest.Tongdiem}</span>
                                 </div>
                                 <div className="info-item">
                                     <span className="label">Ngày bắt đầu:</span>
-                                    <span className="value">{formatDate(test.Ngaybatdau)}</span>
+                                    <span className="value">{formatDate(currentTest.Ngaybatdau)}</span>
                                 </div>
                                 <div className="info-item">
                                     <span className="label">Ngày hết hạn:</span>
-                                    <span className="value">{formatDate(test.Ngayhethan)}</span>
+                                    <span className="value">{formatDate(currentTest.Ngayhethan)}</span>
                                 </div>
                             </div>
-                            {test.Mota && (
+                            {currentTest.Mota && (
                                 <div className="test-description">
                                     <span className="label">Mô tả:</span>
-                                    <p>{test.Mota}</p>
+                                    <p>{currentTest.Mota}</p>
                                 </div>
                             )}
                         </div>
@@ -78,21 +229,21 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
                             <div className="stat-card">
                                 <i className="fas fa-users"></i>
                                 <div>
-                                    <span className="stat-value">{test.statistics?.submissionCount || 0}</span>
+                                    <span className="stat-value">{currentTest.statistics?.submissionCount || 0}</span>
                                     <span className="stat-label">Lượt làm bài</span>
                                 </div>
                             </div>
                             <div className="stat-card">
                                 <i className="fas fa-check-circle"></i>
                                 <div>
-                                    <span className="stat-value">{test.statistics?.completedCount || 0}</span>
+                                    <span className="stat-value">{currentTest.statistics?.completedCount || 0}</span>
                                     <span className="stat-label">Đã hoàn thành</span>
                                 </div>
                             </div>
                             <div className="stat-card">
                                 <i className="fas fa-clock"></i>
                                 <div>
-                                    <span className="stat-value">{test.statistics?.inProgressCount || 0}</span>
+                                    <span className="stat-value">{currentTest.statistics?.inProgressCount || 0}</span>
                                     <span className="stat-label">Đang làm</span>
                                 </div>
                             </div>
@@ -101,13 +252,13 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
                         {/* Danh sách câu hỏi */}
                         <div className="questions-section">
                             <div className="section-header">
-                                <h3>Danh sách câu hỏi ({test.Questions?.length || 0})</h3>
+                                <h3>Danh sách câu hỏi ({currentTest.Questions?.length || 0})</h3>
                                 <button className="btn-add-question" onClick={handleAddQuestions}>
                                     <i className="fas fa-plus"></i> Thêm câu hỏi
                                 </button>
                             </div>
 
-                            {!test.Questions || test.Questions.length === 0 ? (
+                            {!currentTest.Questions || currentTest.Questions.length === 0 ? (
                                 <div className="empty-questions">
                                     <i className="fas fa-question-circle"></i>
                                     <p>Chưa có câu hỏi nào</p>
@@ -117,11 +268,31 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
                                 </div>
                             ) : (
                                 <div className="questions-list">
-                                    {test.Questions.map((question, index) => (
+                                    {currentTest.Questions.map((question, index) => (
                                         <div key={question.id} className="question-item">
                                             <div className="question-header">
                                                 <span className="question-number">Câu {index + 1}</span>
-                                                <span className="question-score">{question.Diem} điểm</span>
+                                                <div className="question-actions">
+                                                    <span className="question-score">{question.Diem} điểm</span>
+                                                    {canEdit() && (
+                                                        <>
+                                                            <button 
+                                                                className="btn-edit-question"
+                                                                onClick={() => handleEditQuestion(question)}
+                                                                title="Chỉnh sửa"
+                                                            >
+                                                                <i className="fas fa-edit"></i>
+                                                            </button>
+                                                            <button 
+                                                                className="btn-delete-question"
+                                                                onClick={() => handleDeleteQuestion(question)}
+                                                                title="Xóa"
+                                                            >
+                                                                <i className="fas fa-trash"></i>
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className="question-content">
                                                 <strong>Câu hỏi:</strong> {question.Cauhoi}
@@ -152,10 +323,35 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
             {/* Question Form Modal */}
             <QuestionFormModal
                 show={showQuestionForm}
-                onClose={() => setShowQuestionForm(false)}
+                onClose={() => {
+                    setShowQuestionForm(false);
+                    setEditingQuestion(null);
+                }}
                 onSuccess={handleQuestionsAdded}
-                testId={test.id}
+                testId={currentTest.id}
                 userId={userId}
+                mode={editingQuestion ? 'edit' : 'create'}
+                initialData={editingQuestion}
+            />
+
+            <TestFormModal
+                show={showTestEditModal}
+                onClose={() => setShowTestEditModal(false)}
+                onSuccess={handleTestUpdated}
+                userId={userId}
+                mode="edit"
+                initialData={currentTest}
+            />
+
+            <ConfirmModal
+                show={showDeleteConfirm}
+                onClose={cancelDeleteQuestion}
+                onConfirm={confirmDeleteQuestion}
+                title="Xác nhận xóa câu hỏi"
+                message={`Bạn có chắc chắn muốn xóa câu hỏi "${questionToDelete?.Cauhoi?.substring(0, 50)}..."? Hành động này không thể hoàn tác.`}
+                confirmText="Xóa"
+                cancelText="Hủy"
+                type="danger"
             />
         </>
     );

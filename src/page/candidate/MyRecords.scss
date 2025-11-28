@@ -1,9 +1,12 @@
 .my-records-page {
     min-height: 100vh;
     background: #f5f7fa;
+    display: flex;
+    flex-direction: column;
 
     .records-container {
         padding: 50px 20px;
+        flex: 1;
 
         .container {
             max-width: 1200px;
@@ -32,7 +35,7 @@
 
                 .btn-create {
                     padding: 12px 24px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: linear-gradient(90deg, #008060 21.86%, #2bab60 78.13%);
                     color: white;
                     border: none;
                     border-radius: 8px;
@@ -46,7 +49,61 @@
 
                     &:hover {
                         transform: translateY(-2px);
-                        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+                        box-shadow: 0 5px 15px rgba(0, 128, 96, 0.4);
+                    }
+                }
+            }
+
+            // Statistics Section
+            .stats-section {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
+
+                .stat-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        transform: translateY(-3px);
+                        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+                    }
+
+                    .stat-icon {
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 12px;
+                        background: linear-gradient(90deg, #008060 21.86%, #2bab60 78.13%);
+                        color: white;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 24px;
+                        flex-shrink: 0;
+                    }
+
+                    .stat-info {
+                        flex: 1;
+
+                        .stat-value {
+                            font-size: 28px;
+                            font-weight: 700;
+                            color: #1f2937;
+                            line-height: 1;
+                            margin-bottom: 5px;
+                        }
+
+                        .stat-label {
+                            font-size: 14px;
+                            color: #6b7280;
+                        }
                     }
                 }
             }
@@ -54,7 +111,7 @@
             .loading-container {
                 text-align: center;
                 padding: 80px 20px;
-                color: #667eea;
+                color: #008060;
 
                 i {
                     font-size: 48px;
@@ -69,7 +126,7 @@
 
             .records-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
                 gap: 25px;
 
                 .record-card {
@@ -88,16 +145,17 @@
                     }
 
                     .record-icon {
-                        width: 60px;
-                        height: 60px;
+                        width: 70px;
+                        height: 70px;
                         border-radius: 12px;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        background: linear-gradient(90deg, #008060 21.86%, #2bab60 78.13%);
                         color: white;
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        font-size: 28px;
+                        font-size: 32px;
                         flex-shrink: 0;
+                        box-shadow: 0 4px 12px rgba(0, 128, 96, 0.2);
                     }
 
                     .record-content {
@@ -118,7 +176,8 @@
                             gap: 8px;
 
                             .record-date,
-                            .record-file {
+                            .record-file,
+                            .record-usage {
                                 display: flex;
                                 align-items: center;
                                 gap: 8px;
@@ -126,16 +185,29 @@
                                 color: #666;
 
                                 i {
-                                    color: #667eea;
                                     width: 16px;
                                 }
                             }
 
+                            .record-date {
+                                i {
+                                    color: #6b7280;
+                                }
+                            }
+
                             .record-file {
-                                color: #4caf50;
+                                color: #10b981;
 
                                 i {
-                                    color: #4caf50;
+                                    color: #10b981;
+                                }
+                            }
+
+                            .record-usage {
+                                color: #008060;
+
+                                i {
+                                    color: #008060;
                                 }
                             }
                         }
@@ -198,31 +270,36 @@
 
             .empty-state {
                 text-align: center;
-                padding: 80px 20px;
+                padding: 100px 20px;
                 background: white;
                 border-radius: 12px;
+                border: 2px dashed #e5e7eb;
 
                 i {
-                    font-size: 80px;
-                    color: #ddd;
-                    margin-bottom: 20px;
+                    font-size: 100px;
+                    color: #d1d5db;
+                    margin-bottom: 25px;
                 }
 
                 h3 {
-                    font-size: 24px;
-                    color: #333;
-                    margin-bottom: 10px;
+                    font-size: 28px;
+                    color: #1f2937;
+                    margin-bottom: 12px;
+                    font-weight: 700;
                 }
 
                 p {
                     font-size: 16px;
-                    color: #666;
-                    margin-bottom: 30px;
+                    color: #6b7280;
+                    margin-bottom: 35px;
+                    max-width: 400px;
+                    margin-left: auto;
+                    margin-right: auto;
                 }
 
                 .btn-create-empty {
                     padding: 14px 28px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: linear-gradient(90deg, #008060 21.86%, #2bab60 78.13%);
                     color: white;
                     border: none;
                     border-radius: 8px;
@@ -236,7 +313,7 @@
 
                     &:hover {
                         transform: translateY(-2px);
-                        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+                        box-shadow: 0 5px 15px rgba(0, 128, 96, 0.4);
                     }
                 }
             }
@@ -354,8 +431,8 @@
 
                         &:focus {
                             outline: none;
-                            border-color: #667eea;
-                            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+                            border-color: #008060;
+                            box-shadow: 0 0 0 3px rgba(0, 128, 96, 0.1);
                         }
                     }
 
@@ -376,13 +453,13 @@
                             background: #fafafa;
 
                             &:hover {
-                                border-color: #667eea;
-                                background: rgba(102, 126, 234, 0.05);
+                                border-color: #008060;
+                                background: rgba(0, 128, 96, 0.05);
                             }
 
                             i {
                                 font-size: 28px;
-                                color: #667eea;
+                                color: #008060;
                             }
 
                             span {
@@ -440,12 +517,12 @@
                     }
 
                     &.btn-submit {
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        background: linear-gradient(90deg, #008060 21.86%, #2bab60 78.13%);
                         color: white;
 
                         &:hover:not(:disabled) {
                             transform: translateY(-2px);
-                            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+                            box-shadow: 0 5px 15px rgba(0, 128, 96, 0.4);
                         }
 
                         &:disabled {
@@ -475,10 +552,41 @@
                     }
                 }
 
+                .stats-section {
+                    grid-template-columns: 1fr;
+                    gap: 15px;
+
+                    .stat-card {
+                        padding: 15px;
+
+                        .stat-icon {
+                            width: 45px;
+                            height: 45px;
+                            font-size: 20px;
+                        }
+
+                        .stat-info {
+                            .stat-value {
+                                font-size: 24px;
+                            }
+                        }
+                    }
+                }
+
                 .records-grid {
                     grid-template-columns: 1fr;
+                    gap: 20px;
 
                     .record-card {
+                        padding: 20px;
+                        gap: 15px;
+
+                        .record-icon {
+                            width: 60px;
+                            height: 60px;
+                            font-size: 28px;
+                        }
+
                         .record-actions {
                             flex-direction: column;
                         }

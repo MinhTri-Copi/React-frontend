@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './TestFormModal.scss';
-import { createTest } from '../../service.js/testService';
+import { createTest, updateTest } from '../../service.js/testService';
 import { getMyJobPostings } from '../../service.js/hrService';
 import { toast } from 'react-toastify';
 
-const TestFormModal = ({ show, onClose, onSuccess, userId }) => {
+const TestFormModal = ({ show, onClose, onSuccess, userId, mode = 'create', initialData = null }) => {
     const [formData, setFormData] = useState({
         Tieude: '',
         Mota: '',
@@ -22,18 +22,39 @@ const TestFormModal = ({ show, onClose, onSuccess, userId }) => {
     useEffect(() => {
         if (show) {
             fetchJobPostings();
-            // Reset form
-            setFormData({
-                Tieude: '',
-                Mota: '',
-                Thoigiantoida: 60,
-                Ngaybatdau: '',
-                Ngayhethan: '',
-                Trangthai: 1,
-                jobPostingId: ''
-            });
+            
+            // Load initial data if editing
+            if (mode === 'edit' && initialData) {
+                const formatDatetimeLocal = (dateString) => {
+                    if (!dateString) return '';
+                    const date = new Date(dateString);
+                    date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+                    return date.toISOString().slice(0, 16);
+                };
+
+                setFormData({
+                    Tieude: initialData.Tieude || '',
+                    Mota: initialData.Mota || '',
+                    Thoigiantoida: initialData.Thoigiantoida || 60,
+                    Ngaybatdau: formatDatetimeLocal(initialData.Ngaybatdau),
+                    Ngayhethan: formatDatetimeLocal(initialData.Ngayhethan),
+                    Trangthai: initialData.Trangthai !== undefined ? initialData.Trangthai : 1,
+                    jobPostingId: initialData.jobPostingId || ''
+                });
+            } else {
+                // Reset form for create mode
+                setFormData({
+                    Tieude: '',
+                    Mota: '',
+                    Thoigiantoida: 60,
+                    Ngaybatdau: '',
+                    Ngayhethan: '',
+                    Trangthai: 1,
+                    jobPostingId: ''
+                });
+            }
         }
-    }, [show]);
+    }, [show, mode, initialData]);
 
     const fetchJobPostings = async () => {
         try {
@@ -67,6 +88,20 @@ const TestFormModal = ({ show, onClose, onSuccess, userId }) => {
         }));
     };
 
+    const getTodayDatetimeLocal = () => {
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        return now.toISOString().slice(0, 16);
+    };
+
+    const getMinEndDate = () => {
+        if (!formData.Ngaybatdau) return getTodayDatetimeLocal();
+        const startDate = new Date(formData.Ngaybatdau);
+        startDate.setDate(startDate.getDate() + 1);
+        startDate.setMinutes(startDate.getMinutes() - startDate.getTimezoneOffset());
+        return startDate.toISOString().slice(0, 16);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -87,29 +122,54 @@ const TestFormModal = ({ show, onClose, onSuccess, userId }) => {
         }
 
         // Validate dates
+        const now = new Date();
+        
+        if (formData.Ngaybatdau) {
+            const startDate = new Date(formData.Ngaybatdau);
+            if (startDate < now) {
+                toast.error('Ngày bắt đầu không được ở quá khứ!');
+                return;
+            }
+        }
+
+        if (formData.Ngayhethan) {
+            const endDate = new Date(formData.Ngayhethan);
+            if (endDate < now) {
+                toast.error('Ngày hết hạn không được ở quá khứ!');
+                return;
+            }
+        }
+
         if (formData.Ngaybatdau && formData.Ngayhethan) {
             const startDate = new Date(formData.Ngaybatdau);
             const endDate = new Date(formData.Ngayhethan);
             
-            if (endDate <= startDate) {
-                toast.error('Ngày hết hạn phải sau ngày bắt đầu!');
+            const oneDayInMs = 24 * 60 * 60 * 1000;
+            if (endDate.getTime() - startDate.getTime() < oneDayInMs) {
+                toast.error('Ngày hết hạn phải sau ngày bắt đầu ít nhất 1 ngày!');
                 return;
             }
         }
 
         try {
             setIsSubmitting(true);
-            const res = await createTest(userId, formData);
+            let res;
+            
+            if (mode === 'edit' && initialData) {
+                res = await updateTest(userId, initialData.id, formData);
+            } else {
+                res = await createTest(userId, formData);
+            }
 
             if (res && res.EC === 0) {
-                toast.success('Tạo bài test thành công!');
+                toast.success(mode === 'edit' ? 'Cập nhật bài test thành công!' : 'Tạo bài test thành công!');
                 onSuccess(res.DT);
             } else {
-                toast.error(res.EM || 'Không thể tạo bài test!');
+                toast.error(res.EM || `Không thể ${mode === 'edit' ? 'cập nhật' : 'tạo'} bài test!`);
             }
         } catch (error) {
-            console.error('Error creating test:', error);
-            toast.error('Có lỗi xảy ra khi tạo bài test!');
+            console.error(`Error ${mode === 'edit' ? 'updating' : 'creating'} test:`, error);
+            toast.error(`Có lỗi xảy ra khi ${mode === 'edit' ? 'cập nhật' : 'tạo'} bài test!`);
         } finally {
             setIsSubmitting(false);
         }
@@ -121,7 +181,7 @@ const TestFormModal = ({ show, onClose, onSuccess, userId }) => {
         <div className="test-form-modal-overlay" onClick={onClose}>
             <div className="test-form-modal-content" onClick={(e) => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h2>Tạo Bài Test Mới</h2>
+                    <h2>{mode === 'edit' ? 'Chỉnh Sửa Bài Test' : 'Tạo Bài Test Mới'}</h2>
                     <button className="btn-close" onClick={onClose}>
                         <i className="fas fa-times"></i>
                     </button>
@@ -162,6 +222,7 @@ const TestFormModal = ({ show, onClose, onSuccess, userId }) => {
                                     value={formData.jobPostingId}
                                     onChange={handleChange}
                                     required
+                                    disabled={mode === 'edit'}
                                 >
                                     {jobPostings.map(job => (
                                         <option key={job.id} value={job.id}>
@@ -169,6 +230,11 @@ const TestFormModal = ({ show, onClose, onSuccess, userId }) => {
                                         </option>
                                     ))}
                                 </select>
+                            )}
+                            {mode === 'edit' && (
+                                <small style={{color: '#6b7280', marginTop: '4px', display: 'block'}}>
+                                    Không thể thay đổi tin tuyển dụng khi chỉnh sửa
+                                </small>
                             )}
                         </div>
 
@@ -222,6 +288,7 @@ const TestFormModal = ({ show, onClose, onSuccess, userId }) => {
                                     name="Ngaybatdau"
                                     value={formData.Ngaybatdau}
                                     onChange={handleChange}
+                                    min={getTodayDatetimeLocal()}
                                 />
                             </div>
 
@@ -232,6 +299,7 @@ const TestFormModal = ({ show, onClose, onSuccess, userId }) => {
                                     name="Ngayhethan"
                                     value={formData.Ngayhethan}
                                     onChange={handleChange}
+                                    min={getMinEndDate()}
                                 />
                             </div>
                         </div>
@@ -258,11 +326,11 @@ const TestFormModal = ({ show, onClose, onSuccess, userId }) => {
                         >
                             {isSubmitting ? (
                                 <>
-                                    <i className="fas fa-spinner fa-spin"></i> Đang tạo...
+                                    <i className="fas fa-spinner fa-spin"></i> {mode === 'edit' ? 'Đang cập nhật...' : 'Đang tạo...'}
                                 </>
                             ) : (
                                 <>
-                                    <i className="fas fa-check"></i> Tạo bài test
+                                    <i className="fas fa-check"></i> {mode === 'edit' ? 'Cập nhật' : 'Tạo bài test'}
                                 </>
                             )}
                         </button>

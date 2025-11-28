@@ -206,6 +206,24 @@ const JobManagement = ({ userId }) => {
 
     return (
         <div className="job-management">
+            <div className="cp-header">
+                <div className="cp-header-left">
+                    <div className="company-logo">
+                        <i className="fas fa-briefcase"></i>
+                    </div>
+                    <div className="company-title">
+                        <h1>Quản lý tin tuyển dụng</h1>
+                        <p className="company-industry">Tạo, theo dõi và tối ưu tin tuyển dụng của bạn</p>
+                    </div>
+                </div>
+                <div className="cp-header-right">
+                    <button className="btn-primary" onClick={handleCreate}>
+                        <i className="fas fa-plus"></i>
+                        Tạo tin mới
+                    </button>
+                </div>
+            </div>
+
             {/* Thống kê */}
             <div className="stats-section">
                 <div className="stat-card stat-total">

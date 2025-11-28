@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CandidateNav from '../../components/Navigation/CandidateNav';
+import Footer from '../../components/Footer/Footer';
 import ReactPaginate from 'react-paginate';
 import { toast } from 'react-toastify';
 import './CandidateHome.scss';
@@ -258,6 +259,8 @@ const CandidateHome = () => {
                     </div>
                 </div>
             </div>
+            
+            <Footer />
         </div>
     );
 };

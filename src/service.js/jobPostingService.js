@@ -3,12 +3,20 @@ import axios from 'axios';
 const getListJobPosting = async (page, limit, filters = {}) => {
     let queryParams = `page=${page}&limit=${limit}`;
     
-    if (filters.keyword) queryParams += `&keyword=${filters.keyword}`;
-    if (filters.location) queryParams += `&location=${filters.location}`;
-    if (filters.experience) queryParams += `&experience=${filters.experience}`;
+    if (filters.keyword) queryParams += `&keyword=${encodeURIComponent(filters.keyword)}`;
+    if (filters.location) queryParams += `&location=${encodeURIComponent(filters.location)}`;
+    if (filters.experience) queryParams += `&experience=${encodeURIComponent(filters.experience)}`;
     if (filters.minSalary) queryParams += `&minSalary=${filters.minSalary}`;
+    if (filters.maxSalary) queryParams += `&maxSalary=${filters.maxSalary}`;
+    if (filters.companyId) queryParams += `&companyId=${filters.companyId}`;
+    if (filters.formatId) queryParams += `&formatId=${filters.formatId}`;
+    if (filters.majorId) queryParams += `&majorId=${filters.majorId}`;
     
     return await axios.get(`http://localhost:8082/api/jobs?${queryParams}`);
+};
+
+const getFilterOptions = async () => {
+    return await axios.get('http://localhost:8082/api/jobs/filters/options');
 };
 
 const getJobPostingById = async (id) => {
@@ -32,6 +40,7 @@ export {
     getJobPostingById, 
     createJobPosting, 
     updateJobPosting, 
-    deleteJobPosting
+    deleteJobPosting,
+    getFilterOptions
 };
 
