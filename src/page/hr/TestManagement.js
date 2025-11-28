@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import ReactPaginate from 'react-paginate';
 import TestFormModal from './TestFormModal';
 import TestDetailModal from './TestDetailModal';
+import QuestionFormModal from './QuestionFormModal';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 
 const TestManagement = ({ userId }) => {
@@ -21,6 +22,8 @@ const TestManagement = ({ userId }) => {
     const [selectedTest, setSelectedTest] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [testToDelete, setTestToDelete] = useState(null);
+    const [showQuestionModal, setShowQuestionModal] = useState(false);
+    const [createdTestId, setCreatedTestId] = useState(null);
 
     useEffect(() => {
         fetchTests(currentPage);
@@ -79,10 +82,26 @@ const TestManagement = ({ userId }) => {
         setSelectedTest(null);
     };
 
-    const handleTestCreated = () => {
+    const handleTestCreated = (testData) => {
         setShowFormModal(false);
+        if (testData && testData.id) {
+            // Lưu testId và mở modal tạo câu hỏi
+            setCreatedTestId(testData.id);
+            setShowQuestionModal(true);
+        }
         fetchTests(currentPage);
-        toast.success('Tạo bài test thành công!');
+    };
+
+    const handleQuestionsAdded = () => {
+        setShowQuestionModal(false);
+        setCreatedTestId(null);
+        fetchTests(currentPage);
+        toast.success('Thêm câu hỏi thành công!');
+    };
+
+    const handleQuestionModalClose = () => {
+        setShowQuestionModal(false);
+        setCreatedTestId(null);
     };
 
     const handleDeleteTest = (test) => {
@@ -288,6 +307,15 @@ const TestManagement = ({ userId }) => {
                 confirmText="Xóa"
                 cancelText="Hủy"
                 type="danger"
+            />
+
+            <QuestionFormModal
+                show={showQuestionModal}
+                onClose={handleQuestionModalClose}
+                onSuccess={handleQuestionsAdded}
+                testId={createdTestId}
+                userId={userId}
+                mode="create"
             />
         </div>
     );

@@ -159,6 +159,25 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
         return !startDate || now < startDate;
     };
 
+    const canAddQuestions = () => {
+        if (!currentTest) return false;
+        // Test phải ở trạng thái "Chưa bắt đầu" (pending)
+        if (!currentTest.Trangthai) return false; // Không hoạt động
+        
+        const now = new Date();
+        const startDate = currentTest.Ngaybatdau ? new Date(currentTest.Ngaybatdau) : null;
+        const endDate = currentTest.Ngayhethan ? new Date(currentTest.Ngayhethan) : null;
+        
+        // Đã hết hạn
+        if (endDate && now > endDate) return false;
+        
+        // Chưa bắt đầu (pending) - chỉ khi có startDate và chưa đến
+        if (startDate && now < startDate) return true;
+        
+        // Nếu không có startDate, coi như đang hoạt động -> không cho thêm
+        return false;
+    };
+
     return (
         <>
             <div className="test-detail-modal-overlay" onClick={onClose}>
@@ -253,18 +272,27 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
                         <div className="questions-section">
                             <div className="section-header">
                                 <h3>Danh sách câu hỏi ({currentTest.Questions?.length || 0})</h3>
-                                <button className="btn-add-question" onClick={handleAddQuestions}>
-                                    <i className="fas fa-plus"></i> Thêm câu hỏi
-                                </button>
+                                {canAddQuestions() && (
+                                    <button className="btn-add-question" onClick={handleAddQuestions}>
+                                        <i className="fas fa-plus"></i> Thêm câu hỏi
+                                    </button>
+                                )}
                             </div>
 
                             {!currentTest.Questions || currentTest.Questions.length === 0 ? (
                                 <div className="empty-questions">
                                     <i className="fas fa-question-circle"></i>
                                     <p>Chưa có câu hỏi nào</p>
-                                    <button className="btn-add-first" onClick={handleAddQuestions}>
-                                        Thêm câu hỏi đầu tiên
-                                    </button>
+                                    {canAddQuestions() ? (
+                                        <button className="btn-add-first" onClick={handleAddQuestions}>
+                                            Thêm câu hỏi đầu tiên
+                                        </button>
+                                    ) : (
+                                        <p className="cannot-add-message">
+                                            <i className="fas fa-info-circle"></i>
+                                            Chỉ có thể thêm câu hỏi khi bài test ở trạng thái "Chưa bắt đầu"
+                                        </p>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="questions-list">
