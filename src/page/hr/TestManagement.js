@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TestManagement.scss';
-import { getMyTests, getTestDetail } from '../../service.js/testService';
+import { getMyTests, getTestDetail, deleteTest } from '../../service.js/testService';
 import { toast } from 'react-toastify';
 import ReactPaginate from 'react-paginate';
 import TestFormModal from './TestFormModal';
@@ -110,10 +110,23 @@ const TestManagement = ({ userId }) => {
     };
 
     const confirmDelete = async () => {
-        // TODO: Implement delete API call
-        toast.info('Chức năng xóa bài test đang được phát triển');
-        setShowDeleteConfirm(false);
-        setTestToDelete(null);
+        if (!testToDelete) return;
+
+        try {
+            const res = await deleteTest(userId, testToDelete.id);
+            
+            if (res && res.EC === 0) {
+                toast.success('Xóa bài test thành công!');
+                setShowDeleteConfirm(false);
+                setTestToDelete(null);
+                fetchTests(currentPage);
+            } else {
+                toast.error(res.EM || 'Không thể xóa bài test!');
+            }
+        } catch (error) {
+            console.error('Error deleting test:', error);
+            toast.error('Có lỗi xảy ra khi xóa bài test!');
+        }
     };
 
     const cancelDelete = () => {

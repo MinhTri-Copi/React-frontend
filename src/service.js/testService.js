@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+
 /**
  * Tạo bài test mới
  */
@@ -92,6 +93,21 @@ const updateTest = async (userId, testId, data) => {
 };
 
 /**
+ * Xóa bài test
+ */
+const deleteTest = async (userId, testId) => {
+    try {
+        const res = await axios.delete(
+            `http://localhost:8082/api/hr/tests/${testId}?userId=${userId}`
+        );
+        return res.data;
+    } catch (error) {
+        console.error('Error deleting test:', error);
+        throw error;
+    }
+};
+
+/**
  * Cập nhật câu hỏi
  */
 const updateQuestion = async (userId, questionId, data) => {
@@ -129,6 +145,7 @@ export {
     getMyTests,
     getTestDetail,
     updateTest,
+    deleteTest,
     updateQuestion,
     deleteQuestion
 };

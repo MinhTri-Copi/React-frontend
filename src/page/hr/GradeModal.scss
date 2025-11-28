@@ -212,6 +212,49 @@
                     align-items: center;
                     gap: 4px;
                 }
+
+                .similarity-status {
+                    padding: 6px 12px;
+                    border-radius: 8px;
+                    font-size: 13px;
+                    font-weight: 600;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 6px;
+                    margin-left: 8px;
+
+                    .status-emoji {
+                        font-size: 16px;
+                    }
+
+                    .status-label {
+                        font-size: 13px;
+                    }
+
+                    .similarity-percent {
+                        font-size: 12px;
+                        opacity: 0.8;
+                        font-weight: 500;
+                    }
+
+                    &.status-good {
+                        background: rgba(34, 197, 94, 0.15);
+                        color: #16a34a;
+                        border: 1px solid rgba(34, 197, 94, 0.3);
+                    }
+
+                    &.status-review {
+                        background: rgba(234, 179, 8, 0.15);
+                        color: #ca8a04;
+                        border: 1px solid rgba(234, 179, 8, 0.3);
+                    }
+
+                    &.status-problem {
+                        background: rgba(239, 68, 68, 0.15);
+                        color: #dc2626;
+                        border: 1px solid rgba(239, 68, 68, 0.3);
+                    }
+                }
             }
         }
 

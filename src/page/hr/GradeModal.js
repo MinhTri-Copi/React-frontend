@@ -8,6 +8,37 @@ import {
 } from '../../service.js/testSubmissionService';
 import './GradeModal.scss';
 
+// Helper function to get similarity status
+const getSimilarityStatus = (similarity) => {
+    if (similarity > 0.75) {
+        return {
+            level: 'good',
+            label: 'Đúng phần lớn',
+            emoji: '🟢',
+            color: 'green'
+        };
+    } else if (similarity >= 0.50) {
+        return {
+            level: 'review',
+            label: 'Cần xem lại',
+            emoji: '🟡',
+            color: 'yellow'
+        };
+    } else {
+        return {
+            level: 'problem',
+            label: 'Có vấn đề',
+            emoji: '🔴',
+            color: 'red'
+        };
+    }
+};
+
+// Helper function to round score to nearest 0.5
+const roundToHalf = (score) => {
+    return Math.round(score * 2) / 2;
+};
+
 const GradeModal = ({ show, onClose, submissionId, hrUserId, onGraded }) => {
     const [submission, setSubmission] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -64,12 +95,13 @@ const GradeModal = ({ show, onClose, submissionId, hrUserId, onGraded }) => {
 
     const handleEditScore = (answerId, currentScore, maxScore) => {
         setEditingAnswerId(answerId);
+        const roundedScore = roundToHalf(currentScore || 0);
         setEditScores({
             ...editScores,
             [answerId]: {
-                Diemdatduoc: currentScore || 0,
+                Diemdatduoc: roundedScore,
                 Nhanxet: '',
-                Dungkhong: currentScore === maxScore
+                Dungkhong: roundedScore === maxScore
             }
         });
     };
@@ -89,10 +121,17 @@ const GradeModal = ({ show, onClose, submissionId, hrUserId, onGraded }) => {
         
         if (!scoreData) return;
 
-        if (scoreData.Diemdatduoc < 0 || scoreData.Diemdatduoc > maxScore) {
+        // Round score to nearest 0.5
+        const roundedScore = roundToHalf(scoreData.Diemdatduoc || 0);
+        
+        if (roundedScore < 0 || roundedScore > maxScore) {
             toast.error(`Điểm phải từ 0 đến ${maxScore}!`);
             return;
         }
+        
+        // Update score data with rounded value
+        scoreData.Diemdatduoc = roundedScore;
+        scoreData.Dungkhong = roundedScore === maxScore;
 
         try {
             const res = await gradeAnswer(hrUserId, answerId, scoreData);
@@ -210,7 +249,9 @@ const GradeModal = ({ show, onClose, submissionId, hrUserId, onGraded }) => {
                                     const isEditing = editingAnswerId === answer.id;
                                     const editData = editScores[answer.id];
                                     const maxScore = answer.Question?.Diem || 10;
-                                    const similarity = answer.Dosattinhcua_nlp || answer.Dosattinhcua_ai || 0;
+                                    const similarity = answer.Dosattinhcua_ai || answer.Dosattinhcua_nlp || 0;
+                                    const status = getSimilarityStatus(similarity);
+                                    const currentScore = roundToHalf(answer.Diemdatduoc || 0);
 
                                     return (
                                         <div key={answer.id} className="answer-card">
@@ -222,9 +263,10 @@ const GradeModal = ({ show, onClose, submissionId, hrUserId, onGraded }) => {
                                                     </span>
                                                     <span className="max-score">Tối đa: {maxScore} điểm</span>
                                                     {similarity > 0 && (
-                                                        <span className="similarity-badge">
-                                                            <i className="fas fa-chart-line"></i>
-                                                            Độ tương đồng: {(similarity * 100).toFixed(0)}%
+                                                        <span className={`similarity-status status-${status.level}`}>
+                                                            <span className="status-emoji">{status.emoji}</span>
+                                                            <span className="status-label">{status.label}</span>
+                                                            <span className="similarity-percent">({(similarity * 100).toFixed(0)}%)</span>
                                                         </span>
                                                     )}
                                                 </div>
@@ -301,7 +343,7 @@ const GradeModal = ({ show, onClose, submissionId, hrUserId, onGraded }) => {
                                                 <div className="score-display">
                                                     <div className="score-info">
                                                         <span className="label">Điểm AI gợi ý:</span>
-                                                        <span className="score-value">{answer.Diemdatduoc || 0} / {maxScore}</span>
+                                                        <span className="score-value">{currentScore.toFixed(1)} / {maxScore}</span>
                                                         {answer.Dungkhong && <span className="correct-badge">✓ Đúng</span>}
                                                     </div>
                                                     {answer.Nhanxet && (
