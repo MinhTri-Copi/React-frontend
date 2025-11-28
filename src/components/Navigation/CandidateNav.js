@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import './CandidateNav.scss';
@@ -6,7 +6,10 @@ import './CandidateNav.scss';
 const CandidateNav = () => {
     const [user, setUser] = useState(null);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [showOptionsDropdown, setShowOptionsDropdown] = useState(false);
     const navigate = useNavigate();
+    const optionsDropdownRef = useRef(null);
+    const userDropdownRef = useRef(null);
 
     useEffect(() => {
         // Get user from sessionStorage or localStorage
@@ -15,6 +18,26 @@ const CandidateNav = () => {
             setUser(JSON.parse(userData));
         }
     }, []);
+
+    // Handle click outside for options dropdown
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (optionsDropdownRef.current && !optionsDropdownRef.current.contains(event.target)) {
+                setShowOptionsDropdown(false);
+            }
+            if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+                setShowDropdown(false);
+            }
+        };
+
+        if (showOptionsDropdown || showDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showOptionsDropdown, showDropdown]);
 
     const handleLogout = () => {
         sessionStorage.removeItem('user');
@@ -62,31 +85,72 @@ const CandidateNav = () => {
                             Công ty
                         </NavLink>
                         
-                        <NavLink 
-                            to="/candidate/my-records" 
-                            className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
+                        <div 
+                            className="nav-dropdown"
+                            ref={optionsDropdownRef}
                         >
-                            <i className="fas fa-file-alt"></i>
-                            Hồ sơ của tôi
-                        </NavLink>
-                        
-                        <NavLink 
-                            to="/candidate/my-applications" 
-                            className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}
-                        >
-                            <i className="fas fa-paper-plane"></i>
-                            Đơn ứng tuyển
-                        </NavLink>
+                            <div 
+                                className={`nav-link ${showOptionsDropdown ? 'active' : ''}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowOptionsDropdown(!showOptionsDropdown);
+                                }}
+                            >
+                                <i className="fas fa-list"></i>
+                                Tùy chọn
+                                <i className={`fas fa-chevron-${showOptionsDropdown ? 'up' : 'down'}`}></i>
+                            </div>
+                            {showOptionsDropdown && (
+                                <div 
+                                    className="dropdown-menu options-dropdown-menu"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <NavLink 
+                                        to="/candidate/my-records" 
+                                        className={({ isActive }) => isActive ? "dropdown-item active" : "dropdown-item"}
+                                        onClick={() => {
+                                            setShowOptionsDropdown(false);
+                                        }}
+                                    >
+                                        <i className="fas fa-file-alt"></i>
+                                        <span>Hồ sơ của tôi</span>
+                                    </NavLink>
+                                    <NavLink 
+                                        to="/candidate/my-applications" 
+                                        className={({ isActive }) => isActive ? "dropdown-item active" : "dropdown-item"}
+                                        onClick={() => {
+                                            setShowOptionsDropdown(false);
+                                        }}
+                                    >
+                                        <i className="fas fa-paper-plane"></i>
+                                        <span>Đơn ứng tuyển của tôi</span>
+                                    </NavLink>
+                                    <NavLink 
+                                        to="/candidate/my-tests" 
+                                        className={({ isActive }) => isActive ? "dropdown-item active" : "dropdown-item"}
+                                        onClick={() => {
+                                            setShowOptionsDropdown(false);
+                                        }}
+                                    >
+                                        <i className="fas fa-clipboard-check"></i>
+                                        <span>Xem bài test</span>
+                                    </NavLink>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* User profile */}
                     <div className="navbar-user">
                         {user ? (
                             <>
-                                <div className="user-dropdown">
+                                <div className="user-dropdown" ref={userDropdownRef}>
                                     <div 
                                         className="user-info" 
-                                        onClick={() => setShowDropdown(!showDropdown)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowDropdown(!showDropdown);
+                                        }}
                                     >
                                         <div className="user-avatar">
                                             {user.Hoten ? user.Hoten.charAt(0).toUpperCase() : 'U'}
@@ -96,14 +160,29 @@ const CandidateNav = () => {
                                     </div>
 
                                     {showDropdown && (
-                                        <div className="dropdown-menu">
-                                            <NavLink to="/candidate/profile" className="dropdown-item">
+                                        <div 
+                                            className="dropdown-menu user-dropdown-menu"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <NavLink 
+                                                to="/candidate/profile" 
+                                                className={({ isActive }) => isActive ? "dropdown-item active" : "dropdown-item"}
+                                                onClick={() => {
+                                                    setShowDropdown(false);
+                                                }}
+                                            >
                                                 <i className="fas fa-user"></i>
-                                                Thông tin cá nhân
+                                                <span>Thông tin cá nhân</span>
                                             </NavLink>
-                                            <NavLink to="/candidate/settings" className="dropdown-item">
+                                            <NavLink 
+                                                to="/candidate/settings" 
+                                                className={({ isActive }) => isActive ? "dropdown-item active" : "dropdown-item"}
+                                                onClick={() => {
+                                                    setShowDropdown(false);
+                                                }}
+                                            >
                                                 <i className="fas fa-cog"></i>
-                                                Cài đặt
+                                                <span>Cài đặt</span>
                                             </NavLink>
                                         </div>
                                     )}

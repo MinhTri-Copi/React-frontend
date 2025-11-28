@@ -58,12 +58,22 @@ const autoGradeSubmission = async (submissionId) => {
     return await axios.post(`${BASE_URL}/test-submissions/${submissionId}/auto-grade`);
 };
 
+/**
+ * Get test submissions for candidate
+ */
+const getMyTestSubmissions = async (userId, { status = 'all', jobPostingId = 'all', page = 1, limit = 10 } = {}) => {
+    return await axios.get(`${BASE_URL}/candidate/test-submissions`, {
+        params: { userId, status, jobPostingId, page, limit }
+    });
+};
+
 export {
     submitTest,
     getSubmissionForGrading,
     gradeAnswer,
     finalizeGrading,
     getSubmissionResult,
-    autoGradeSubmission
+    autoGradeSubmission,
+    getMyTestSubmissions
 };
 

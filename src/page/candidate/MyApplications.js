@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CandidateNav from '../../components/Navigation/CandidateNav';
+import Footer from '../../components/Footer/Footer';
 import { getMyApplications, startTest } from '../../service.js/jobApplicationService';
 import { toast } from 'react-toastify';
 import './MyApplications.scss';
@@ -80,14 +81,21 @@ const MyApplications = () => {
         const submission = app.TestSubmissions && app.TestSubmissions.length > 0 ? app.TestSubmissions[0] : null;
 
         if (submission && submission.Trangthai === 'dacham') {
-            return { show: true, disabled: true, label: 'Đã hoàn thành', variant: 'completed', testStatus: testInfo.status };
+            return { 
+                show: true, 
+                disabled: false, 
+                label: 'Xem kết quả', 
+                variant: 'completed', 
+                testStatus: testInfo.status,
+                submissionId: submission.id
+            };
         }
 
         if (submission && submission.Trangthai === 'danglam') {
             return {
                 show: true,
                 disabled: false,
-                label: 'Tiếp tục làm bài',
+                label: 'Xem bài test',
                 variant: 'resume',
                 submissionId: submission.id,
                 testStatus: testInfo.status
@@ -101,7 +109,7 @@ const MyApplications = () => {
         return {
             show: true,
             disabled: false,
-            label: 'Làm bài test',
+            label: 'Xem bài test',
             variant: 'start',
             submissionId: submission?.id,
             testStatus: testInfo.status
@@ -114,6 +122,14 @@ const MyApplications = () => {
         if (!status.show) return;
         if (status.disabled && !status.submissionId) return;
 
+        // Navigate to MyTests page and scroll to the test for all cases with submissionId
+        // This ensures consistent behavior for all test states (in progress, completed, etc.)
+        if (status.submissionId && (status.variant === 'resume' || status.variant === 'start' || status.variant === 'completed')) {
+            navigate(`/candidate/my-tests?submissionId=${status.submissionId}`);
+            return;
+        }
+
+        // If test status is not active, show message
         if (status.testStatus && status.testStatus !== 'active') {
             const message = TEST_STATUS_MESSAGES[status.testStatus] || 'Bài test hiện không khả dụng.';
             if (status.testStatus === 'pending') {
@@ -124,18 +140,14 @@ const MyApplications = () => {
             return;
         }
 
+        // Create new test submission if needed
         setStartingTestId(application.id);
         try {
-            let response;
-            if (status.submissionId && status.variant === 'resume') {
-                navigate(`/candidate/tests/${status.submissionId}?userId=${user.id}`);
-                return;
-            }
-            response = await startTest(user.id, application.id);
+            const response = await startTest(user.id, application.id);
             if (response.data && response.data.EC === 0) {
                 const submission = response.data.DT;
                 toast.success('Bắt đầu bài test thành công!');
-                navigate(`/candidate/tests/${submission.id}?userId=${user.id}`);
+                navigate(`/candidate/my-tests?submissionId=${submission.id}`);
             } else {
                 toast.error(response.data?.EM || 'Không thể bắt đầu bài test!');
             }
@@ -155,6 +167,26 @@ const MyApplications = () => {
         return `${min.toLocaleString('vi-VN')} - ${max.toLocaleString('vi-VN')} VNĐ`;
     };
 
+    // Calculate statistics
+    const getStatistics = () => {
+        const total = applications.length;
+        const pending = applications.filter(app => {
+            const statusId = app.applicationStatusId || app.ApplicationStatus?.id;
+            return statusId === 1 || statusId === 2; // Chờ xét duyệt, Đang xét duyệt
+        }).length;
+        const approved = applications.filter(app => {
+            const statusId = app.applicationStatusId || app.ApplicationStatus?.id;
+            return statusId === 4; // Đã xét duyệt
+        }).length;
+        const rejected = applications.filter(app => {
+            const statusId = app.applicationStatusId || app.ApplicationStatus?.id;
+            return statusId === 3; // Từ chối
+        }).length;
+        return { total, pending, approved, rejected };
+    };
+
+    const stats = getStatistics();
+
     return (
         <div className="my-applications-page">
             <CandidateNav />
@@ -165,6 +197,26 @@ const MyApplications = () => {
                             <h1>Đơn ứng tuyển của tôi</h1>
                             <p>Theo dõi những công việc bạn đã nộp hồ sơ</p>
                         </div>
+                        {applications.length > 0 && (
+                            <div className="header-stats">
+                                <div className="stat-item">
+                                    <span className="stat-number">{stats.total}</span>
+                                    <span className="stat-label">Tổng đơn</span>
+                                </div>
+                                <div className="stat-item">
+                                    <span className="stat-number">{stats.pending}</span>
+                                    <span className="stat-label">Đang chờ</span>
+                                </div>
+                                <div className="stat-item">
+                                    <span className="stat-number">{stats.approved}</span>
+                                    <span className="stat-label">Đã duyệt</span>
+                                </div>
+                                <div className="stat-item">
+                                    <span className="stat-number">{stats.rejected}</span>
+                                    <span className="stat-label">Từ chối</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {isLoading ? (
@@ -230,7 +282,11 @@ const MyApplications = () => {
                                                         disabled={isDisabled}
                                                         onClick={() => handleStartTest(app)}
                                                     >
-                                                        <i className="fas fa-pencil-alt"></i>
+                                                        {testState.variant === 'completed' ? (
+                                                            <i className="fas fa-eye"></i>
+                                                        ) : (
+                                                            <i className="fas fa-clipboard-check"></i>
+                                                        )}
                                                         {btnLabel}
                                                     </button>
                                                 );
@@ -252,6 +308,7 @@ const MyApplications = () => {
                     )}
                 </div>
             </div>
+            <Footer />
         </div>
     );
 };
