@@ -41,6 +41,7 @@ function App() {
           <Route path="/admin" element={<div>Admin Dashboard</div>} />
           <Route path="/hr" element={<HrDashboard />} />
           <Route path="/hr/tests" element={<HrDashboard />} />
+          <Route path="/hr/test-submissions" element={<HrDashboard />} />
           <Route path="/hr/candidates" element={<HrDashboard />} />
           <Route path="/hr/company-profile" element={<HrDashboard />} />
           <Route path="/" element={<Login />} />

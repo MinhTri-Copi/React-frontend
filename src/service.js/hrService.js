@@ -140,6 +140,24 @@ const updateCompanyProfile = async (userId, companyData) => {
     }
 };
 
+const getTestSubmissions = async (userId, { status = 'all', jobPostingId = 'all', page = 1, limit = 10, search = '' } = {}) => {
+    try {
+        const params = new URLSearchParams({
+            userId,
+            status,
+            jobPostingId,
+            page,
+            limit,
+            search
+        });
+        const res = await axios.get(`http://localhost:8082/api/hr/test-submissions?${params.toString()}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error fetching test submissions:', error);
+        throw error;
+    }
+};
+
 export { 
     getHrDashboard, 
     getMyJobPostings, 
@@ -154,5 +172,6 @@ export {
     getApplicationDetail,
     updateApplicationStatus,
     getCompanyProfile,
-    updateCompanyProfile
+    updateCompanyProfile,
+    getTestSubmissions
 };

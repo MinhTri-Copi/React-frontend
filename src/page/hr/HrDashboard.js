@@ -7,11 +7,13 @@ import CandidateManagement from './CandidateManagement';
 import CompanyProfile from './CompanyProfile';
 import HrStatistics from './HrStatistics';
 import TestManagement from './TestManagement';
+import TestSubmissionList from './TestSubmissionList';
 
 const sidebarItems = [
     { id: 'analytics', label: 'Thống kê', icon: 'fas fa-chart-line' },
     { id: 'jobs', label: 'Quản lý tin tuyển dụng', icon: 'fas fa-briefcase' },
     { id: 'tests', label: 'Quản lý bài test', icon: 'fas fa-file-alt' },
+    { id: 'test-submissions', label: 'DS bài test đã nộp', icon: 'fas fa-clipboard-check' },
     { id: 'candidates', label: 'QL ứng viên', icon: 'fas fa-user-friends' },
     { id: 'company', label: 'QL hồ sơ công ty', icon: 'fas fa-building' },
     { id: 'applications', label: 'Danh sách ứng viên ', icon: 'fas fa-clipboard-list' },
@@ -34,6 +36,8 @@ const HrDashboard = () => {
             setActiveMenu('applications');
         } else if (path === '/hr/tests') {
             setActiveMenu('tests');
+        } else if (path === '/hr/test-submissions') {
+            setActiveMenu('test-submissions');
         } else if (path === '/hr') {
             // Don't override if already set to 'jobs' or 'analytics'
             // Only set to 'analytics' on initial load
@@ -69,6 +73,8 @@ const HrDashboard = () => {
             }
         } else if (itemId === 'tests') {
             navigate('/hr/tests');
+        } else if (itemId === 'test-submissions') {
+            navigate('/hr/test-submissions');
         } else if (itemId === 'candidates') {
             navigate('/hr/candidates');
         } else if (itemId === 'company') {
@@ -125,6 +131,8 @@ const HrDashboard = () => {
                         <JobManagement userId={user?.id} />
                     ) : activeMenu === 'tests' ? (
                         <TestManagement userId={user?.id} />
+                    ) : activeMenu === 'test-submissions' ? (
+                        <TestSubmissionList userId={user?.id} />
                     ) : activeMenu === 'candidates' ? (
                         <CandidateManagement />
                     ) : activeMenu === 'company' ? (
