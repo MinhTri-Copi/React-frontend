@@ -3,11 +3,13 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
 import { getMyTestSubmissions } from '../../service.js/testSubmissionService';
+import { startTest } from '../../service.js/jobApplicationService';
 import { toast } from 'react-toastify';
 import './MyTests.scss';
 
 const STATUS_OPTIONS = [
     { value: 'all', label: 'Tất cả' },
+    { value: 'chuabatdau', label: 'Chưa làm bài' },
     { value: 'danglam', label: 'Đang làm' },
     { value: 'danop', label: 'Đã nộp' },
     { value: 'dacham', label: 'Đã chấm' }
@@ -95,11 +97,36 @@ const MyTests = () => {
 
     const getStatusBadge = (status) => {
         const statusMap = {
+            'chuabatdau': { label: 'Chưa làm bài', class: 'status-not-started', icon: 'fa-circle' },
             'danglam': { label: 'Đang làm', class: 'status-in-progress', icon: 'fa-clock' },
             'danop': { label: 'Đã nộp', class: 'status-submitted', icon: 'fa-check-circle' },
             'dacham': { label: 'Đã chấm', class: 'status-graded', icon: 'fa-star' }
         };
         return statusMap[status] || { label: 'Không xác định', class: 'status-unknown', icon: 'fa-question' };
+    };
+
+    const handleStartFromMyTests = async (submission) => {
+        if (!user) return;
+
+        const applicationId = submission.JobApplication?.id;
+        if (!applicationId) {
+            toast.error('Không tìm thấy đơn ứng tuyển cho bài test này!');
+            return;
+        }
+
+        try {
+            const res = await startTest(user.id, applicationId);
+            if (res.data && res.data.EC === 0 && res.data.DT) {
+                const newSubmission = res.data.DT;
+                toast.success('Bắt đầu bài test thành công!');
+                navigate(`/candidate/tests/${newSubmission.id}?userId=${user.id}`);
+            } else {
+                toast.error(res.data?.EM || 'Không thể bắt đầu bài test!');
+            }
+        } catch (error) {
+            console.error('Error starting test from MyTests:', error);
+            toast.error('Có lỗi xảy ra khi bắt đầu bài test!');
+        }
     };
 
     const handleViewTest = (submission) => {
@@ -258,6 +285,15 @@ const MyTests = () => {
                                         </div>
 
                                         <div className="test-actions">
+                                            {submission.Trangthai === 'chuabatdau' && (
+                                                <button 
+                                                    className="btn-start"
+                                                    onClick={() => handleStartFromMyTests(submission)}
+                                                >
+                                                    <i className="fas fa-play"></i>
+                                                    Bắt đầu làm bài
+                                                </button>
+                                            )}
                                             {submission.Trangthai === 'danglam' && (
                                                 <button 
                                                     className="btn-continue"

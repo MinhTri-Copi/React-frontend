@@ -224,6 +224,11 @@
                         gap: 6px;
                         white-space: nowrap;
 
+                        &.status-not-started {
+                            background: rgba(156, 163, 175, 0.15);
+                            color: #4b5563;
+                        }
+
                         &.status-in-progress {
                             background: rgba(251, 191, 36, 0.15);
                             color: #f59e0b;
@@ -330,6 +335,16 @@
                         &:hover {
                             transform: translateY(-2px);
                             box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+                        }
+                    }
+
+                    &.btn-start {
+                        background: #ecfdf5;
+                        color: #047857;
+                        border: 1px solid #6ee7b7;
+
+                        &:hover {
+                            background: #d1fae5;
                         }
                     }
 
