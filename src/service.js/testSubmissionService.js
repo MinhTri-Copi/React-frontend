@@ -1,12 +1,10 @@
-import axios from 'axios';
-
-const BASE_URL = 'http://localhost:8082/api';
+import axiosInstance from '../utils/axiosConfig';
 
 /**
  * Candidate submits test answers
  */
 const submitTest = async (userId, submissionId, answers) => {
-    return await axios.post(`${BASE_URL}/test-submissions/submit`, {
+    return await axiosInstance.post(`/test-submissions/submit`, {
         userId,
         submissionId,
         answers
@@ -17,7 +15,7 @@ const submitTest = async (userId, submissionId, answers) => {
  * HR gets submission for grading
  */
 const getSubmissionForGrading = async (hrUserId, submissionId) => {
-    return await axios.get(`${BASE_URL}/test-submissions/${submissionId}/grading`, {
+    return await axiosInstance.get(`/test-submissions/${submissionId}/grading`, {
         params: { hrUserId }
     });
 };
@@ -26,7 +24,7 @@ const getSubmissionForGrading = async (hrUserId, submissionId) => {
  * HR grades individual answer
  */
 const gradeAnswer = async (hrUserId, answerId, scoreData) => {
-    return await axios.post(`${BASE_URL}/test-submissions/answers/${answerId}/grade`, {
+    return await axiosInstance.post(`/test-submissions/answers/${answerId}/grade`, {
         hrUserId,
         ...scoreData
     });
@@ -36,7 +34,7 @@ const gradeAnswer = async (hrUserId, answerId, scoreData) => {
  * HR finalizes grading (calculate total score)
  */
 const finalizeGrading = async (hrUserId, submissionId) => {
-    return await axios.post(`${BASE_URL}/test-submissions/${submissionId}/finalize`, {
+    return await axiosInstance.post(`/test-submissions/${submissionId}/finalize`, {
         hrUserId,
         submissionId
     });
@@ -46,7 +44,7 @@ const finalizeGrading = async (hrUserId, submissionId) => {
  * Get submission result (for candidate or HR)
  */
 const getSubmissionResult = async (userId, submissionId, isHR = false) => {
-    return await axios.get(`${BASE_URL}/test-submissions/${submissionId}/result`, {
+    return await axiosInstance.get(`/test-submissions/${submissionId}/result`, {
         params: { userId, isHR }
     });
 };
@@ -55,14 +53,14 @@ const getSubmissionResult = async (userId, submissionId, isHR = false) => {
  * Auto-grade submission using AI/NLP
  */
 const autoGradeSubmission = async (submissionId) => {
-    return await axios.post(`${BASE_URL}/test-submissions/${submissionId}/auto-grade`);
+    return await axiosInstance.post(`/test-submissions/${submissionId}/auto-grade`);
 };
 
 /**
  * Get test submissions for candidate
  */
 const getMyTestSubmissions = async (userId, { status = 'all', jobPostingId = 'all', page = 1, limit = 10 } = {}) => {
-    return await axios.get(`${BASE_URL}/candidate/test-submissions`, {
+    return await axiosInstance.get(`/candidate/test-submissions`, {
         params: { userId, status, jobPostingId, page, limit }
     });
 };

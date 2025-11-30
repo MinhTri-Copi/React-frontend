@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axiosInstance from '../utils/axiosConfig';
 
 
 /**
@@ -6,7 +6,7 @@ import axios from 'axios';
  */
 const createTest = async (userId, data) => {
     try {
-        const res = await axios.post(`http://localhost:8082/api/hr/tests?userId=${userId}`, data);
+        const res = await axiosInstance.post(`/hr/tests?userId=${userId}`, data);
         return res.data;
     } catch (error) {
         console.error('Error creating test:', error);
@@ -19,8 +19,8 @@ const createTest = async (userId, data) => {
  */
 const addQuestion = async (userId, testId, questionData) => {
     try {
-        const res = await axios.post(
-            `http://localhost:8082/api/hr/tests/questions?userId=${userId}&testId=${testId}`,
+        const res = await axiosInstance.post(
+            `/hr/tests/questions?userId=${userId}&testId=${testId}`,
             questionData
         );
         return res.data;
@@ -35,8 +35,8 @@ const addQuestion = async (userId, testId, questionData) => {
  */
 const addMultipleQuestions = async (userId, testId, questions) => {
     try {
-        const res = await axios.post(
-            `http://localhost:8082/api/hr/tests/questions/bulk?userId=${userId}&testId=${testId}`,
+        const res = await axiosInstance.post(
+            `/hr/tests/questions/bulk?userId=${userId}&testId=${testId}`,
             { questions }
         );
         return res.data;
@@ -51,8 +51,8 @@ const addMultipleQuestions = async (userId, testId, questions) => {
  */
 const getMyTests = async (userId, page = 1, limit = 10) => {
     try {
-        const res = await axios.get(
-            `http://localhost:8082/api/hr/tests?userId=${userId}&page=${page}&limit=${limit}`
+        const res = await axiosInstance.get(
+            `/hr/tests?userId=${userId}&page=${page}&limit=${limit}`
         );
         return res.data;
     } catch (error) {
@@ -66,8 +66,8 @@ const getMyTests = async (userId, page = 1, limit = 10) => {
  */
 const getTestDetail = async (userId, testId) => {
     try {
-        const res = await axios.get(
-            `http://localhost:8082/api/hr/tests/detail?userId=${userId}&testId=${testId}`
+        const res = await axiosInstance.get(
+            `/hr/tests/detail?userId=${userId}&testId=${testId}`
         );
         return res.data;
     } catch (error) {
@@ -81,8 +81,8 @@ const getTestDetail = async (userId, testId) => {
  */
 const updateTest = async (userId, testId, data) => {
     try {
-        const res = await axios.put(
-            `http://localhost:8082/api/hr/tests/${testId}?userId=${userId}`,
+        const res = await axiosInstance.put(
+            `/hr/tests/${testId}?userId=${userId}`,
             data
         );
         return res.data;
@@ -97,8 +97,8 @@ const updateTest = async (userId, testId, data) => {
  */
 const deleteTest = async (userId, testId) => {
     try {
-        const res = await axios.delete(
-            `http://localhost:8082/api/hr/tests/${testId}?userId=${userId}`
+        const res = await axiosInstance.delete(
+            `/hr/tests/${testId}?userId=${userId}`
         );
         return res.data;
     } catch (error) {
@@ -112,8 +112,8 @@ const deleteTest = async (userId, testId) => {
  */
 const updateQuestion = async (userId, questionId, data) => {
     try {
-        const res = await axios.put(
-            `http://localhost:8082/api/hr/tests/questions/${questionId}?userId=${userId}`,
+        const res = await axiosInstance.put(
+            `/hr/tests/questions/${questionId}?userId=${userId}`,
             data
         );
         return res.data;
@@ -128,8 +128,8 @@ const updateQuestion = async (userId, questionId, data) => {
  */
 const deleteQuestion = async (userId, questionId) => {
     try {
-        const res = await axios.delete(
-            `http://localhost:8082/api/hr/tests/questions/${questionId}?userId=${userId}`
+        const res = await axiosInstance.delete(
+            `/hr/tests/questions/${questionId}?userId=${userId}`
         );
         return res.data;
     } catch (error) {

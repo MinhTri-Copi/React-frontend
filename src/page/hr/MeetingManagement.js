@@ -136,7 +136,8 @@ const MeetingManagement = ({ userId }) => {
     };
 
     const handleJoinMeeting = (roomName) => {
-        window.open(`/meeting/${roomName}`, '_blank');
+        // Use navigate instead of window.open to maintain session
+        window.location.href = `/meeting/${roomName}`;
     };
 
     const handleCancelMeeting = async (meetingId) => {

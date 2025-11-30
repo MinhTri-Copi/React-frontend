@@ -38,34 +38,52 @@ const HrStatistics = () => {
     const [timeFilter, setTimeFilter] = useState('6months'); // 7days, 30days, 3months, 6months, 12months
 
     useEffect(() => {
+        let isMounted = true;
         const userStr = sessionStorage.getItem('user') || localStorage.getItem('user');
         if (userStr) {
             const parsedUser = JSON.parse(userStr);
-            setUser(parsedUser);
-            fetchStatistics(parsedUser.id);
+            if (isMounted) {
+                setUser(parsedUser);
+                fetchStatistics(parsedUser.id, isMounted);
+            }
         }
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     useEffect(() => {
+        let isMounted = true;
         if (user) {
-            fetchStatistics(user.id);
+            fetchStatistics(user.id, isMounted);
         }
+        return () => {
+            isMounted = false;
+        };
     }, [timeFilter]);
 
-    const fetchStatistics = async (userId) => {
+    const fetchStatistics = async (userId, isMounted = true) => {
         try {
-            setLoading(true);
+            if (isMounted) {
+                setLoading(true);
+            }
             const res = await getDashboardStatistics(userId, timeFilter);
-            if (res && res.EC === 0) {
-                setStatistics(res.DT);
-            } else {
-                toast.error(res?.EM || 'Không thể tải dữ liệu thống kê!');
+            if (isMounted) {
+                if (res && res.EC === 0) {
+                    setStatistics(res.DT);
+                } else {
+                    toast.error(res?.EM || 'Không thể tải dữ liệu thống kê!');
+                }
             }
         } catch (error) {
-            console.error('Error fetching statistics:', error);
-            toast.error('Không thể tải dữ liệu thống kê!');
+            if (isMounted) {
+                console.error('Error fetching statistics:', error);
+                toast.error('Không thể tải dữ liệu thống kê!');
+            }
         } finally {
-            setLoading(false);
+            if (isMounted) {
+                setLoading(false);
+            }
         }
     };
 

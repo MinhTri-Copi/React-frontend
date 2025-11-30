@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const BASE_URL = 'http://localhost:8082/api';
+import axiosInstance from '../utils/axiosConfig';
 
 const getInterviewRounds = async (userId, filters = {}) => {
     try {
@@ -11,7 +9,7 @@ const getInterviewRounds = async (userId, filters = {}) => {
         if (filters.isActive !== undefined) {
             params.append('isActive', filters.isActive);
         }
-        const res = await axios.get(`${BASE_URL}/hr/interview-rounds?${params.toString()}`);
+        const res = await axiosInstance.get(`/hr/interview-rounds?${params.toString()}`);
         return res.data;
     } catch (error) {
         console.error('Error fetching interview rounds:', error);
@@ -21,7 +19,7 @@ const getInterviewRounds = async (userId, filters = {}) => {
 
 const createInterviewRound = async (userId, data) => {
     try {
-        const res = await axios.post(`${BASE_URL}/hr/interview-rounds?userId=${userId}`, data);
+        const res = await axiosInstance.post(`/hr/interview-rounds?userId=${userId}`, data);
         return res.data;
     } catch (error) {
         console.error('Error creating interview round:', error);
@@ -31,7 +29,7 @@ const createInterviewRound = async (userId, data) => {
 
 const updateInterviewRound = async (userId, roundId, data) => {
     try {
-        const res = await axios.put(`${BASE_URL}/hr/interview-rounds/${roundId}?userId=${userId}`, data);
+        const res = await axiosInstance.put(`/hr/interview-rounds/${roundId}?userId=${userId}`, data);
         return res.data;
     } catch (error) {
         console.error('Error updating interview round:', error);
@@ -41,7 +39,7 @@ const updateInterviewRound = async (userId, roundId, data) => {
 
 const deleteInterviewRound = async (userId, roundId) => {
     try {
-        const res = await axios.delete(`${BASE_URL}/hr/interview-rounds/${roundId}?userId=${userId}`);
+        const res = await axiosInstance.delete(`/hr/interview-rounds/${roundId}?userId=${userId}`);
         return res.data;
     } catch (error) {
         console.error('Error deleting interview round:', error);

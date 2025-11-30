@@ -19,6 +19,7 @@ import TestTaking from './page/candidate/TestTaking';
 import TestResult from './page/candidate/TestResult';
 import HrDashboard from './page/hr/HrDashboard';
 import MeetingRoom from './page/meeting/MeetingRoom';
+import JitsiRoom from './components/JitsiRoom';
 
 function App() {
   return (
@@ -43,7 +44,7 @@ function App() {
           <Route path="/candidate/settings" element={<div>Settings Page</div>} />
           
           {/* Meeting Routes */}
-          <Route path="/meeting/:roomName" element={<MeetingRoom />} />
+          <Route path="/meeting/:roomName" element={<JitsiRoom />} />
           
           {/* Other Routes */}
           <Route path="/admin" element={<div>Admin Dashboard</div>} />

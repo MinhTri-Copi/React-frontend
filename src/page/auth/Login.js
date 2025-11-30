@@ -27,14 +27,41 @@ const Login = () => {
             if (res && res.data && res.data.EC === 0) {
                 toast.success(res.data.EM);
                 
-                // Save user info to storage
-                const userData = JSON.stringify(res.data.DT);
-                localStorage.setItem('user', userData);
-                sessionStorage.setItem('user', userData);
+                // Save user info and JWT token to storage
+                const userData = res.data.DT;
+                
+                // Debug: Log response structure
+                console.log('Login response DT:', userData);
+                
+                // Handle both old format (user object directly) and new format (user + token)
+                let userDataToStore;
+                if (userData.user && userData.token) {
+                    // New format: { user: {...}, token: "..." }
+                    userDataToStore = {
+                        ...userData.user,
+                        token: userData.token
+                    };
+                } else if (userData.token) {
+                    // Format: { ...userFields, token: "..." }
+                    userDataToStore = userData;
+                } else {
+                    // Old format: just user object (shouldn't happen with JWT)
+                    userDataToStore = {
+                        ...userData,
+                        token: null
+                    };
+                    console.warn('Login response missing token!');
+                }
+                
+                console.log('Storing user data:', userDataToStore);
+                
+                const userDataString = JSON.stringify(userDataToStore);
+                localStorage.setItem('user', userDataString);
+                sessionStorage.setItem('user', userDataString);
                 
                 // Navigate based on role
-                if (res.data.DT && res.data.DT.roleId) {
-                    switch (res.data.DT.roleId) {
+                if (userData.user && userData.user.roleId) {
+                    switch (userData.user.roleId) {
                         case 1:
                             navigate('/admin');
                             break;
