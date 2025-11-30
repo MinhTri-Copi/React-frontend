@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import ReactPaginate from 'react-paginate';
 import { toast } from 'react-toastify';
-import { getTestSubmissions } from '../../service.js/hrService';
+import { getTestSubmissions, updateApplicationStatus } from '../../service.js/hrService';
 import GradeModal from './GradeModal';
 import './TestSubmissionList.scss';
 
@@ -23,6 +23,10 @@ const TestSubmissionList = ({ userId }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [showGradeModal, setShowGradeModal] = useState(false);
     const [selectedSubmissionId, setSelectedSubmissionId] = useState(null);
+    const [showSelectionFilter, setShowSelectionFilter] = useState(false);
+    const [scoreSortOrder, setScoreSortOrder] = useState('desc'); // 'desc' = cao đến thấp, 'asc' = thấp đến cao
+    const [selectedCount, setSelectedCount] = useState('');
+    const [isApproving, setIsApproving] = useState(false);
 
     useEffect(() => {
         if (!userId) return;
@@ -94,6 +98,110 @@ const TestSubmissionList = ({ userId }) => {
 
     const handleGraded = () => {
         fetchSubmissions(); // Refresh list after grading
+    };
+
+    const handleToggleSelectionFilter = () => {
+        if (!showSelectionFilter && jobFilter === 'all') {
+            toast.warning('Vui lòng chọn tin tuyển dụng trước khi sử dụng tính năng tuyển chọn!');
+            return;
+        }
+        setShowSelectionFilter(!showSelectionFilter);
+        if (!showSelectionFilter) {
+            setScoreSortOrder('desc');
+            setSelectedCount('');
+        }
+    };
+
+    const handleApproveCandidates = async () => {
+        if (!selectedCount || parseInt(selectedCount) <= 0) {
+            toast.error('Vui lòng nhập số lượng ứng viên cần duyệt!');
+            return;
+        }
+
+        if (jobFilter === 'all') {
+            toast.error('Vui lòng chọn tin tuyển dụng trước khi duyệt!');
+            return;
+        }
+
+        // Lấy tất cả submissions đã chấm điểm của tin tuyển dụng này
+        try {
+            setIsApproving(true);
+            const res = await getTestSubmissions(userId, {
+                status: 'dacham',
+                jobPostingId: jobFilter,
+                search: '',
+                page: 1,
+                limit: 1000 // Lấy tất cả
+            });
+
+            if (res && res.EC === 0) {
+                let candidates = res.DT?.submissions || [];
+
+                // Lọc chỉ những submission đã chấm điểm và có điểm
+                candidates = candidates.filter(sub => 
+                    sub.Trangthai === 'dacham' && 
+                    sub.Tongdiemdatduoc !== null &&
+                    sub.JobApplication?.id
+                );
+
+                // Sắp xếp theo điểm
+                candidates.sort((a, b) => {
+                    const scoreA = a.Tongdiemdatduoc || 0;
+                    const scoreB = b.Tongdiemdatduoc || 0;
+                    return scoreSortOrder === 'desc' ? scoreB - scoreA : scoreA - scoreB;
+                });
+
+                // Lấy số lượng đã chọn
+                const count = parseInt(selectedCount);
+                const toApprove = candidates.slice(0, count);
+
+                if (toApprove.length === 0) {
+                    toast.warning('Không có ứng viên nào đủ điều kiện để duyệt!');
+                    setIsApproving(false);
+                    return;
+                }
+
+                // Duyệt từng ứng viên (statusId = 4: Đã xét duyệt - vào vòng phỏng vấn)
+                let successCount = 0;
+                let failCount = 0;
+
+                for (const submission of toApprove) {
+                    try {
+                        const approveRes = await updateApplicationStatus(
+                            userId,
+                            submission.JobApplication.id,
+                            4 // Status ID 4: Đã xét duyệt (vào vòng phỏng vấn)
+                        );
+                        if (approveRes.EC === 0) {
+                            successCount++;
+                        } else {
+                            failCount++;
+                        }
+                    } catch (error) {
+                        console.error('Error approving candidate:', error);
+                        failCount++;
+                    }
+                }
+
+                if (successCount > 0) {
+                    toast.success(`Đã duyệt thành công ${successCount} ứng viên vào vòng phỏng vấn!`);
+                    fetchSubmissions(); // Refresh list
+                    setShowSelectionFilter(false);
+                    setSelectedCount('');
+                }
+
+                if (failCount > 0) {
+                    toast.warning(`${failCount} ứng viên không thể duyệt. Vui lòng kiểm tra lại!`);
+                }
+            } else {
+                toast.error(res?.EM || 'Không thể lấy danh sách ứng viên!');
+            }
+        } catch (error) {
+            console.error('Error approving candidates:', error);
+            toast.error('Có lỗi xảy ra khi duyệt ứng viên!');
+        } finally {
+            setIsApproving(false);
+        }
     };
 
     const statusBadgeClass = useMemo(() => ({
@@ -177,6 +285,87 @@ const TestSubmissionList = ({ userId }) => {
                             </button>
                         ))}
                     </div>
+                </div>
+
+                <div className="selection-section">
+                    <button 
+                        className="btn-selection-toggle"
+                        onClick={handleToggleSelectionFilter}
+                    >
+                        <i className="fas fa-check-circle"></i>
+                        Tuyển chọn
+                    </button>
+
+                    {showSelectionFilter && (
+                        <div className="selection-filter-panel">
+                            <div className="filter-row">
+                                <label>
+                                    <i className="fas fa-sort-amount-down"></i>
+                                    Sắp xếp theo điểm:
+                                </label>
+                                <select 
+                                    value={scoreSortOrder} 
+                                    onChange={(e) => setScoreSortOrder(e.target.value)}
+                                    disabled={jobFilter === 'all'}
+                                >
+                                    <option value="desc">Cao đến thấp</option>
+                                    <option value="asc">Thấp đến cao</option>
+                                </select>
+                                {jobFilter === 'all' && (
+                                    <span className="warning-text">
+                                        <i className="fas fa-exclamation-triangle"></i>
+                                        Vui lòng chọn tin tuyển dụng trước
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="filter-row">
+                                <label>
+                                    <i className="fas fa-users"></i>
+                                    Số lượng ứng viên cần duyệt:
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={selectedCount}
+                                    onChange={(e) => setSelectedCount(e.target.value)}
+                                    placeholder="Nhập số lượng"
+                                    disabled={jobFilter === 'all'}
+                                />
+                            </div>
+
+                            <div className="filter-actions">
+                                <button
+                                    className="btn-approve-batch"
+                                    onClick={handleApproveCandidates}
+                                    disabled={!selectedCount || jobFilter === 'all' || isApproving}
+                                >
+                                    {isApproving ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i>
+                                            Đang duyệt...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-check"></i>
+                                            Duyệt
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    className="btn-cancel-selection"
+                                    onClick={() => {
+                                        setShowSelectionFilter(false);
+                                        setSelectedCount('');
+                                        setScoreSortOrder('desc');
+                                    }}
+                                >
+                                    <i className="fas fa-times"></i>
+                                    Hủy
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

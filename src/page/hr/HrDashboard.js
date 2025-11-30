@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import './HrDashboard.scss';
@@ -22,6 +22,9 @@ const sidebarItems = [
 const HrDashboard = () => {
     const [user, setUser] = useState(null);
     const [activeMenu, setActiveMenu] = useState('analytics');
+    const [sidebarWidth, setSidebarWidth] = useState(270); // Default width
+    const [isResizing, setIsResizing] = useState(false);
+    const sidebarRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -93,15 +96,72 @@ const HrDashboard = () => {
         navigate('/login');
     };
 
+    // Load sidebar width from localStorage on mount
+    useEffect(() => {
+        const savedWidth = localStorage.getItem('hr-sidebar-width');
+        if (savedWidth) {
+            const width = parseInt(savedWidth, 10);
+            if (width >= 200 && width <= 400) { // Min 200px, Max 400px
+                setSidebarWidth(width);
+            }
+        }
+    }, []);
+
+    // Save sidebar width to localStorage
+    useEffect(() => {
+        localStorage.setItem('hr-sidebar-width', sidebarWidth.toString());
+    }, [sidebarWidth]);
+
+    // Handle mouse down on resize handle
+    const handleMouseDown = useCallback((e) => {
+        e.preventDefault();
+        setIsResizing(true);
+    }, []);
+
+    // Handle mouse move during resize
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!isResizing) return;
+
+            const newWidth = e.clientX;
+            // Min width: 200px, Max width: 400px
+            if (newWidth >= 200 && newWidth <= 400) {
+                setSidebarWidth(newWidth);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsResizing(false);
+        };
+
+        if (isResizing) {
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+        }
+
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+        };
+    }, [isResizing]);
+
     return (
         <div className="hr-dashboard-page">
             <div className="hr-layout">
-                <aside className="hr-sidebar">
+                <aside 
+                    className="hr-sidebar" 
+                    ref={sidebarRef}
+                    style={{ width: `${sidebarWidth}px` }}
+                >
                     <div className="sidebar-brand">
                         <div className="brand-icon">
                             <i className="fas fa-user-tie"></i>
                         </div>
-                        <div>
+                        <div className="brand-text">
                             <h2>HR Center</h2>
                             <p>{user?.Hoten || 'HR Manager'}</p>
                         </div>
@@ -112,18 +172,23 @@ const HrDashboard = () => {
                                 key={item.id}
                                 className={`sidebar-item ${activeMenu === item.id ? 'active' : ''}`}
                                 onClick={() => handleMenuClick(item.id)}
+                                title={item.label}
                             >
                                 <i className={item.icon}></i>
-                                <span>{item.label}</span>
+                                <span className="sidebar-item-text">{item.label}</span>
                             </button>
                         ))}
                     </nav>
                     <div className="sidebar-footer">
-                        <button className="logout-btn" onClick={handleLogout}>
+                        <button className="logout-btn" onClick={handleLogout} title="Đăng xuất">
                             <i className="fas fa-sign-out-alt"></i>
-                            <span>Đăng xuất</span>
+                            <span className="sidebar-item-text">Đăng xuất</span>
                         </button>
                     </div>
+                    <div 
+                        className={`sidebar-resize-handle ${isResizing ? 'resizing' : ''}`}
+                        onMouseDown={handleMouseDown}
+                    ></div>
                 </aside>
 
                 <div className="hr-main">
