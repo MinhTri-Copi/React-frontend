@@ -137,6 +137,15 @@
                                 i {
                                     font-size: 14px;
                                 }
+
+                                &.interview-rounds {
+                                    background: rgba(255, 255, 255, 0.25);
+                                    font-weight: 600;
+
+                                    i {
+                                        color: rgba(255, 255, 255, 0.95);
+                                    }
+                                }
                             }
                         }
 
@@ -257,6 +266,77 @@
                                             border-radius: 20px;
                                             font-size: 14px;
                                             font-weight: 500;
+                                        }
+                                    }
+                                }
+
+                                .interview-rounds-list {
+                                    display: flex;
+                                    flex-direction: column;
+                                    gap: 20px;
+
+                                    .round-item {
+                                        padding: 20px;
+                                        background: #f9fafb;
+                                        border-radius: 12px;
+                                        border: 2px solid #e5e7eb;
+                                        transition: all 0.3s ease;
+
+                                        &:hover {
+                                            border-color: #008060;
+                                            box-shadow: 0 4px 12px rgba(0, 128, 96, 0.1);
+                                        }
+
+                                        .round-header {
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 15px;
+                                            margin-bottom: 12px;
+
+                                            .round-number-badge {
+                                                flex-shrink: 0;
+
+                                                .round-number {
+                                                    display: inline-block;
+                                                    padding: 6px 14px;
+                                                    background: linear-gradient(135deg, #008060, #2bab60);
+                                                    color: white;
+                                                    border-radius: 20px;
+                                                    font-size: 13px;
+                                                    font-weight: 600;
+                                                }
+                                            }
+
+                                            .round-title {
+                                                margin: 0;
+                                                font-size: 18px;
+                                                font-weight: 600;
+                                                color: #333;
+                                                flex: 1;
+                                            }
+                                        }
+
+                                        .round-duration {
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 8px;
+                                            color: #6b7280;
+                                            font-size: 14px;
+                                            margin-bottom: 10px;
+
+                                            i {
+                                                color: #008060;
+                                                font-size: 13px;
+                                            }
+                                        }
+
+                                        .round-description {
+                                            p {
+                                                margin: 0;
+                                                font-size: 14px;
+                                                color: #555;
+                                                line-height: 1.6;
+                                            }
                                         }
                                     }
                                 }

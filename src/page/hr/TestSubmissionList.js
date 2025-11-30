@@ -45,7 +45,30 @@ const TestSubmissionList = ({ userId }) => {
             });
 
             if (res && res.EC === 0) {
-                setSubmissions(res.DT?.submissions || []);
+                // Lọc bỏ những ứng viên đã bị từ chối (applicationStatusId = 3)
+                let filteredSubmissions = (res.DT?.submissions || []).filter(sub => {
+                    // Nếu không có JobApplication hoặc applicationStatusId = 3 (từ chối) thì ẩn
+                    if (!sub.JobApplication || sub.JobApplication.applicationStatusId === 3) {
+                        return false;
+                    }
+                    return true;
+                });
+
+                // Sắp xếp: ưu tiên hiển thị trạng thái "đã nộp bài" (danop) lên đầu
+                filteredSubmissions.sort((a, b) => {
+                    // Nếu a là "danop" và b không phải → a lên trước
+                    if (a.Trangthai === 'danop' && b.Trangthai !== 'danop') {
+                        return -1;
+                    }
+                    // Nếu b là "danop" và a không phải → b lên trước
+                    if (b.Trangthai === 'danop' && a.Trangthai !== 'danop') {
+                        return 1;
+                    }
+                    // Còn lại giữ nguyên thứ tự
+                    return 0;
+                });
+
+                setSubmissions(filteredSubmissions);
                 setJobOptions(res.DT?.filterOptions?.jobPostings || []);
                 setStats(res.DT?.stats || { total: 0, pending: 0, graded: 0 });
                 setPagination(res.DT?.pagination || { totalRows: 0, totalPages: 0, currentPage: 1, limit: 10 });
@@ -98,6 +121,70 @@ const TestSubmissionList = ({ userId }) => {
 
     const handleGraded = () => {
         fetchSubmissions(); // Refresh list after grading
+    };
+
+    const handleApproveCandidate = async (submission) => {
+        if (!submission.JobApplication?.id) {
+            toast.error('Không tìm thấy đơn ứng tuyển!');
+            return;
+        }
+
+        if (submission.Trangthai !== 'dacham') {
+            toast.warning('Chỉ có thể duyệt ứng viên đã chấm điểm!');
+            return;
+        }
+
+        try {
+            const res = await updateApplicationStatus(
+                userId,
+                submission.JobApplication.id,
+                7 // Status ID 7: Chuẩn bị phỏng vấn
+            );
+
+            if (res.EC === 0) {
+                toast.success(`Đã duyệt ứng viên ${submission.User?.Hoten || ''} vào vòng phỏng vấn!`);
+                fetchSubmissions(); // Refresh list
+            } else {
+                toast.error(res.EM || 'Không thể duyệt ứng viên!');
+            }
+        } catch (error) {
+            console.error('Error approving candidate:', error);
+            toast.error('Có lỗi xảy ra khi duyệt ứng viên!');
+        }
+    };
+
+    const handleRejectCandidate = async (submission) => {
+        if (!submission.JobApplication?.id) {
+            toast.error('Không tìm thấy đơn ứng tuyển!');
+            return;
+        }
+
+        if (submission.Trangthai !== 'dacham') {
+            toast.warning('Chỉ có thể từ chối ứng viên đã chấm điểm!');
+            return;
+        }
+
+        if (!window.confirm(`Bạn có chắc chắn muốn từ chối ứng viên ${submission.User?.Hoten || ''}?`)) {
+            return;
+        }
+
+        try {
+            const res = await updateApplicationStatus(
+                userId,
+                submission.JobApplication.id,
+                3 // Status ID 3: Từ chối
+            );
+
+            if (res.EC === 0) {
+                toast.success(`Đã từ chối ứng viên ${submission.User?.Hoten || ''}!`);
+                fetchSubmissions(); // Refresh list
+            } else {
+                toast.error(res.EM || 'Không thể từ chối ứng viên!');
+            }
+        } catch (error) {
+            console.error('Error rejecting candidate:', error);
+            toast.error('Có lỗi xảy ra khi từ chối ứng viên!');
+        }
     };
 
     const handleToggleSelectionFilter = () => {
@@ -161,7 +248,7 @@ const TestSubmissionList = ({ userId }) => {
                     return;
                 }
 
-                // Duyệt từng ứng viên (statusId = 4: Đã xét duyệt - vào vòng phỏng vấn)
+                // Duyệt từng ứng viên (statusId = 7: Chuẩn bị phỏng vấn)
                 let successCount = 0;
                 let failCount = 0;
 
@@ -170,7 +257,7 @@ const TestSubmissionList = ({ userId }) => {
                         const approveRes = await updateApplicationStatus(
                             userId,
                             submission.JobApplication.id,
-                            4 // Status ID 4: Đã xét duyệt (vào vòng phỏng vấn)
+                            7 // Status ID 7: Chuẩn bị phỏng vấn
                         );
                         if (approveRes.EC === 0) {
                             successCount++;
@@ -436,14 +523,43 @@ const TestSubmissionList = ({ userId }) => {
                                         </td>
                                         <td>{formatDateTime(sub.updatedAt)}</td>
                                         <td>
-                                            <button
-                                                className="btn-grade"
-                                                onClick={() => handleOpenGradeModal(sub.id)}
-                                                disabled={sub.Trangthai !== 'danop' && sub.Trangthai !== 'dacham'}
-                                            >
-                                                <i className="fas fa-pen"></i>
-                                                {sub.Trangthai === 'dacham' ? 'Xem lại' : 'Chấm bài'}
-                                            </button>
+                                            <div className="action-buttons">
+                                                <button
+                                                    className="btn-grade"
+                                                    onClick={() => handleOpenGradeModal(sub.id)}
+                                                    disabled={sub.Trangthai !== 'danop' && sub.Trangthai !== 'dacham'}
+                                                >
+                                                    <i className="fas fa-pen"></i>
+                                                    {sub.Trangthai === 'dacham' ? 'Xem lại' : 'Chấm bài'}
+                                                </button>
+                                                {sub.Trangthai === 'dacham' && (
+                                                    <>
+                                                        {/* Chỉ hiển thị nút "Duyệt" nếu chưa duyệt (applicationStatusId !== 7) */}
+                                                        {sub.JobApplication?.applicationStatusId !== 7 && (
+                                                            <button
+                                                                className="btn-approve"
+                                                                onClick={() => handleApproveCandidate(sub)}
+                                                                title="Duyệt vào vòng phỏng vấn"
+                                                            >
+                                                                <i className="fas fa-check"></i>
+                                                                Duyệt
+                                                            </button>
+                                                        )}
+                                                        {/* Chỉ hiển thị nút "Từ chối" nếu chưa duyệt và chưa từ chối */}
+                                                        {sub.JobApplication?.applicationStatusId !== 7 && 
+                                                         sub.JobApplication?.applicationStatusId !== 3 && (
+                                                            <button
+                                                                className="btn-reject"
+                                                                onClick={() => handleRejectCandidate(sub)}
+                                                                title="Từ chối ứng viên"
+                                                            >
+                                                                <i className="fas fa-times"></i>
+                                                                Từ chối
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

@@ -410,6 +410,12 @@ const JobList = () => {
                                                                     <i className="fas fa-map-marker-alt"></i>
                                                                     {job.Diadiem}
                                                                 </span>
+                                                                {job.interviewRoundsCount > 0 && (
+                                                                    <span className="interview-rounds">
+                                                                        <i className="fas fa-users"></i>
+                                                                        {job.interviewRoundsCount} vòng phỏng vấn
+                                                                    </span>
+                                                                )}
                                                                 {daysRemaining !== null && (
                                                                     <span className="deadline">
                                                                         <i className="far fa-clock"></i>

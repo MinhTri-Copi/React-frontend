@@ -165,6 +165,233 @@
                         color: #6b7280;
                         font-style: italic;
                     }
+
+                    // Interview Rounds Section
+                    &.interview-rounds-section {
+                        margin-top: 10px;
+                        padding: 20px;
+                        background: #f9fafb;
+                        border-radius: 12px;
+                        border: 2px solid #e5e7eb;
+
+                        &.create-mode {
+                            border-color: #3b82f6;
+                            background: #eff6ff;
+
+                            label {
+                                .info-text {
+                                    color: #3b82f6;
+                                    font-weight: 500;
+                                }
+                            }
+
+                            .create-mode-message {
+                                text-align: center;
+                                padding: 20px;
+
+                                .info-icon {
+                                    margin-bottom: 12px;
+
+                                    i {
+                                        font-size: 36px;
+                                        color: #3b82f6;
+                                    }
+                                }
+
+                                p {
+                                    margin: 8px 0;
+                                    color: #374151;
+                                    font-size: 14px;
+
+                                    &.hint-text {
+                                        color: #6b7280;
+                                        font-size: 13px;
+                                        font-style: italic;
+                                    }
+                                }
+
+                                .btn-create-interview {
+                                    margin-top: 20px;
+                                    padding: 12px 24px;
+                                    background: linear-gradient(135deg, #3b82f6, #2563eb);
+                                    color: white;
+                                    border: none;
+                                    border-radius: 10px;
+                                    font-weight: 600;
+                                    font-size: 14px;
+                                    cursor: pointer;
+                                    display: inline-flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    transition: all 0.3s ease;
+                                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+
+                                    &:hover {
+                                        opacity: 0.9;
+                                        transform: translateY(-2px);
+                                        box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
+                                    }
+
+                                    i {
+                                        font-size: 12px;
+                                    }
+                                }
+                            }
+                        }
+
+                        label {
+                            .warning-text {
+                                color: #f59e0b;
+                                font-weight: 500;
+                            }
+
+                            .info-text {
+                                color: #3b82f6;
+                                font-weight: 500;
+                            }
+                        }
+
+                        .loading-rounds {
+                            display: flex;
+                            align-items: center;
+                            gap: 10px;
+                            padding: 20px;
+                            color: #6b7280;
+                            justify-content: center;
+
+                            i {
+                                font-size: 18px;
+                            }
+                        }
+
+                        .rounds-info {
+                            .rounds-count {
+                                display: flex;
+                                align-items: center;
+                                gap: 10px;
+                                margin-bottom: 16px;
+                                padding: 12px;
+                                background: white;
+                                border-radius: 8px;
+                                border: 1px solid #e5e7eb;
+
+                                i {
+                                    color: #10b981;
+                                    font-size: 18px;
+                                }
+
+                                span {
+                                    font-size: 14px;
+                                    color: #374151;
+
+                                    strong {
+                                        color: #10b981;
+                                        font-size: 16px;
+                                    }
+                                }
+                            }
+
+                            .rounds-list {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 10px;
+
+                                .round-item {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 12px;
+                                    padding: 12px 16px;
+                                    background: white;
+                                    border-radius: 8px;
+                                    border: 1px solid #e5e7eb;
+                                    transition: all 0.3s ease;
+
+                                    &:hover {
+                                        border-color: #10b981;
+                                        box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
+                                    }
+
+                                    .round-number {
+                                        font-weight: 600;
+                                        color: #10b981;
+                                        min-width: 70px;
+                                        font-size: 14px;
+                                    }
+
+                                    .round-title {
+                                        flex: 1;
+                                        color: #374151;
+                                        font-size: 14px;
+                                    }
+
+                                    .round-duration {
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 6px;
+                                        color: #6b7280;
+                                        font-size: 13px;
+
+                                        i {
+                                            font-size: 12px;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        .no-rounds-message {
+                            text-align: center;
+                            padding: 30px 20px;
+
+                            .no-rounds-icon {
+                                margin-bottom: 16px;
+
+                                i {
+                                    font-size: 48px;
+                                    color: #f59e0b;
+                                }
+                            }
+
+                            p {
+                                margin: 8px 0;
+                                color: #374151;
+                                font-size: 14px;
+
+                                &.hint-text {
+                                    color: #6b7280;
+                                    font-size: 13px;
+                                    font-style: italic;
+                                }
+                            }
+
+                            .btn-navigate-interview {
+                                margin-top: 20px;
+                                padding: 12px 24px;
+                                background: linear-gradient(135deg, #10b981, #059669);
+                                color: white;
+                                border: none;
+                                border-radius: 10px;
+                                font-weight: 600;
+                                font-size: 14px;
+                                cursor: pointer;
+                                display: inline-flex;
+                                align-items: center;
+                                gap: 8px;
+                                transition: all 0.3s ease;
+                                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+
+                                &:hover {
+                                    opacity: 0.9;
+                                    transform: translateY(-2px);
+                                    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+                                }
+
+                                i {
+                                    font-size: 12px;
+                                }
+                            }
+                        }
+                    }
                 }
 
                 @media (max-width: 768px) {

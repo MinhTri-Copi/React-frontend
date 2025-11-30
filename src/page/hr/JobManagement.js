@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './JobManagement.scss';
 import { getMyJobPostings, getJobPostingDetail, deleteJobPosting, createJobPosting, updateJobPosting, getMyCompanies } from '../../service.js/hrService';
 import { getAllMajors, getAllFormats, getAllJobPostingStatuses } from '../../service.js/utilityService';
@@ -8,6 +9,7 @@ import JobFormModal from './JobFormModal';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 
 const JobManagement = ({ userId }) => {
+    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
     const [stats, setStats] = useState({
         totalJobs: 0,
@@ -195,6 +197,14 @@ const JobManagement = ({ userId }) => {
                 handleModalClose();
                 // Refresh the list
                 fetchJobPostings(currentPage);
+                
+                // Nếu là tạo mới, điều hướng đến trang vòng phỏng vấn với jobPostingId
+                if (modalMode === 'create' && res.DT && res.DT.id) {
+                    // Delay một chút để toast hiển thị
+                    setTimeout(() => {
+                        navigate(`/hr/interview-rounds?jobPostingId=${res.DT.id}&autoOpen=true`);
+                    }, 500);
+                }
             } else {
                 toast.error(res.EM || 'Có lỗi xảy ra!');
             }
@@ -386,6 +396,7 @@ const JobManagement = ({ userId }) => {
                 formats={formats}
                 majors={majors}
                 statuses={statuses}
+                userId={userId}
             />
 
             {/* Confirm Delete Modal */}

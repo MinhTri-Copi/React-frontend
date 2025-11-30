@@ -8,12 +8,16 @@ import CompanyProfile from './CompanyProfile';
 import HrStatistics from './HrStatistics';
 import TestManagement from './TestManagement';
 import TestSubmissionList from './TestSubmissionList';
+import InterviewRoundManagement from './InterviewRoundManagement';
+import MeetingManagement from './MeetingManagement';
 
 const sidebarItems = [
     { id: 'analytics', label: 'Thống kê', icon: 'fas fa-chart-line' },
     { id: 'jobs', label: 'Quản lý tin tuyển dụng', icon: 'fas fa-briefcase' },
     { id: 'tests', label: 'Quản lý bài test', icon: 'fas fa-file-alt' },
     { id: 'test-submissions', label: 'DS bài test đã nộp', icon: 'fas fa-clipboard-check' },
+    { id: 'interview-rounds', label: 'Vòng phỏng vấn', icon: 'fas fa-video' },
+    { id: 'meetings', label: 'Meet', icon: 'fas fa-video' },
     { id: 'candidates', label: 'QL ứng viên', icon: 'fas fa-user-friends' },
     { id: 'company', label: 'QL hồ sơ công ty', icon: 'fas fa-building' },
     { id: 'applications', label: 'Danh sách ứng viên ', icon: 'fas fa-clipboard-list' },
@@ -41,6 +45,10 @@ const HrDashboard = () => {
             setActiveMenu('tests');
         } else if (path === '/hr/test-submissions') {
             setActiveMenu('test-submissions');
+        } else if (path === '/hr/interview-rounds') {
+            setActiveMenu('interview-rounds');
+        } else if (path === '/hr/meetings') {
+            setActiveMenu('meetings');
         } else if (path === '/hr') {
             // Don't override if already set to 'jobs' or 'analytics'
             // Only set to 'analytics' on initial load
@@ -78,6 +86,10 @@ const HrDashboard = () => {
             navigate('/hr/tests');
         } else if (itemId === 'test-submissions') {
             navigate('/hr/test-submissions');
+        } else if (itemId === 'interview-rounds') {
+            navigate('/hr/interview-rounds');
+        } else if (itemId === 'meetings') {
+            navigate('/hr/meetings');
         } else if (itemId === 'candidates') {
             navigate('/hr/candidates');
         } else if (itemId === 'company') {
@@ -198,6 +210,10 @@ const HrDashboard = () => {
                         <TestManagement userId={user?.id} />
                     ) : activeMenu === 'test-submissions' ? (
                         <TestSubmissionList userId={user?.id} />
+                    ) : activeMenu === 'interview-rounds' ? (
+                        <InterviewRoundManagement userId={user?.id} />
+                    ) : activeMenu === 'meetings' ? (
+                        <MeetingManagement userId={user?.id} />
                     ) : activeMenu === 'candidates' ? (
                         <CandidateManagement />
                     ) : activeMenu === 'company' ? (

@@ -263,6 +263,12 @@ const JobDetail = () => {
                                             <span>{job.Format.TenHinhThuc}</span>
                                         </div>
                                     )}
+                                    {job.interviewRoundsCount > 0 && (
+                                        <div className="info-item interview-rounds">
+                                            <i className="fas fa-users"></i>
+                                            <span>{job.interviewRoundsCount} vòng phỏng vấn</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <button 
                                     className={`btn-apply-large ${!canApply ? 'disabled' : ''}`} 
@@ -327,6 +333,41 @@ const JobDetail = () => {
                                         )}
                                     </div>
                                 </div>
+
+                                {/* Interview Rounds */}
+                                {job.interviewRounds && job.interviewRounds.length > 0 && (
+                                    <div className="detail-card">
+                                        <h2 className="card-title">
+                                            <i className="fas fa-users"></i>
+                                            Quy trình phỏng vấn ({job.interviewRoundsCount} vòng)
+                                        </h2>
+                                        <div className="card-content">
+                                            <div className="interview-rounds-list">
+                                                {job.interviewRounds.map((round, index) => (
+                                                    <div key={round.id} className="round-item">
+                                                        <div className="round-header">
+                                                            <div className="round-number-badge">
+                                                                <span className="round-number">Vòng {round.roundNumber}</span>
+                                                            </div>
+                                                            <h3 className="round-title">{round.title}</h3>
+                                                        </div>
+                                                        {round.duration && (
+                                                            <div className="round-duration">
+                                                                <i className="fas fa-clock"></i>
+                                                                <span>Thời lượng: {round.duration} phút</span>
+                                                            </div>
+                                                        )}
+                                                        {round.description && (
+                                                            <div className="round-description">
+                                                                <p>{round.description}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Benefits */}
                                 <div className="detail-card">
