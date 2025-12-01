@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import { toast } from 'react-toastify';
-import { getMeetingByRoomName } from '../service.js/meetingService';
+import { getMeetingByRoomName, updateMeetingStatus } from '../service.js/meetingService';
 import './JitsiRoom.scss';
 
 const JitsiRoom = () => {
@@ -141,8 +141,28 @@ const JitsiRoom = () => {
         }
     };
 
-    const handleLeaveMeeting = () => {
+    const handleLeaveMeeting = async () => {
         console.log('handleLeaveMeeting called - isHR:', isHR);
+        
+        // Update meeting status to "done" if HR leaves
+        if (isHR && user && roomName) {
+            try {
+                // Get meeting info to update status
+                const meetingRes = await getMeetingByRoomName(roomName, user.id);
+                if (meetingRes && meetingRes.EC === 0 && meetingRes.DT) {
+                    const meeting = meetingRes.DT;
+                    // Only update if meeting is still running
+                    if (meeting.status === 'running' || meeting.status === 'pending') {
+                        await updateMeetingStatus(meeting.id, user.id, 'done', 'hr');
+                        console.log('✅ Meeting status updated to done');
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating meeting status:', error);
+                // Don't block navigation if update fails
+            }
+        }
+        
         // Navigate back based on role
         if (isHR) {
             navigate('/hr/meetings');
@@ -154,10 +174,32 @@ const JitsiRoom = () => {
     const handleApiReady = (api) => {
         console.log('✅ Jitsi API ready');
         
-        // If HR, grant moderator status
+        // Update meeting status to "running" when meeting starts
+        const updateStatusToRunning = async () => {
+            if (isHR && user && roomName) {
+                try {
+                    const meetingRes = await getMeetingByRoomName(roomName, user.id);
+                    if (meetingRes && meetingRes.EC === 0 && meetingRes.DT) {
+                        const meeting = meetingRes.DT;
+                        // Only update if meeting is still pending
+                        if (meeting.status === 'pending') {
+                            await updateMeetingStatus(meeting.id, user.id, 'running', 'hr');
+                            console.log('✅ Meeting status updated to running');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error updating meeting status to running:', error);
+                }
+            }
+        };
+        
+        // If HR, grant moderator status and update status
         if (isHR) {
             api.addEventListener('videoConferenceJoined', () => {
                 console.log('✅ HR joined - Setting as moderator');
+                // Update status to running
+                updateStatusToRunning();
+                
                 setTimeout(() => {
                     try {
                         const myUserID = api._myUserID || api.getMyUserId();
@@ -213,6 +255,7 @@ const JitsiRoom = () => {
                     }}
                     onApiReady={handleApiReady}
                     onReadyToClose={handleLeaveMeeting}
+                    onVideoConferenceLeft={handleLeaveMeeting}
                 />
             </div>
         </div>

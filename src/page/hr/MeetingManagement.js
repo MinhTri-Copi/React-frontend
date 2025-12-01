@@ -8,6 +8,7 @@ import {
 } from '../../service.js/meetingService';
 import { getJobApplications } from '../../service.js/hrService';
 import { getInterviewRounds } from '../../service.js/interviewRoundService';
+import MeetingEvaluationModal from './MeetingEvaluationModal';
 import './MeetingManagement.scss';
 
 const MeetingManagement = ({ userId }) => {
@@ -25,6 +26,8 @@ const MeetingManagement = ({ userId }) => {
     const [jobApplications, setJobApplications] = useState([]);
     const [interviewRounds, setInterviewRounds] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedMeetingForEvaluation, setSelectedMeetingForEvaluation] = useState(null);
+    const [showEvaluationModal, setShowEvaluationModal] = useState(false);
 
     useEffect(() => {
         if (userId) {
@@ -314,10 +317,37 @@ const MeetingManagement = ({ userId }) => {
                                     </button>
                                 )}
                                 {meeting.status === 'done' && (
-                                    <div className="meeting-completed">
-                                        <i className="fas fa-check-circle"></i>
-                                        Meeting đã hoàn thành
-                                    </div>
+                                    <>
+                                        {meeting.score !== null && meeting.score !== undefined ? (
+                                            <div className="meeting-evaluated">
+                                                <div className="evaluation-info">
+                                                    <i className="fas fa-star"></i>
+                                                    <span>Điểm: {meeting.score}/100</span>
+                                                </div>
+                                                <button 
+                                                    className="btn-view-evaluation"
+                                                    onClick={() => {
+                                                        setSelectedMeetingForEvaluation(meeting);
+                                                        setShowEvaluationModal(true);
+                                                    }}
+                                                >
+                                                    <i className="fas fa-eye"></i>
+                                                    Xem đánh giá
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button 
+                                                className="btn-evaluate"
+                                                onClick={() => {
+                                                    setSelectedMeetingForEvaluation(meeting);
+                                                    setShowEvaluationModal(true);
+                                                }}
+                                            >
+                                                <i className="fas fa-star"></i>
+                                                Đánh giá
+                                            </button>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -423,6 +453,21 @@ const MeetingManagement = ({ userId }) => {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {/* Meeting Evaluation Modal */}
+            {showEvaluationModal && selectedMeetingForEvaluation && (
+                <MeetingEvaluationModal
+                    meeting={selectedMeetingForEvaluation}
+                    isOpen={showEvaluationModal}
+                    onClose={() => {
+                        setShowEvaluationModal(false);
+                        setSelectedMeetingForEvaluation(null);
+                    }}
+                    onSuccess={() => {
+                        fetchMeetings();
+                    }}
+                />
             )}
         </div>
     );

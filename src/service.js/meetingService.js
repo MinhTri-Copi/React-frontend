@@ -75,8 +75,17 @@ const updateMeetingStatus = async (meetingId, userId, status, role = 'hr') => {
     }
 };
 
-const updateMeeting = async (meetingId, userId, data) => {
+const updateMeeting = async (meetingId, data) => {
     try {
+        // Get userId from storage for backward compatibility
+        const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+        const userId = parsedUser?.id;
+
+        if (!userId) {
+            throw new Error('User ID not found');
+        }
+
         const res = await axiosInstance.put(`/hr/meetings/${meetingId}?userId=${userId}`, data);
         return res.data;
     } catch (error) {
