@@ -50,6 +50,7 @@ function App() {
           <Route path="/admin" element={<div>Admin Dashboard</div>} />
           <Route path="/hr" element={<HrDashboard />} />
           <Route path="/hr/tests" element={<HrDashboard />} />
+          <Route path="/hr/question-banks" element={<HrDashboard />} />
           <Route path="/hr/test-submissions" element={<HrDashboard />} />
           <Route path="/hr/interview-rounds" element={<HrDashboard />} />
           <Route path="/hr/meetings" element={<HrDashboard />} />

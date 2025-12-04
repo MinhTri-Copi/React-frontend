@@ -10,11 +10,13 @@ import TestManagement from './TestManagement';
 import TestSubmissionList from './TestSubmissionList';
 import InterviewRoundManagement from './InterviewRoundManagement';
 import MeetingManagement from './MeetingManagement';
+import QuestionBankManagement from './QuestionBankManagement';
 
 const sidebarItems = [
     { id: 'analytics', label: 'Thống kê', icon: 'fas fa-chart-line' },
     { id: 'jobs', label: 'Quản lý tin tuyển dụng', icon: 'fas fa-briefcase' },
     { id: 'tests', label: 'Quản lý bài test', icon: 'fas fa-file-alt' },
+    { id: 'question-banks', label: 'Bộ đề', icon: 'fas fa-book' },
     { id: 'test-submissions', label: 'DS bài test đã nộp', icon: 'fas fa-clipboard-check' },
     { id: 'interview-rounds', label: 'Vòng phỏng vấn', icon: 'fas fa-video' },
     { id: 'meetings', label: 'Meet', icon: 'fas fa-video' },
@@ -43,6 +45,8 @@ const HrDashboard = () => {
             setActiveMenu('applications');
         } else if (path === '/hr/tests') {
             setActiveMenu('tests');
+        } else if (path === '/hr/question-banks') {
+            setActiveMenu('question-banks');
         } else if (path === '/hr/test-submissions') {
             setActiveMenu('test-submissions');
         } else if (path === '/hr/interview-rounds') {
@@ -84,6 +88,8 @@ const HrDashboard = () => {
             }
         } else if (itemId === 'tests') {
             navigate('/hr/tests');
+        } else if (itemId === 'question-banks') {
+            navigate('/hr/question-banks');
         } else if (itemId === 'test-submissions') {
             navigate('/hr/test-submissions');
         } else if (itemId === 'interview-rounds') {
@@ -208,6 +214,8 @@ const HrDashboard = () => {
                         <JobManagement userId={user?.id} />
                     ) : activeMenu === 'tests' ? (
                         <TestManagement userId={user?.id} />
+                    ) : activeMenu === 'question-banks' ? (
+                        <QuestionBankManagement userId={user?.id} />
                     ) : activeMenu === 'test-submissions' ? (
                         <TestSubmissionList userId={user?.id} />
                     ) : activeMenu === 'interview-rounds' ? (
