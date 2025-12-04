@@ -104,6 +104,30 @@ const cancelMeeting = async (meetingId, userId) => {
     }
 };
 
+const getCandidatesByJobPosting = async (userId, jobPostingId, interviewRoundId = null) => {
+    try {
+        let url = `/hr/meetings/candidates?userId=${userId}&jobPostingId=${jobPostingId}`;
+        if (interviewRoundId) {
+            url += `&interviewRoundId=${interviewRoundId}`;
+        }
+        const res = await axiosInstance.get(url);
+        return res.data;
+    } catch (error) {
+        console.error('Error fetching candidates by job posting:', error);
+        throw error;
+    }
+};
+
+const getLatestMeetingByJobPosting = async (userId, jobPostingId) => {
+    try {
+        const res = await axiosInstance.get(`/hr/meetings/latest?userId=${userId}&jobPostingId=${jobPostingId}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error fetching latest meeting by job posting:', error);
+        throw error;
+    }
+};
+
 export {
     getMeetingsForHr,
     getMeetingsForCandidate,
@@ -112,6 +136,8 @@ export {
     createMeeting,
     updateMeetingStatus,
     updateMeeting,
-    cancelMeeting
+    cancelMeeting,
+    getCandidatesByJobPosting,
+    getLatestMeetingByJobPosting
 };
 

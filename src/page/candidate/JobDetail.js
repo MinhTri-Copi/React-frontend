@@ -41,7 +41,8 @@ const JobDetail = () => {
             setApplicantInfo((prev) => ({
                 ...prev,
                 fullName: parsedUser.Hoten || '',
-                email: parsedUser.email || ''
+                email: parsedUser.email || '',
+                phone: parsedUser.SDT || '' // Tự động điền SDT nếu user đã có
             }));
             checkAppliedStatus(parsedUser.id);
         } else {
@@ -146,6 +147,11 @@ const JobDetail = () => {
             toast.info('Bạn đã ứng tuyển công việc này!');
             return;
         }
+        // Luôn set phone từ user.SDT nếu có (để hiển thị số điện thoại đã lưu)
+        setApplicantInfo((prev) => ({
+            ...prev,
+            phone: user.SDT || prev.phone || ''
+        }));
         setShowApplyModal(true);
     };
 
@@ -178,6 +184,21 @@ const JobDetail = () => {
             if (res && res.data && res.data.EC === 0) {
                 toast.success('Ứng tuyển thành công!');
                 setHasApplied(true);
+                
+                // Nếu user chưa có SDT và đã nhập SDT, cập nhật lại user trong storage
+                // (Backend đã tự động update SDT vào DB, giờ chỉ cần update frontend state)
+                if (!user.SDT && applicantInfo.phone) {
+                    const updatedUser = {
+                        ...user,
+                        SDT: applicantInfo.phone
+                    };
+                    setUser(updatedUser);
+                    // Update cả localStorage và sessionStorage để đảm bảo đồng bộ
+                    const updatedUserString = JSON.stringify(updatedUser);
+                    sessionStorage.setItem('user', updatedUserString);
+                    localStorage.setItem('user', updatedUserString);
+                }
+                
                 handleCloseApplyModal();
             } else {
                 toast.error(res?.data?.EM || 'Ứng tuyển thất bại!');

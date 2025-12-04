@@ -4,9 +4,11 @@ import {
     getMeetingsForHr, 
     createMeeting, 
     updateMeetingStatus,
-    cancelMeeting 
+    cancelMeeting,
+    getCandidatesByJobPosting,
+    getLatestMeetingByJobPosting
 } from '../../service.js/meetingService';
-import { getJobApplications } from '../../service.js/hrService';
+import { getActiveJobPostings } from '../../service.js/hrService';
 import { getInterviewRounds } from '../../service.js/interviewRoundService';
 import MeetingEvaluationModal from './MeetingEvaluationModal';
 import './MeetingManagement.scss';
@@ -17,13 +19,15 @@ const MeetingManagement = ({ userId }) => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [statusFilter, setStatusFilter] = useState('all');
     const [formData, setFormData] = useState({
+        jobPostingId: '',
         interviewRoundId: '',
         jobApplicationId: '',
         candidateUserId: '',
         scheduledAt: '',
         notes: ''
     });
-    const [jobApplications, setJobApplications] = useState([]);
+    const [jobPostings, setJobPostings] = useState([]);
+    const [candidates, setCandidates] = useState([]);
     const [interviewRounds, setInterviewRounds] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedMeetingForEvaluation, setSelectedMeetingForEvaluation] = useState(null);
@@ -32,7 +36,7 @@ const MeetingManagement = ({ userId }) => {
     useEffect(() => {
         if (userId) {
             fetchMeetings();
-            fetchJobApplications();
+            fetchJobPostings();
         }
     }, [userId, statusFilter]);
 
@@ -55,60 +59,145 @@ const MeetingManagement = ({ userId }) => {
         }
     };
 
-    const fetchJobApplications = async () => {
+    const fetchJobPostings = async () => {
         try {
-            const res = await getJobApplications(userId, 7, 'all', 1, 100); // Only "Chuẩn bị phỏng vấn" (statusId=7)
+            const res = await getActiveJobPostings(userId);
             if (res && res.EC === 0) {
-                setJobApplications(res.DT?.applications || []);
+                setJobPostings(res.DT || []);
             }
         } catch (error) {
-            console.error('Error fetching job applications:', error);
+            console.error('Error fetching job postings:', error);
         }
     };
 
     const handleCreateMeeting = () => {
         setFormData({
+            jobPostingId: '',
             interviewRoundId: '',
             jobApplicationId: '',
             candidateUserId: '',
             scheduledAt: '',
             notes: ''
         });
+        setCandidates([]);
+        setInterviewRounds([]);
         setShowCreateModal(true);
     };
 
-    const handleJobApplicationChange = async (applicationId) => {
-        if (!applicationId) {
+    const handleJobPostingChange = async (jobPostingId) => {
+        if (!jobPostingId) {
             setFormData(prev => ({
                 ...prev,
+                jobPostingId: '',
+                interviewRoundId: '',
                 jobApplicationId: '',
                 candidateUserId: '',
-                interviewRoundId: ''
+                scheduledAt: ''
             }));
+            setCandidates([]);
             setInterviewRounds([]);
             return;
         }
 
-        const application = jobApplications.find(app => app.id === parseInt(applicationId));
-        if (application) {
+        setFormData(prev => ({
+            ...prev,
+            jobPostingId,
+            interviewRoundId: '',
+            jobApplicationId: '',
+            candidateUserId: '',
+            scheduledAt: ''
+        }));
+
+        // Reset candidates - will be loaded when interview round is selected
+        setCandidates([]);
+
+        // Fetch interview rounds for this job posting
+        try {
+            const roundsRes = await getInterviewRounds(userId, { 
+                jobPostingId: parseInt(jobPostingId)
+            });
+            if (roundsRes && roundsRes.EC === 0) {
+                setInterviewRounds(roundsRes.DT?.rounds || []);
+            }
+        } catch (error) {
+            console.error('Error fetching interview rounds:', error);
+        }
+    };
+
+    const handleCandidateChange = (candidateId) => {
+        if (!candidateId) {
             setFormData(prev => ({
                 ...prev,
-                jobApplicationId: applicationId,
-                candidateUserId: application.Record?.User?.id || ''
+                jobApplicationId: '',
+                candidateUserId: ''
             }));
+            return;
+        }
 
-            // Fetch interview rounds for this job posting
-            if (application.JobPosting?.id) {
-                try {
-                    const roundsRes = await getInterviewRounds(userId, { 
-                        jobPostingId: application.JobPosting.id 
-                    });
-                    if (roundsRes && roundsRes.EC === 0) {
-                        setInterviewRounds(roundsRes.DT?.rounds || []);
-                    }
-                } catch (error) {
-                    console.error('Error fetching interview rounds:', error);
+        const candidate = candidates.find(c => c.candidateId === parseInt(candidateId));
+        if (candidate) {
+            setFormData(prev => ({
+                ...prev,
+                jobApplicationId: candidate.applicationId,
+                candidateUserId: candidate.candidateId
+            }));
+        }
+    };
+
+    const handleInterviewRoundChange = async (roundId) => {
+        setFormData(prev => ({
+            ...prev,
+            interviewRoundId: roundId,
+            candidateUserId: '', // Reset candidate selection when round changes
+            jobApplicationId: ''
+        }));
+
+        // Filter candidates: exclude those who already have meeting for this round
+        if (roundId && formData.jobPostingId) {
+            try {
+                // Fetch candidates again with interviewRoundId to filter out those who already have meeting
+                const candidatesRes = await getCandidatesByJobPosting(userId, formData.jobPostingId, roundId);
+                if (candidatesRes && candidatesRes.EC === 0) {
+                    setCandidates(candidatesRes.DT || []);
                 }
+            } catch (error) {
+                console.error('Error fetching filtered candidates:', error);
+            }
+
+            // Gợi ý thời gian dựa trên meeting gần nhất + duration của round đó + duration của round hiện tại
+            try {
+                const latestMeetingRes = await getLatestMeetingByJobPosting(userId, formData.jobPostingId);
+                if (latestMeetingRes && latestMeetingRes.EC === 0 && latestMeetingRes.DT) {
+                    const latestMeeting = latestMeetingRes.DT;
+                    const selectedRound = interviewRounds.find(r => r.id === parseInt(roundId));
+                    const currentRoundDuration = selectedRound?.duration || 0;
+
+                    if (latestMeeting.scheduledAt) {
+                        // Tính thời gian gợi ý = scheduledAt của meeting gần nhất + duration của round đó + duration của round hiện tại
+                        const latestDate = new Date(latestMeeting.scheduledAt);
+                        const previousRoundDuration = latestMeeting.duration || 0;
+                        const suggestedDate = new Date(
+                            latestDate.getTime() + 
+                            previousRoundDuration * 60000 + // Duration của round trước đó
+                            currentRoundDuration * 60000     // Duration của round hiện tại
+                        );
+                        
+                        // Format thành datetime-local
+                        const year = suggestedDate.getFullYear();
+                        const month = String(suggestedDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(suggestedDate.getDate()).padStart(2, '0');
+                        const hours = String(suggestedDate.getHours()).padStart(2, '0');
+                        const minutes = String(suggestedDate.getMinutes()).padStart(2, '0');
+                        const suggestedDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+                        setFormData(prev => ({
+                            ...prev,
+                            scheduledAt: suggestedDateTime
+                        }));
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching latest meeting:', error);
             }
         }
     };
@@ -368,39 +457,64 @@ const MeetingManagement = ({ userId }) => {
                         <form onSubmit={handleSubmit} className="modal-body">
                             <div className="form-group">
                                 <label>
-                                    Đơn ứng tuyển <span className="required">*</span>
+                                    Tin tuyển dụng <span className="required">*</span>
                                 </label>
                                 <select
-                                    value={formData.jobApplicationId}
-                                    onChange={(e) => handleJobApplicationChange(e.target.value)}
+                                    value={formData.jobPostingId}
+                                    onChange={(e) => handleJobPostingChange(e.target.value)}
                                     required
                                 >
-                                    <option value="">-- Chọn đơn ứng tuyển --</option>
-                                    {jobApplications.map(app => (
-                                        <option key={app.id} value={app.id}>
-                                            {app.JobPosting?.Tieude} - {app.Record?.User?.Hoten}
+                                    <option value="">-- Chọn tin tuyển dụng --</option>
+                                    {jobPostings.map(job => (
+                                        <option key={job.id} value={job.id}>
+                                            {job.Tieude} - {job.Company?.Tencongty}
                                         </option>
                                     ))}
                                 </select>
                             </div>
 
-                            {formData.jobApplicationId && (
+                            {formData.jobPostingId && (
                                 <div className="form-group">
                                     <label>
                                         Vòng phỏng vấn <span className="required">*</span>
                                     </label>
                                     <select
                                         value={formData.interviewRoundId}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, interviewRoundId: e.target.value }))}
+                                        onChange={(e) => handleInterviewRoundChange(e.target.value)}
                                         required
                                     >
                                         <option value="">-- Chọn vòng phỏng vấn --</option>
                                         {interviewRounds.map(round => (
                                             <option key={round.id} value={round.id}>
-                                                Vòng {round.roundNumber}: {round.title}
+                                                Vòng {round.roundNumber}: {round.title} {round.duration ? `(${round.duration} phút)` : ''}
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+                            )}
+
+                            {formData.jobPostingId && formData.interviewRoundId && (
+                                <div className="form-group">
+                                    <label>
+                                        Ứng viên <span className="required">*</span>
+                                    </label>
+                                    <select
+                                        value={formData.candidateUserId}
+                                        onChange={(e) => handleCandidateChange(e.target.value)}
+                                        required
+                                    >
+                                        <option value="">-- Chọn ứng viên --</option>
+                                        {candidates.map(candidate => (
+                                            <option key={candidate.candidateId} value={candidate.candidateId}>
+                                                {candidate.candidateName} ({candidate.candidateEmail})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    {candidates.length === 0 && (
+                                        <small className="form-hint">
+                                            Không có ứng viên nào ở trạng thái "Chuẩn bị phỏng vấn" hoặc tất cả ứng viên đã tham gia vòng phỏng vấn này.
+                                        </small>
+                                    )}
                                 </div>
                             )}
 
