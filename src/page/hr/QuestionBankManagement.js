@@ -66,6 +66,20 @@ const QuestionBankManagement = ({ userId }) => {
         }
     };
 
+    const handleUpdateQuestion = async () => {
+        // Refresh detail when question is updated
+        if (selectedBank) {
+            try {
+                const res = await getQuestionBankDetail(userId, selectedBank.id);
+                if (res && res.EC === 0) {
+                    setSelectedBank(res.DT);
+                }
+            } catch (error) {
+                console.error('Error refreshing question bank detail:', error);
+            }
+        }
+    };
+
     const handleDelete = (bank) => {
         setBankToDelete(bank);
         setShowDeleteConfirm(true);
@@ -221,6 +235,8 @@ const QuestionBankManagement = ({ userId }) => {
                     setSelectedBank(null);
                 }}
                 bank={selectedBank}
+                onUpdate={handleUpdateQuestion}
+                userId={userId}
             />
 
             {/* Delete Confirm Modal */}

@@ -67,10 +67,27 @@ const deleteQuestionBank = async (userId, bankId) => {
     }
 };
 
+/**
+ * Update question bank item
+ */
+const updateQuestionBankItem = async (userId, itemId, updateData) => {
+    try {
+        const res = await axiosInstance.put(`/hr/question-banks/items/${itemId}`, {
+            userId,
+            ...updateData
+        });
+        return res.data;
+    } catch (error) {
+        console.error('Error updating question bank item:', error);
+        throw error;
+    }
+};
+
 export {
     uploadQuestionBank,
     getQuestionBanks,
     getQuestionBankDetail,
-    deleteQuestionBank
+    deleteQuestionBank,
+    updateQuestionBankItem
 };
 

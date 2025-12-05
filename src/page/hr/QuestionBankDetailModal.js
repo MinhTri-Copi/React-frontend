@@ -1,8 +1,68 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './QuestionBankDetailModal.scss';
+import { updateQuestionBankItem } from '../../service.js/questionBankService';
+import { toast } from 'react-toastify';
 
-const QuestionBankDetailModal = ({ show, onClose, bank }) => {
+const QuestionBankDetailModal = ({ show, onClose, bank, onUpdate, userId }) => {
+    const [editingItem, setEditingItem] = useState(null);
+    const [editForm, setEditForm] = useState({});
+    const [loading, setLoading] = useState(false);
+
     if (!show || !bank) return null;
+
+    const handleEdit = (item) => {
+        setEditingItem(item.id);
+        setEditForm({
+            Cauhoi: item.Cauhoi,
+            Dapan: item.Dapan,
+            Chude: item.Chude,
+            Loaicauhoi: item.Loaicauhoi,
+            Diem: item.Diem,
+            Dodai: item.Dodai,
+            Dokho: item.Dokho
+        });
+    };
+
+    const handleCancelEdit = () => {
+        setEditingItem(null);
+        setEditForm({});
+    };
+
+    const handleSaveEdit = async (itemId) => {
+        try {
+            setLoading(true);
+            if (!userId) {
+                toast.error('Không tìm thấy thông tin người dùng!');
+                return;
+            }
+
+            const result = await updateQuestionBankItem(userId, itemId, editForm);
+            
+            if (result.EC === 0) {
+                toast.success('Cập nhật câu hỏi thành công!');
+                setEditingItem(null);
+                setEditForm({});
+                // Refresh data
+                if (onUpdate) {
+                    onUpdate();
+                }
+            } else {
+                toast.error(result.EM || 'Có lỗi xảy ra!');
+            }
+        } catch (error) {
+            console.error('Error updating question:', error);
+            toast.error('Có lỗi xảy ra khi cập nhật câu hỏi!');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleInputChange = (field, value) => {
+        setEditForm(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -69,26 +129,136 @@ const QuestionBankDetailModal = ({ show, onClose, bank }) => {
                                         <div className="question-header">
                                             <span className="question-number">Câu {index + 1}</span>
                                             <div className="question-meta">
-                                                {item.Chude && (
-                                                    <span className="topic-badge">{item.Chude}</span>
+                                                {editingItem !== item.id ? (
+                                                    <>
+                                                        {item.Chude && (
+                                                            <span className="topic-badge">{item.Chude}</span>
+                                                        )}
+                                                        <span className="type-badge">
+                                                            {item.Loaicauhoi === 'tracnghiem' ? 'Trắc nghiệm' : 'Tự luận'}
+                                                        </span>
+                                                        <span className="difficulty-badge">
+                                                            {item.Dokho === 'de' ? 'Dễ' : 
+                                                             item.Dokho === 'kho' ? 'Khó' : 'Trung bình'}
+                                                        </span>
+                                                        <span className="score-badge">{item.Diem} điểm</span>
+                                                        <button 
+                                                            className="edit-btn"
+                                                            onClick={() => handleEdit(item)}
+                                                            title="Chỉnh sửa"
+                                                        >
+                                                            <i className="fas fa-edit"></i>
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <button 
+                                                        className="cancel-btn"
+                                                        onClick={handleCancelEdit}
+                                                        title="Hủy"
+                                                    >
+                                                        <i className="fas fa-times"></i>
+                                                    </button>
                                                 )}
-                                                <span className="type-badge">
-                                                    {item.Loaicauhoi === 'tracnghiem' ? 'Trắc nghiệm' : 'Tự luận'}
-                                                </span>
-                                                <span className="difficulty-badge">
-                                                    {item.Dokho === 'de' ? 'Dễ' : 
-                                                     item.Dokho === 'kho' ? 'Khó' : 'Trung bình'}
-                                                </span>
-                                                <span className="score-badge">{item.Diem} điểm</span>
                                             </div>
                                         </div>
                                         <div className="question-content">
-                                            <p className="question-text">
-                                                <strong>Câu hỏi:</strong> {item.Cauhoi}
-                                            </p>
-                                            <p className="answer-text">
-                                                <strong>Đáp án:</strong> {item.Dapan}
-                                            </p>
+                                            {editingItem === item.id ? (
+                                                <div className="edit-form">
+                                                    <div className="form-group">
+                                                        <label>Câu hỏi:</label>
+                                                        <textarea
+                                                            value={editForm.Cauhoi || ''}
+                                                            onChange={(e) => handleInputChange('Cauhoi', e.target.value)}
+                                                            rows={3}
+                                                        />
+                                                    </div>
+                                                    <div className="form-group">
+                                                        <label>Đáp án:</label>
+                                                        <textarea
+                                                            value={editForm.Dapan || ''}
+                                                            onChange={(e) => handleInputChange('Dapan', e.target.value)}
+                                                            rows={3}
+                                                        />
+                                                    </div>
+                                                    <div className="form-row">
+                                                        <div className="form-group">
+                                                            <label>Chủ đề:</label>
+                                                            <input
+                                                                type="text"
+                                                                value={editForm.Chude || ''}
+                                                                onChange={(e) => handleInputChange('Chude', e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label>Loại câu hỏi:</label>
+                                                            <select
+                                                                value={editForm.Loaicauhoi || 'tuluan'}
+                                                                onChange={(e) => handleInputChange('Loaicauhoi', e.target.value)}
+                                                            >
+                                                                <option value="tuluan">Tự luận</option>
+                                                                <option value="tracnghiem">Trắc nghiệm</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label>Độ dài:</label>
+                                                            <select
+                                                                value={editForm.Dodai || 'trungbinh'}
+                                                                onChange={(e) => handleInputChange('Dodai', e.target.value)}
+                                                            >
+                                                                <option value="ngan">Ngắn</option>
+                                                                <option value="trungbinh">Trung bình</option>
+                                                                <option value="dai">Dài</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label>Độ khó:</label>
+                                                            <select
+                                                                value={editForm.Dokho || 'trungbinh'}
+                                                                onChange={(e) => handleInputChange('Dokho', e.target.value)}
+                                                            >
+                                                                <option value="de">Dễ</option>
+                                                                <option value="trungbinh">Trung bình</option>
+                                                                <option value="kho">Khó</option>
+                                                            </select>
+                                                        </div>
+                                                        <div className="form-group">
+                                                            <label>Điểm:</label>
+                                                            <input
+                                                                type="number"
+                                                                min="1"
+                                                                max="100"
+                                                                value={editForm.Diem || 10}
+                                                                onChange={(e) => handleInputChange('Diem', parseInt(e.target.value))}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="form-actions">
+                                                        <button
+                                                            className="btn btn-primary"
+                                                            onClick={() => handleSaveEdit(item.id)}
+                                                            disabled={loading}
+                                                        >
+                                                            {loading ? 'Đang lưu...' : 'Lưu'}
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-secondary"
+                                                            onClick={handleCancelEdit}
+                                                            disabled={loading}
+                                                        >
+                                                            Hủy
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <p className="question-text">
+                                                        <strong>Câu hỏi:</strong> {item.Cauhoi}
+                                                    </p>
+                                                    <p className="answer-text">
+                                                        <strong>Đáp án:</strong> {item.Dapan}
+                                                    </p>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
