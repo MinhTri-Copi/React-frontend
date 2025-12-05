@@ -1,0 +1,832 @@
+.job-list-page {
+    min-height: 100vh;
+    background: #f5f7fa;
+
+    .job-list-container {
+        // Hero Section
+        .hero-section {
+            background-image: linear-gradient(180deg, #002b33, rgba(0, 43, 51, 0.25)), linear-gradient(90deg, #008060 21.86%, #2bab60 78.13%);
+            padding: 40px 20px;
+            color: white;
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+
+                .page-title {
+                    font-size: 32px;
+                    font-weight: 700;
+                    margin-bottom: 8px;
+                }
+
+                .page-subtitle {
+                    font-size: 16px;
+                    opacity: 0.9;
+                    margin-bottom: 20px;
+                }
+
+                .quick-tags {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+
+                    .quick-tag {
+                        background: white;
+                        color: #008060;
+                        padding: 8px 16px;
+                        border-radius: 20px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 6px;
+
+                        i {
+                            font-size: 12px;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Filter Section
+        .filter-section {
+            background: white;
+            padding: 25px 20px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+
+                .search-box {
+                    display: flex;
+                    gap: 15px;
+                    align-items: center;
+                    padding: 15px;
+                    background: #f8f9fa;
+                    border-radius: 12px;
+                    margin-bottom: 20px;
+
+                    .search-input-group {
+                        flex: 2;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        background: white;
+                        padding: 12px 16px;
+                        border-radius: 8px;
+                        border: 1px solid #e5e7eb;
+
+                        i {
+                            color: #9ca3af;
+                            font-size: 16px;
+                        }
+
+                        input {
+                            flex: 1;
+                            border: none;
+                            outline: none;
+                            font-size: 14px;
+                            color: #333;
+
+                            &::placeholder {
+                                color: #9ca3af;
+                            }
+                        }
+                    }
+
+                    .filter-dropdowns {
+                        display: flex;
+                        gap: 10px;
+                        flex: 2;
+
+                        .filter-select {
+                            flex: 1;
+                            padding: 12px 16px;
+                            border-radius: 8px;
+                            border: 1px solid #e5e7eb;
+                            background: white;
+                            font-size: 14px;
+                            color: #333;
+                            cursor: pointer;
+                            min-width: 150px;
+
+                            &:focus {
+                                outline: none;
+                                border-color: #008060;
+                            }
+                        }
+                    }
+
+                    .btn-search {
+                        padding: 12px 24px;
+                        background: #008060;
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        white-space: nowrap;
+
+                        &:hover {
+                            background: #006a50;
+                        }
+                    }
+                }
+
+                .major-tags {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                    margin-bottom: 20px;
+
+                    .major-tag {
+                        padding: 10px 16px;
+                        border: 1px solid #e5e7eb;
+                        border-radius: 25px;
+                        background: white;
+                        font-size: 14px;
+                        color: #333;
+                        cursor: pointer;
+                        transition: all 0.3s ease;
+                        display: inline-flex;
+                        align-items: center;
+                        gap: 8px;
+
+                        .count {
+                            background: #f3f4f6;
+                            padding: 2px 8px;
+                            border-radius: 12px;
+                            font-size: 12px;
+                            color: #6b7280;
+                        }
+
+                        &:hover {
+                            border-color: #008060;
+                            color: #008060;
+                        }
+
+                        &.active {
+                            background: #008060;
+                            border-color: #008060;
+                            color: white;
+
+                            .count {
+                                background: rgba(255, 255, 255, 0.2);
+                                color: white;
+                            }
+                        }
+
+                        &.more {
+                            background: #f3f4f6;
+                            border-color: #f3f4f6;
+                        }
+                    }
+                }
+
+                .results-info {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+
+                    p {
+                        margin: 0;
+                        color: #333;
+                        font-size: 14px;
+
+                        strong {
+                            color: #008060;
+                        }
+                    }
+
+                    .btn-clear-filters {
+                        background: none;
+                        border: none;
+                        color: #ef4444;
+                        font-size: 14px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+
+                        &:hover {
+                            text-decoration: underline;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Sort Section
+        .sort-section {
+            background: white;
+            padding: 15px 20px;
+            border-top: 1px solid #f3f4f6;
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+
+                .sort-options {
+                    display: flex;
+                    align-items: center;
+                    gap: 25px;
+
+                    .sort-label {
+                        color: #6b7280;
+                        font-size: 14px;
+                    }
+
+                    .sort-option {
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        cursor: pointer;
+                        font-size: 14px;
+                        color: #333;
+
+                        input {
+                            display: none;
+                        }
+
+                        .fa-circle {
+                            color: #d1d5db;
+                        }
+
+                        .fa-check-circle {
+                            display: none;
+                            color: #008060;
+                        }
+
+                        &.active {
+                            color: #008060;
+                            font-weight: 600;
+
+                            .fa-circle {
+                                display: none;
+                            }
+
+                            .fa-check-circle {
+                                display: inline;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Main Content
+        .main-content {
+            padding: 30px 20px;
+
+            .container {
+                max-width: 1200px;
+                margin: 0 auto;
+
+                .content-wrapper {
+                    display: grid;
+                    grid-template-columns: 1fr 320px;
+                    gap: 30px;
+
+                    // Jobs Column
+                    .jobs-column {
+                        .loading-container {
+                            text-align: center;
+                            padding: 80px 20px;
+                            background: white;
+                            border-radius: 12px;
+                            color: #008060;
+
+                            i {
+                                font-size: 48px;
+                                margin-bottom: 20px;
+                            }
+
+                            p {
+                                font-size: 16px;
+                                color: #666;
+                            }
+                        }
+
+                        .jobs-list {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 15px;
+
+                            .job-card {
+                                background: white;
+                                border-radius: 12px;
+                                padding: 20px;
+                                cursor: pointer;
+                                transition: all 0.3s ease;
+                                position: relative;
+                                border: 1px solid #e5e7eb;
+
+                                &:hover {
+                                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+                                    border-color: #008060;
+                                }
+
+                                .hot-badge {
+                                    position: absolute;
+                                    top: 15px;
+                                    left: 15px;
+                                    background: #ef4444;
+                                    color: white;
+                                    padding: 4px 10px;
+                                    border-radius: 4px;
+                                    font-size: 11px;
+                                    font-weight: 700;
+                                }
+
+                                .job-card-content {
+                                    display: flex;
+                                    gap: 15px;
+                                    align-items: flex-start;
+
+                                    .company-logo {
+                                        width: 70px;
+                                        height: 70px;
+                                        border-radius: 12px;
+                                        background: linear-gradient(90deg, #008060 21.86%, #2bab60 78.13%);
+                                        color: white;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        font-size: 28px;
+                                        font-weight: 700;
+                                        flex-shrink: 0;
+                                    }
+
+                                    .job-info {
+                                        flex: 1;
+                                        min-width: 0;
+
+                                        .job-title {
+                                            font-size: 16px;
+                                            font-weight: 600;
+                                            color: #1f2937;
+                                            margin-bottom: 6px;
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 8px;
+
+                                            .verified {
+                                                color: #008060;
+                                                font-size: 14px;
+                                            }
+                                        }
+
+                                        .company-name {
+                                            font-size: 14px;
+                                            color: #6b7280;
+                                            margin-bottom: 4px;
+                                        }
+
+                                        .update-time {
+                                            font-size: 12px;
+                                            color: #9ca3af;
+                                            margin-bottom: 10px;
+                                        }
+
+                                        .job-tags {
+                                            display: flex;
+                                            flex-wrap: wrap;
+                                            gap: 8px;
+                                            margin-bottom: 12px;
+
+                                            .tag {
+                                                padding: 4px 12px;
+                                                background: #f3f4f6;
+                                                color: #008060;
+                                                border-radius: 4px;
+                                                font-size: 12px;
+                                                font-weight: 500;
+
+                                                &.more {
+                                                    background: #e5e7eb;
+                                                    color: #6b7280;
+                                                }
+                                            }
+                                        }
+
+                                        .job-meta {
+                                            display: flex;
+                                            flex-wrap: wrap;
+                                            gap: 20px;
+                                            font-size: 13px;
+                                            color: #6b7280;
+
+                                            span {
+                                                display: flex;
+                                                align-items: center;
+                                                gap: 6px;
+
+                                                i {
+                                                    color: #9ca3af;
+                                                }
+
+                                                &.interview-rounds {
+                                                    color: #008060;
+                                                    font-weight: 500;
+
+                                                    i {
+                                                        color: #008060;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    .job-actions {
+                                        display: flex;
+                                        flex-direction: column;
+                                        align-items: flex-end;
+                                        gap: 10px;
+                                        flex-shrink: 0;
+
+                                        .salary {
+                                            color: #008060;
+                                            font-size: 15px;
+                                            font-weight: 600;
+                                            display: flex;
+                                            align-items: center;
+                                            gap: 6px;
+                                        }
+
+                                        .btn-apply {
+                                            padding: 10px 20px;
+                                            background: #008060;
+                                            color: white;
+                                            border: none;
+                                            border-radius: 6px;
+                                            font-size: 14px;
+                                            font-weight: 600;
+                                            cursor: pointer;
+                                            transition: all 0.3s ease;
+
+                                            &:hover {
+                                                background: #006a50;
+                                            }
+                                        }
+
+                                        .btn-save {
+                                            width: 36px;
+                                            height: 36px;
+                                            border-radius: 50%;
+                                            border: 1px solid #e5e7eb;
+                                            background: white;
+                                            color: #9ca3af;
+                                            cursor: pointer;
+                                            transition: all 0.3s ease;
+
+                                            &:hover {
+                                                border-color: #ef4444;
+                                                color: #ef4444;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        .no-jobs {
+                            text-align: center;
+                            padding: 80px 20px;
+                            background: white;
+                            border-radius: 12px;
+
+                            i {
+                                font-size: 64px;
+                                color: #d1d5db;
+                                margin-bottom: 20px;
+                            }
+
+                            p {
+                                font-size: 16px;
+                                color: #6b7280;
+                                margin-bottom: 20px;
+                            }
+
+                            .btn-clear {
+                                padding: 12px 24px;
+                                background: #008060;
+                                color: white;
+                                border: none;
+                                border-radius: 8px;
+                                font-size: 14px;
+                                font-weight: 600;
+                                cursor: pointer;
+
+                                &:hover {
+                                    background: #006a50;
+                                }
+                            }
+                        }
+
+                        .pagination-container {
+                            display: flex;
+                            justify-content: center;
+                            margin-top: 30px;
+
+                            .pagination {
+                                display: flex;
+                                gap: 5px;
+                                list-style: none;
+                                padding: 0;
+
+                                .page-item {
+                                    .page-link {
+                                        padding: 10px 15px;
+                                        border: 1px solid #e5e7eb;
+                                        border-radius: 6px;
+                                        color: #333;
+                                        text-decoration: none;
+                                        transition: all 0.3s ease;
+                                        cursor: pointer;
+                                        background: white;
+
+                                        &:hover {
+                                            background: #f3f4f6;
+                                            border-color: #008060;
+                                            color: #008060;
+                                        }
+                                    }
+
+                                    &.active .page-link {
+                                        background: #008060;
+                                        color: white;
+                                        border-color: #008060;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Sidebar Column
+                    .sidebar-column {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 20px;
+
+                        .sidebar-card {
+                            background: white;
+                            border-radius: 12px;
+                            padding: 20px;
+                            border: 1px solid #e5e7eb;
+
+                            .sidebar-title {
+                                font-size: 16px;
+                                font-weight: 700;
+                                color: #1f2937;
+                                margin-bottom: 20px;
+                                padding-bottom: 12px;
+                                border-bottom: 1px solid #f3f4f6;
+                            }
+
+                            .company-list {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 15px;
+
+                                .company-item {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 12px;
+                                    cursor: pointer;
+                                    padding: 10px;
+                                    border-radius: 8px;
+                                    transition: all 0.3s ease;
+
+                                    &:hover {
+                                        background: #f3f4f6;
+                                    }
+
+                                    .company-logo-small {
+                                        width: 48px;
+                                        height: 48px;
+                                        border-radius: 8px;
+                                        background: #f3f4f6;
+                                        color: #008060;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        font-size: 18px;
+                                        font-weight: 700;
+                                        flex-shrink: 0;
+                                    }
+
+                                    .company-info {
+                                        flex: 1;
+                                        min-width: 0;
+
+                                        h4 {
+                                            font-size: 14px;
+                                            font-weight: 600;
+                                            color: #1f2937;
+                                            margin: 0 0 4px 0;
+                                            white-space: nowrap;
+                                            overflow: hidden;
+                                            text-overflow: ellipsis;
+                                        }
+
+                                        p {
+                                            font-size: 12px;
+                                            color: #6b7280;
+                                            margin: 0;
+                                        }
+                                    }
+                                }
+                            }
+
+                            .format-list {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 10px;
+
+                                .format-item {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 10px;
+                                    padding: 10px 12px;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                    font-size: 14px;
+                                    color: #333;
+
+                                    input {
+                                        display: none;
+                                    }
+
+                                    &:hover {
+                                        background: #f3f4f6;
+                                    }
+
+                                    &.active {
+                                        background: rgba(0, 128, 96, 0.1);
+                                        color: #008060;
+                                        font-weight: 600;
+                                    }
+                                }
+
+                                .btn-clear-format {
+                                    background: none;
+                                    border: none;
+                                    color: #ef4444;
+                                    font-size: 13px;
+                                    cursor: pointer;
+                                    padding: 8px;
+                                    text-align: left;
+
+                                    &:hover {
+                                        text-decoration: underline;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Responsive
+    @media (max-width: 1024px) {
+        .job-list-container {
+            .main-content {
+                .container {
+                    .content-wrapper {
+                        grid-template-columns: 1fr;
+
+                        .sidebar-column {
+                            order: -1;
+                            display: grid;
+                            grid-template-columns: repeat(2, 1fr);
+                            gap: 15px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @media (max-width: 768px) {
+        .job-list-container {
+            .hero-section {
+                padding: 30px 15px;
+
+                .container {
+                    .page-title {
+                        font-size: 24px;
+                    }
+
+                    .quick-tags {
+                        gap: 8px;
+
+                        .quick-tag {
+                            padding: 6px 12px;
+                            font-size: 12px;
+                        }
+                    }
+                }
+            }
+
+            .filter-section {
+                padding: 20px 15px;
+
+                .container {
+                    .search-box {
+                        flex-direction: column;
+                        gap: 10px;
+
+                        .search-input-group {
+                            width: 100%;
+                        }
+
+                        .filter-dropdowns {
+                            width: 100%;
+                            flex-direction: column;
+
+                            .filter-select {
+                                width: 100%;
+                            }
+                        }
+
+                        .btn-search {
+                            width: 100%;
+                            justify-content: center;
+                        }
+                    }
+
+                    .major-tags {
+                        overflow-x: auto;
+                        flex-wrap: nowrap;
+                        padding-bottom: 10px;
+
+                        &::-webkit-scrollbar {
+                            height: 4px;
+                        }
+
+                        .major-tag {
+                            flex-shrink: 0;
+                        }
+                    }
+                }
+            }
+
+            .sort-section {
+                .container {
+                    .sort-options {
+                        flex-wrap: wrap;
+                        gap: 15px;
+                    }
+                }
+            }
+
+            .main-content {
+                padding: 20px 15px;
+
+                .container {
+                    .content-wrapper {
+                        .sidebar-column {
+                            grid-template-columns: 1fr;
+                        }
+
+                        .jobs-column {
+                            .jobs-list {
+                                .job-card {
+                                    .job-card-content {
+                                        flex-direction: column;
+
+                                        .company-logo {
+                                            width: 60px;
+                                            height: 60px;
+                                            font-size: 24px;
+                                        }
+
+                                        .job-actions {
+                                            flex-direction: row;
+                                            width: 100%;
+                                            justify-content: space-between;
+                                            align-items: center;
+                                            padding-top: 15px;
+                                            border-top: 1px solid #f3f4f6;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
