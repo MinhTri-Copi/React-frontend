@@ -198,6 +198,32 @@
                 align-items: center;
                 margin-bottom: 16px;
 
+                .action-buttons {
+                    display: flex;
+                    gap: 12px;
+                }
+
+                .btn-select-from-bank {
+                    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    font-size: 14px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+                    }
+
+                    i {
+                        margin-right: 6px;
+                    }
+                }
+
                 .btn-add-question {
                     background: linear-gradient(135deg, #008060, #2bab60);
                     color: white;
@@ -350,14 +376,67 @@
                         }
                     }
 
-                    .question-content,
-                    .question-answer {
-                        margin-bottom: 12px;
-                        line-height: 1.6;
+                    .question-content {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 16px;
+                        width: 100%;
 
-                        strong {
-                            color: #374151;
-                            margin-right: 8px;
+                        .question-text {
+                            width: 100%;
+                            padding: 14px 16px;
+                            background: #f8f9fa;
+                            border-left: 4px solid #008060;
+                            border-radius: 8px;
+                            display: block;
+
+                            .question-label {
+                                font-size: 12px;
+                                font-weight: 600;
+                                color: #008060;
+                                margin-bottom: 8px;
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                                display: block;
+                            }
+
+                            .question-value {
+                                font-size: 14px;
+                                font-weight: 500;
+                                color: #333;
+                                line-height: 1.7;
+                                word-wrap: break-word;
+                                display: block;
+                                white-space: pre-wrap;
+                            }
+                        }
+
+                        .question-answer {
+                            width: 100%;
+                            padding: 14px 16px;
+                            background: #fff9e6;
+                            border-left: 4px solid #ffa726;
+                            border-radius: 8px;
+                            display: block;
+
+                            .answer-label {
+                                font-size: 12px;
+                                font-weight: 600;
+                                color: #ff6f00;
+                                margin-bottom: 8px;
+                                text-transform: uppercase;
+                                letter-spacing: 0.5px;
+                                display: block;
+                            }
+
+                            .answer-value {
+                                font-size: 13px;
+                                color: #555;
+                                line-height: 1.7;
+                                word-wrap: break-word;
+                                display: block;
+                                white-space: pre-wrap;
+                            }
                         }
                     }
 

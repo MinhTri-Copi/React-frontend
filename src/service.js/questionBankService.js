@@ -83,11 +83,35 @@ const updateQuestionBankItem = async (userId, itemId, updateData) => {
     }
 };
 
+/**
+ * Get question bank items with filters (for selecting questions)
+ */
+const getQuestionBankItems = async (userId, filters = {}) => {
+    try {
+        const params = new URLSearchParams({ userId });
+        if (filters.bankId) params.append('bankId', filters.bankId);
+        if (filters.chude) params.append('chude', filters.chude);
+        if (filters.loaicauhoi) params.append('loaicauhoi', filters.loaicauhoi);
+        if (filters.dodai) params.append('dodai', filters.dodai);
+        if (filters.dokho) params.append('dokho', filters.dokho);
+        if (filters.search) params.append('search', filters.search);
+        if (filters.limit) params.append('limit', filters.limit);
+        if (filters.offset) params.append('offset', filters.offset);
+
+        const res = await axiosInstance.get(`/hr/question-banks/items/search?${params.toString()}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error getting question bank items:', error);
+        throw error;
+    }
+};
+
 export {
     uploadQuestionBank,
     getQuestionBanks,
     getQuestionBankDetail,
     deleteQuestionBank,
-    updateQuestionBankItem
+    updateQuestionBankItem,
+    getQuestionBankItems
 };
 

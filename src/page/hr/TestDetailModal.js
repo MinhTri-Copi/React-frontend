@@ -3,12 +3,14 @@ import './TestDetailModal.scss';
 import QuestionFormModal from './QuestionFormModal';
 import TestFormModal from './TestFormModal';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import QuestionBankSelectorModal from './QuestionBankSelectorModal';
 import { toast } from 'react-toastify';
-import { deleteQuestion, getTestDetail } from '../../service.js/testService';
+import { deleteQuestion, getTestDetail, addMultipleQuestions } from '../../service.js/testService';
 
 const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
     const [showQuestionForm, setShowQuestionForm] = useState(false);
     const [showTestEditModal, setShowTestEditModal] = useState(false);
+    const [showQuestionBankSelector, setShowQuestionBankSelector] = useState(false);
     const [editingQuestion, setEditingQuestion] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [questionToDelete, setQuestionToDelete] = useState(null);
@@ -71,6 +73,27 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
     const handleAddQuestions = () => {
         setEditingQuestion(null);
         setShowQuestionForm(true);
+    };
+
+    const handleSelectFromBank = () => {
+        setShowQuestionBankSelector(true);
+    };
+
+    const handleQuestionsSelectedFromBank = async (selectedQuestions) => {
+        try {
+            const res = await addMultipleQuestions(userId, currentTest.id, selectedQuestions);
+            if (res && res.EC === 0) {
+                toast.success(`Đã thêm ${selectedQuestions.length} câu hỏi từ bộ đề thành công!`);
+                setShowQuestionBankSelector(false);
+                await refreshTestDetail();
+                setNeedsParentUpdate(true);
+            } else {
+                toast.error(res.EM || 'Không thể thêm câu hỏi từ bộ đề!');
+            }
+        } catch (error) {
+            console.error('Error adding questions from bank:', error);
+            toast.error('Có lỗi xảy ra khi thêm câu hỏi từ bộ đề!');
+        }
     };
 
     const handleQuestionsAdded = async () => {
@@ -273,9 +296,14 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
                             <div className="section-header">
                                 <h3>Danh sách câu hỏi ({currentTest.Questions?.length || 0})</h3>
                                 {canAddQuestions() && (
-                                    <button className="btn-add-question" onClick={handleAddQuestions}>
-                                        <i className="fas fa-plus"></i> Thêm câu hỏi
-                                    </button>
+                                    <div className="action-buttons">
+                                        <button className="btn-select-from-bank" onClick={handleSelectFromBank}>
+                                            <i className="fas fa-book"></i> Chọn từ bộ đề
+                                        </button>
+                                        <button className="btn-add-question" onClick={handleAddQuestions}>
+                                            <i className="fas fa-plus"></i> Thêm câu hỏi
+                                        </button>
+                                    </div>
                                 )}
                             </div>
 
@@ -323,10 +351,14 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
                                                 </div>
                                             </div>
                                             <div className="question-content">
-                                                <strong>Câu hỏi:</strong> {question.Cauhoi}
-                                            </div>
-                                            <div className="question-answer">
-                                                <strong>Đáp án:</strong> {question.Dapan}
+                                                <div className="question-text">
+                                                    <div className="question-label">Câu hỏi:</div>
+                                                    <div className="question-value">{question.Cauhoi}</div>
+                                                </div>
+                                                <div className="question-answer">
+                                                    <div className="answer-label">Đáp án:</div>
+                                                    <div className="answer-value">{question.Dapan}</div>
+                                                </div>
                                             </div>
                                             <div className="question-type">
                                                 <span className={`type-badge ${question.Loaicauhoi}`}>
@@ -360,6 +392,14 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
                 userId={userId}
                 mode={editingQuestion ? 'edit' : 'create'}
                 initialData={editingQuestion}
+            />
+
+            {/* Question Bank Selector Modal */}
+            <QuestionBankSelectorModal
+                show={showQuestionBankSelector}
+                onClose={() => setShowQuestionBankSelector(false)}
+                onSelect={handleQuestionsSelectedFromBank}
+                userId={userId}
             />
 
             <TestFormModal
