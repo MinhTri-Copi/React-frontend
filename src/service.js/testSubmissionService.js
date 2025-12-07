@@ -53,7 +53,9 @@ const getSubmissionResult = async (userId, submissionId, isHR = false) => {
  * Auto-grade submission using AI/NLP
  */
 const autoGradeSubmission = async (submissionId) => {
-    return await axiosInstance.post(`/test-submissions/${submissionId}/auto-grade`);
+    return await axiosInstance.post(`/test-submissions/${submissionId}/auto-grade`, {}, {
+        timeout: 300000 // 5 minutes - LLM batch processing may take time
+    });
 };
 
 /**
