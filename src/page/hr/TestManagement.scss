@@ -1,6 +1,6 @@
 .test-management-container {
     padding: 20px;
-    max-width: 1400px;
+    max-width: 1800px; // tương đương trang tin tuyển dụng
     margin: 0 auto;
 
     .cp-header {
@@ -52,8 +52,35 @@
 
         .cp-header-right {
             display: flex;
-            align-items: center;
+            align-items: flex-end;
             justify-content: flex-end;
+            gap: 12px;
+            flex-wrap: wrap;
+
+            .filter-group {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                min-width: 220px;
+                justify-content: flex-end;
+
+                label {
+                    font-weight: 600;
+                    font-size: 14px;
+                    color: white;
+                }
+
+                select {
+                    width: 100%;
+                    padding: 12px 12px; // tăng padding để cao tương đương nút
+                    border-radius: 10px;
+                    border: none;
+                    outline: none;
+                    font-size: 14px;
+                    color: #333;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                }
+            }
 
             .btn-create-test {
                 background: white;
@@ -122,7 +149,7 @@
 
     .tests-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); // rộng hơn nữa
         gap: 24px;
         margin-bottom: 30px;
     }
@@ -140,7 +167,7 @@
         }
 
         .test-card-header {
-            padding: 20px;
+            padding: 22px;
             background: linear-gradient(135deg, #008060, #2bab60);
             color: white;
             display: flex;
@@ -202,7 +229,7 @@
         }
 
         .test-card-body {
-            padding: 20px;
+            padding: 22px;
 
             .test-info {
                 margin-bottom: 20px;

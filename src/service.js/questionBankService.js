@@ -106,12 +106,28 @@ const getQuestionBankItems = async (userId, filters = {}) => {
     }
 };
 
+/**
+ * HR xác nhận sau khi rà soát để sinh training data + (tùy chọn) train ML
+ */
+const confirmTrainingData = async (userId, bankId) => {
+    try {
+        const res = await axiosInstance.post(`/hr/question-banks/${bankId}/confirm-training`, {
+            userId
+        });
+        return res.data;
+    } catch (error) {
+        console.error('Error confirming training data:', error);
+        throw error;
+    }
+};
+
 export {
     uploadQuestionBank,
     getQuestionBanks,
     getQuestionBankDetail,
     deleteQuestionBank,
     updateQuestionBankItem,
-    getQuestionBankItems
+    getQuestionBankItems,
+    confirmTrainingData
 };
 

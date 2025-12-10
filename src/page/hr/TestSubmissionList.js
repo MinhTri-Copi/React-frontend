@@ -27,6 +27,7 @@ const TestSubmissionList = ({ userId }) => {
     const [scoreSortOrder, setScoreSortOrder] = useState('desc'); // 'desc' = cao đến thấp, 'asc' = thấp đến cao
     const [selectedCount, setSelectedCount] = useState('');
     const [isApproving, setIsApproving] = useState(false);
+    const [approvingId, setApprovingId] = useState(null);
 
     useEffect(() => {
         if (!userId) return;
@@ -124,6 +125,7 @@ const TestSubmissionList = ({ userId }) => {
     };
 
     const handleApproveCandidate = async (submission) => {
+        if (approvingId) return; // đang duyệt
         if (!submission.JobApplication?.id) {
             toast.error('Không tìm thấy đơn ứng tuyển!');
             return;
@@ -135,11 +137,15 @@ const TestSubmissionList = ({ userId }) => {
         }
 
         try {
+            setApprovingId(submission.id);
+            const toastId = toast.info('Đang duyệt ứng viên...', { autoClose: false });
             const res = await updateApplicationStatus(
                 userId,
                 submission.JobApplication.id,
                 7 // Status ID 7: Chuẩn bị phỏng vấn
             );
+
+            toast.dismiss(toastId);
 
             if (res.EC === 0) {
                 toast.success(`Đã duyệt ứng viên ${submission.User?.Hoten || ''} vào vòng phỏng vấn!`);
@@ -150,6 +156,8 @@ const TestSubmissionList = ({ userId }) => {
         } catch (error) {
             console.error('Error approving candidate:', error);
             toast.error('Có lỗi xảy ra khi duyệt ứng viên!');
+        } finally {
+            setApprovingId(null);
         }
     };
 

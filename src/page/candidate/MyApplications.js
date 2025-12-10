@@ -4,6 +4,8 @@ import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
 import { getMyApplications, startTest } from '../../service.js/jobApplicationService';
 import { toast } from 'react-toastify';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 import './MyApplications.scss';
 
 const TEST_STATUS_MESSAGES = {
@@ -42,6 +44,15 @@ const MyApplications = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true,
+            offset: 100,
+            delay: 0
+        });
+
         const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
         if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
@@ -49,6 +60,13 @@ const MyApplications = () => {
             fetchApplications(parsedUser.id);
         }
     }, []);
+
+    // Refresh AOS when applications change
+    useEffect(() => {
+        if (!isLoading && applications.length > 0) {
+            AOS.refresh();
+        }
+    }, [applications, isLoading]);
 
     const fetchApplications = async (userId) => {
         setIsLoading(true);
@@ -192,26 +210,26 @@ const MyApplications = () => {
             <CandidateNav />
             <div className="applications-container">
                 <div className="container">
-                    <div className="page-header">
+                    <div className="page-header" data-aos="fade-down" data-aos-delay="0">
                         <div>
                             <h1>Đơn ứng tuyển của tôi</h1>
                             <p>Theo dõi những công việc bạn đã nộp hồ sơ</p>
                         </div>
                         {applications.length > 0 && (
                             <div className="header-stats">
-                                <div className="stat-item">
+                                <div className="stat-item" data-aos="fade-down" data-aos-delay="100">
                                     <span className="stat-number">{stats.total}</span>
                                     <span className="stat-label">Tổng đơn</span>
                                 </div>
-                                <div className="stat-item">
+                                <div className="stat-item" data-aos="fade-down" data-aos-delay="200">
                                     <span className="stat-number">{stats.pending}</span>
                                     <span className="stat-label">Đang chờ</span>
                                 </div>
-                                <div className="stat-item">
+                                <div className="stat-item" data-aos="fade-down" data-aos-delay="300">
                                     <span className="stat-number">{stats.approved}</span>
                                     <span className="stat-label">Đã duyệt</span>
                                 </div>
-                                <div className="stat-item">
+                                <div className="stat-item" data-aos="fade-down" data-aos-delay="400">
                                     <span className="stat-number">{stats.rejected}</span>
                                     <span className="stat-label">Từ chối</span>
                                 </div>
@@ -226,8 +244,14 @@ const MyApplications = () => {
                         </div>
                     ) : applications.length > 0 ? (
                         <div className="applications-list">
-                            {applications.map((app) => (
-                                <div className="application-card" key={app.id}>
+                            {applications.map((app, index) => (
+                                <div 
+                                    className="application-card" 
+                                    key={app.id}
+                                    data-aos="fade-down"
+                                    data-aos-delay={index % 6 * 50}
+                                >
+                                    <div className="ticket-hole-bottom"></div>
                                     <div className="job-info">
                                         <div className="job-title-row">
                                             <h3>{app.JobPosting?.Tieude}</h3>
@@ -278,12 +302,14 @@ const MyApplications = () => {
                                                 const isDisabled = testState.disabled || isLoadingBtn;
                                                 return (
                                                     <button
-                                                        className={`btn-test btn-${testState.variant || 'start'}`}
+                                                        className={`btn-test btn-${testState.variant || 'start'} ${testState.variant === 'pending' ? 'grading' : ''}`}
                                                         disabled={isDisabled}
                                                         onClick={() => handleStartTest(app)}
                                                     >
                                                         {testState.variant === 'completed' ? (
                                                             <i className="fas fa-eye"></i>
+                                                        ) : testState.variant === 'pending' ? (
+                                                            <i className="fas fa-clock"></i>
                                                         ) : (
                                                             <i className="fas fa-clipboard-check"></i>
                                                         )}
@@ -297,7 +323,7 @@ const MyApplications = () => {
                             ))}
                         </div>
                     ) : (
-                        <div className="empty-state">
+                        <div className="empty-state" data-aos="fade-down" data-aos-delay="0">
                             <img src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png" alt="empty" />
                             <h3>Bạn chưa ứng tuyển công việc nào</h3>
                             <p>Hãy khám phá các cơ hội việc làm phù hợp và nộp hồ sơ ngay hôm nay!</p>

@@ -49,11 +49,17 @@ const addMultipleQuestions = async (userId, testId, questions) => {
 /**
  * Lấy danh sách bài test
  */
-const getMyTests = async (userId, page = 1, limit = 10) => {
+const getMyTests = async (userId, page = 1, limit = 10, jobPostingId = null) => {
     try {
-        const res = await axiosInstance.get(
-            `/hr/tests?userId=${userId}&page=${page}&limit=${limit}`
-        );
+        const url = new URL(`/hr/tests`, window.location.origin);
+        url.searchParams.append('userId', userId);
+        url.searchParams.append('page', page);
+        url.searchParams.append('limit', limit);
+        if (jobPostingId) {
+            url.searchParams.append('jobPostingId', jobPostingId);
+        }
+
+        const res = await axiosInstance.get(url.pathname + url.search);
         return res.data;
     } catch (error) {
         console.error('Error fetching tests:', error);

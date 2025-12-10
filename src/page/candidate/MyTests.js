@@ -5,6 +5,8 @@ import Footer from '../../components/Footer/Footer';
 import { getMyTestSubmissions } from '../../service.js/testSubmissionService';
 import { startTest } from '../../service.js/jobApplicationService';
 import { toast } from 'react-toastify';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 import './MyTests.scss';
 
 const STATUS_OPTIONS = [
@@ -28,6 +30,15 @@ const MyTests = () => {
     const submissionRefs = useRef({});
 
     useEffect(() => {
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true,
+            offset: 100,
+        });
+    }, []);
+
+    useEffect(() => {
         const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
         if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
@@ -35,6 +46,10 @@ const MyTests = () => {
             fetchTests(parsedUser.id);
         }
     }, [statusFilter, jobPostingFilter]);
+
+    useEffect(() => {
+        AOS.refresh();
+    }, [submissions, stats]);
 
     // Scroll to specific submission if provided in URL
     useEffect(() => {
@@ -144,26 +159,26 @@ const MyTests = () => {
             <CandidateNav />
             <div className="tests-container">
                 <div className="container">
-                    <div className="page-header">
+                    <div className="page-header" data-aos="fade-down">
                         <div>
                             <h1>Bài test của tôi</h1>
                             <p>Danh sách các bài test đã được gửi cho bạn</p>
                         </div>
                         {submissions.length > 0 && (
                             <div className="header-stats">
-                                <div className="stat-item">
+                                <div className="stat-item" data-aos="fade-down" data-aos-delay="100">
                                     <span className="stat-number">{stats.total}</span>
                                     <span className="stat-label">Tổng bài test</span>
                                 </div>
-                                <div className="stat-item">
+                                <div className="stat-item" data-aos="fade-down" data-aos-delay="200">
                                     <span className="stat-number">{stats.inProgress}</span>
                                     <span className="stat-label">Đang làm</span>
                                 </div>
-                                <div className="stat-item">
+                                <div className="stat-item" data-aos="fade-down" data-aos-delay="300">
                                     <span className="stat-number">{stats.pending}</span>
                                     <span className="stat-label">Đã nộp</span>
                                 </div>
-                                <div className="stat-item">
+                                <div className="stat-item" data-aos="fade-down" data-aos-delay="400">
                                     <span className="stat-number">{stats.graded}</span>
                                     <span className="stat-label">Đã chấm</span>
                                 </div>
@@ -171,7 +186,7 @@ const MyTests = () => {
                         )}
                     </div>
 
-                    <div className="filters-section">
+                    <div className="filters-section" data-aos="fade-down" data-aos-delay="200">
                         <div className="filter-group">
                             <label>Lọc theo trạng thái:</label>
                             <select 
@@ -210,7 +225,7 @@ const MyTests = () => {
                         </div>
                     ) : submissions.length > 0 ? (
                         <div className="tests-list">
-                            {submissions.map((submission) => {
+                            {submissions.map((submission, index) => {
                                 const statusInfo = getStatusBadge(submission.Trangthai);
                                 const maxScore = submission.Test?.Tongdiem || 100;
                                 const achievedScore = submission.Tongdiemdatduoc || 0;
@@ -220,6 +235,8 @@ const MyTests = () => {
                                     <div 
                                         key={submission.id} 
                                         className="test-card"
+                                        data-aos="fade-down"
+                                        data-aos-delay={index % 6 * 50}
                                         ref={(el) => {
                                             if (el) submissionRefs.current[submission.id] = el;
                                         }}
@@ -290,7 +307,7 @@ const MyTests = () => {
                                                     className="btn-start"
                                                     onClick={() => handleStartFromMyTests(submission)}
                                                 >
-                                                    <i className="fas fa-play"></i>
+                                                    <i className="fas fa-clipboard-check"></i>
                                                     Bắt đầu làm bài
                                                 </button>
                                             )}
@@ -304,8 +321,8 @@ const MyTests = () => {
                                                 </button>
                                             )}
                                             {submission.Trangthai === 'danop' && (
-                                                <button className="btn-waiting" disabled>
-                                                    <i className="fas fa-hourglass-half"></i>
+                                                <button className="btn-waiting grading" disabled>
+                                                    <i className="fas fa-clock"></i>
                                                     Đang chấm điểm
                                                 </button>
                                             )}
@@ -324,7 +341,7 @@ const MyTests = () => {
                             })}
                         </div>
                     ) : (
-                        <div className="empty-state">
+                        <div className="empty-state" data-aos="fade-down">
                             <img src="https://cdn-icons-png.flaticon.com/512/4076/4076549.png" alt="empty" />
                             <h3>Bạn chưa có bài test nào</h3>
                             <p>Khi có bài test được gửi cho bạn, nó sẽ hiển thị ở đây</p>

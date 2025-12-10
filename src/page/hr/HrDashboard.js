@@ -12,17 +12,18 @@ import InterviewRoundManagement from './InterviewRoundManagement';
 import MeetingManagement from './MeetingManagement';
 import QuestionBankManagement from './QuestionBankManagement';
 
+// Order: Thống kê, Quản lý tin tuyển dụng, QL ứng viên, Quản lý bài test,
+// DS bài test đã nộp, Meet, Vòng phỏng vấn, Bộ đề, QL hồ sơ công ty
 const sidebarItems = [
     { id: 'analytics', label: 'Thống kê', icon: 'fas fa-chart-line' },
     { id: 'jobs', label: 'Quản lý tin tuyển dụng', icon: 'fas fa-briefcase' },
-    { id: 'tests', label: 'Quản lý bài test', icon: 'fas fa-file-alt' },
-    { id: 'question-banks', label: 'Bộ đề', icon: 'fas fa-book' },
-    { id: 'test-submissions', label: 'DS bài test đã nộp', icon: 'fas fa-clipboard-check' },
-    { id: 'interview-rounds', label: 'Vòng phỏng vấn', icon: 'fas fa-video' },
-    { id: 'meetings', label: 'Meet', icon: 'fas fa-video' },
     { id: 'candidates', label: 'QL ứng viên', icon: 'fas fa-user-friends' },
-    { id: 'company', label: 'QL hồ sơ công ty', icon: 'fas fa-building' },
-    { id: 'applications', label: 'Danh sách ứng viên ', icon: 'fas fa-clipboard-list' },
+    { id: 'tests', label: 'Quản lý bài test', icon: 'fas fa-file-alt' },
+    { id: 'test-submissions', label: 'DS bài test đã nộp', icon: 'fas fa-clipboard-check' },
+    { id: 'meetings', label: 'Meet', icon: 'fas fa-video' },
+    { id: 'interview-rounds', label: 'Vòng phỏng vấn', icon: 'fas fa-video' },
+    { id: 'question-banks', label: 'Bộ đề', icon: 'fas fa-book' },
+    { id: 'company', label: 'QL hồ sơ công ty', icon: 'fas fa-building' }
 ];
 
 const HrDashboard = () => {
@@ -37,7 +38,9 @@ const HrDashboard = () => {
     // Set active menu based on URL
     useEffect(() => {
         const path = location.pathname;
-        if (path === '/hr/candidates') {
+        if (path === '/hr/jobs') {
+            setActiveMenu('jobs');
+        } else if (path === '/hr/candidates') {
             setActiveMenu('candidates');
         } else if (path === '/hr/company-profile') {
             setActiveMenu('company');
@@ -82,9 +85,8 @@ const HrDashboard = () => {
         if (itemId === 'analytics') {
             navigate('/hr');
         } else if (itemId === 'jobs') {
-            // Only navigate if not already on /hr
-            if (location.pathname !== '/hr') {
-                navigate('/hr');
+            if (location.pathname !== '/hr/jobs') {
+                navigate('/hr/jobs');
             }
         } else if (itemId === 'tests') {
             navigate('/hr/tests');
@@ -100,8 +102,6 @@ const HrDashboard = () => {
             navigate('/hr/candidates');
         } else if (itemId === 'company') {
             navigate('/hr/company-profile');
-        } else if (itemId === 'applications') {
-            navigate('/hr/applications');
         } else {
             toast.info('Tính năng đang được phát triển!');
         }

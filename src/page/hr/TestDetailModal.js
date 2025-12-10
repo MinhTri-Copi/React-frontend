@@ -177,9 +177,20 @@ const TestDetailModal = ({ show, onClose, test, userId, onUpdate }) => {
 
     const canEdit = () => {
         if (!currentTest) return false;
+        if (!currentTest.Trangthai) return false; // không hoạt động
+
         const now = new Date();
         const startDate = currentTest.Ngaybatdau ? new Date(currentTest.Ngaybatdau) : null;
-        return !startDate || now < startDate;
+        const endDate = currentTest.Ngayhethan ? new Date(currentTest.Ngayhethan) : null;
+
+        // Cho phép sửa khi chưa bắt đầu hoặc đã hết hạn
+        if (startDate && now < startDate) return true; // pending
+        if (endDate && now > endDate) return true;     // expired
+
+        // Nếu không có ngày bắt đầu/kết thúc, cho phép chỉnh sửa
+        if (!startDate && !endDate) return true;
+
+        return false;
     };
 
     const canAddQuestions = () => {

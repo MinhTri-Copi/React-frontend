@@ -55,16 +55,23 @@ const GradeModal = ({ show, onClose, submissionId, hrUserId, onGraded }) => {
 
     const fetchAndAutoGrade = async () => {
         setIsLoading(true);
-        setIsAutoGrading(true);
         
         try {
             // Step 1: Get submission details
             const submissionRes = await getSubmissionForGrading(hrUserId, submissionId);
             
             if (submissionRes.data && submissionRes.data.EC === 0) {
-                setSubmission(submissionRes.data.DT);
-                
-                // Step 2: Auto-grade with AI
+                const submissionData = submissionRes.data.DT;
+                setSubmission(submissionData);
+
+                // Nếu đã chấm (dacham) thì chỉ xem lại, không gọi AI chấm lại
+                if (submissionData.Trangthai === 'dacham') {
+                    setIsAutoGrading(false);
+                    return;
+                }
+
+                // Step 2: Auto-grade with AI cho bài đã nộp (danop)
+                setIsAutoGrading(true);
                 toast.info('🤖 AI đang chấm điểm tự động...');
                 const gradeRes = await autoGradeSubmission(submissionId);
                 

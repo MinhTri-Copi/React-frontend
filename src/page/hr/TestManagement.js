@@ -14,7 +14,9 @@ const TestManagement = ({ userId }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [totalTests, setTotalTests] = useState(0);
-    const limit = 10;
+    // Hiển thị dạng thẻ 4 cột, nên limit 8 hoặc 12 cho đẹp
+    const limit = 8;
+    const [jobFilter, setJobFilter] = useState('');
 
     // Modal states
     const [showFormModal, setShowFormModal] = useState(false);
@@ -26,13 +28,13 @@ const TestManagement = ({ userId }) => {
     const [createdTestId, setCreatedTestId] = useState(null);
 
     useEffect(() => {
-        fetchTests(currentPage);
-    }, [currentPage]);
+        fetchTests(currentPage, jobFilter);
+    }, [currentPage, jobFilter]);
 
-    const fetchTests = async (page) => {
+    const fetchTests = async (page, jobPostingId = null) => {
         try {
             setIsLoading(true);
-            const res = await getMyTests(userId, page, limit);
+            const res = await getMyTests(userId, page, limit, jobPostingId);
 
             if (res && res.EC === 0) {
                 setTests(res.DT.tests);
@@ -54,6 +56,11 @@ const TestManagement = ({ userId }) => {
 
     const handlePageClick = (event) => {
         setCurrentPage(event.selected + 1);
+    };
+
+    const handleJobFilterChange = (e) => {
+        setJobFilter(e.target.value);
+        setCurrentPage(1);
     };
 
     const handleCreateTest = () => {
@@ -162,7 +169,7 @@ const TestManagement = ({ userId }) => {
 
     const canEditOrDelete = (test) => {
         const statusInfo = getStatusBadge(test);
-        return statusInfo.status === 'pending';
+        return statusInfo.status === 'pending' || statusInfo.status === 'expired';
     };
 
     if (isLoading) {
@@ -182,6 +189,24 @@ const TestManagement = ({ userId }) => {
                     </div>
                 </div>
                 <div className="cp-header-right">
+                    <div className="filter-group">
+                        <label htmlFor="jobFilter">Lọc theo tin tuyển dụng</label>
+                        <select
+                            id="jobFilter"
+                            value={jobFilter}
+                            onChange={handleJobFilterChange}
+                        >
+                            <option value="">Tất cả tin tuyển dụng</option>
+                            {Array.isArray(tests) &&
+                                [...new Map(tests.map(t => [t.JobPosting?.id, t.JobPosting])).values()]
+                                    .filter(j => j && j.id)
+                                    .map(job => (
+                                        <option key={job.id} value={job.id}>
+                                            {job.Tieude || `Tin tuyển dụng #${job.id}`}
+                                        </option>
+                                    ))}
+                        </select>
+                    </div>
                     <button className="btn-create-test" onClick={handleCreateTest}>
                         <i className="fas fa-plus"></i> Tạo bài test mới
                     </button>

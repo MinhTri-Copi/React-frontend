@@ -158,7 +158,14 @@ const JobManagement = ({ userId }) => {
                 // Refresh the list
                 fetchJobPostings(currentPage);
             } else {
-                toast.error(res.EM || 'Không thể xóa tin tuyển dụng!');
+                // Hiển thị thông điệp rõ ràng hơn cho các case đã biết
+                if (res.EC === 3) {
+                    toast.warning(res.EM || 'Chỉ được xóa tin ở trạng thái "Ngừng tuyển".');
+                } else if (res.EC === 4) {
+                    toast.warning(res.EM || 'Tin đã có đơn ứng tuyển, không thể xóa.');
+                } else {
+                    toast.error(res.EM || 'Không thể xóa tin tuyển dụng!');
+                }
             }
         } catch (error) {
             console.error('Error deleting job posting:', error);

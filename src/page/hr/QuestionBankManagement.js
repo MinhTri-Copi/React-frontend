@@ -9,6 +9,7 @@ import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 const QuestionBankManagement = ({ userId }) => {
     const [questionBanks, setQuestionBanks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [showNotice, setShowNotice] = useState(true);
     
     // Modal states
     const [showUploadModal, setShowUploadModal] = useState(false);
@@ -119,15 +120,21 @@ const QuestionBankManagement = ({ userId }) => {
 
     return (
         <div className="question-bank-management">
-            <div className="page-header">
-                <h2>
-                    <i className="fas fa-book"></i>
-                    Quản lý bộ đề
-                </h2>
-                <button className="btn btn-primary" onClick={handleUpload}>
-                    <i className="fas fa-upload"></i>
-                    Upload bộ đề
-                </button>
+            <div className="qb-header">
+                <div className="qb-header-left">
+                    <div className="qb-icon">
+                        <i className="fas fa-book"></i>
+                    </div>
+                    <div className="qb-title">
+                        <h1>Quản lý bộ đề</h1>
+                        <p>Tạo, theo dõi và tái sử dụng bộ câu hỏi</p>
+                    </div>
+                </div>
+                <div className="qb-header-right">
+                    <button className="btn-upload-qb" onClick={handleUpload}>
+                        <i className="fas fa-upload"></i> Upload bộ đề
+                    </button>
+                </div>
             </div>
 
             {isLoading ? (
@@ -250,6 +257,28 @@ const QuestionBankManagement = ({ userId }) => {
                 title="Xác nhận xóa bộ đề"
                 message={`Bạn có chắc chắn muốn xóa bộ đề "${bankToDelete?.Ten}"? Hành động này không thể hoàn tác!`}
             />
+
+            {/* Notice modal: remind HR to upload early for AI training */}
+            {showNotice && (
+                <div className="qb-notice-backdrop">
+                    <div className="qb-notice-modal">
+                        <div className="notice-icon">
+                            <i className="fas fa-info-circle"></i>
+                        </div>
+                        <h3>Lưu ý khi upload bộ đề</h3>
+                        <p>
+                            Nên upload bộ đề trước vài ngày để AI có thời gian sinh dữ liệu huấn luyện
+                            và train mô hình chấm nhanh. Việc này giúp tốc độ chấm và độ chính xác cao hơn
+                            khi ứng viên làm bài.
+                        </p>
+                        <div className="notice-actions">
+                            <button className="btn btn-primary" onClick={() => setShowNotice(false)}>
+                                Đã hiểu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

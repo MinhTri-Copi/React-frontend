@@ -4,6 +4,8 @@ import Footer from '../../components/Footer/Footer';
 import ReactPaginate from 'react-paginate';
 import { toast } from 'react-toastify';
 import { getListCompany, searchCompany } from '../../service.js/companyService';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 import './CompanyList.scss';
 
 const CompanyList = () => {
@@ -14,8 +16,24 @@ const CompanyList = () => {
     const [searchKeyword, setSearchKeyword] = useState('');
 
     useEffect(() => {
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true,
+            offset: 100,
+            delay: 0
+        });
+
         fetchCompanies(1);
     }, []);
+
+    // Refresh AOS when companies change
+    useEffect(() => {
+        if (!isLoading && companies.length > 0) {
+            AOS.refresh();
+        }
+    }, [companies, isLoading]);
 
     const fetchCompanies = async (page) => {
         setIsLoading(true);
@@ -111,13 +129,44 @@ const CompanyList = () => {
             <div className="company-container">
                 {/* Header Section */}
                 <div className="header-section">
+                    {/* Binary Code Effect */}
+                    <div className="binary-code"></div>
+                    
+                    {/* Floating Tech Icons */}
+                    <div className="tech-elements">
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="300">
+                            <i className="fab fa-react"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="400">
+                            <i className="fab fa-node-js"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="500">
+                            <i className="fab fa-python"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="600">
+                            <i className="fab fa-js"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="700">
+                            <i className="fab fa-java"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="800">
+                            <i className="fas fa-database"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="900">
+                            <i className="fab fa-aws"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="1000">
+                            <i className="fab fa-docker"></i>
+                        </div>
+                    </div>
+
                     <div className="header-content">
-                        <h1 className="page-title">Các công ty IT hàng đầu</h1>
-                        <p className="page-subtitle">
+                        <h1 className="page-title" data-aos="fade-down" data-aos-delay="0">Các công ty IT hàng đầu</h1>
+                        <p className="page-subtitle" data-aos="fade-down" data-aos-delay="100">
                             Khám phá những công ty công nghệ tốt nhất để làm việc
                         </p>
 
-                        <div className="search-bar">
+                        <div className="search-bar" data-aos="fade-up" data-aos-delay="200">
                             <input
                                 type="text"
                                 placeholder="Tìm kiếm công ty theo tên, ngành nghề..."
@@ -151,7 +200,12 @@ const CompanyList = () => {
                                             const recommendation = getRandomRecommendation(company.id);
                                             
                                             return (
-                                                <div key={company.id} className="company-card">
+                                                <div 
+                                                    key={company.id} 
+                                                    className={`company-card ${rank <= 3 ? 'top-rank-card' : ''}`}
+                                                    data-aos="fade-down"
+                                                    data-aos-delay={index % 6 * 50}
+                                                >
                                                     {/* Rank Badge */}
                                                     <div className={`rank-badge ${rank <= 3 ? 'top-rank' : ''}`}>
                                                         <div className="rank-number">{rank}</div>

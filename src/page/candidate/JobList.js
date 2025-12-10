@@ -5,6 +5,8 @@ import Footer from '../../components/Footer/Footer';
 import ReactPaginate from 'react-paginate';
 import { toast } from 'react-toastify';
 import { getListJobPosting, getFilterOptions } from '../../service.js/jobPostingService';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 import './JobList.scss';
 
 const JobList = () => {
@@ -45,9 +47,25 @@ const JobList = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true,
+            offset: 100,
+            delay: 0
+        });
+
         fetchFilterOptions();
         fetchJobs(1);
     }, []);
+
+    // Refresh AOS when jobs change
+    useEffect(() => {
+        if (!isLoading && jobs.length > 0) {
+            AOS.refresh();
+        }
+    }, [jobs, isLoading]);
 
     const fetchFilterOptions = async () => {
         setIsLoadingFilters(true);
@@ -207,12 +225,37 @@ const JobList = () => {
             <div className="job-list-container">
                 {/* Hero Section */}
                 <div className="hero-section">
+                    {/* Binary Code Effect */}
+                    <div className="binary-code"></div>
+                    
+                    {/* Floating Tech Icons */}
+                    <div className="tech-elements">
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="300">
+                            <i className="fab fa-react"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="400">
+                            <i className="fab fa-node-js"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="500">
+                            <i className="fab fa-python"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="600">
+                            <i className="fab fa-js"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="700">
+                            <i className="fab fa-java"></i>
+                        </div>
+                        <div className="tech-icon" data-aos="fade-in" data-aos-delay="800">
+                            <i className="fas fa-database"></i>
+                        </div>
+                    </div>
+
                     <div className="container">
-                        <h1 className="page-title">Việc làm IT</h1>
-                        <p className="page-subtitle">Việc làm IT xịn dành cho Developer chất</p>
+                        <h1 className="page-title" data-aos="fade-down" data-aos-delay="0">Việc làm IT</h1>
+                        <p className="page-subtitle" data-aos="fade-down" data-aos-delay="100">Việc làm IT xịn dành cho Developer chất</p>
                         
                         {/* Quick category tags */}
-                        <div className="quick-tags">
+                        <div className="quick-tags" data-aos="fade-up" data-aos-delay="200">
                             <span className="quick-tag"><i className="fas fa-check-circle"></i> Backend</span>
                             <span className="quick-tag"><i className="fas fa-check-circle"></i> Frontend</span>
                             <span className="quick-tag"><i className="fas fa-check-circle"></i> Tester</span>
@@ -280,10 +323,12 @@ const JobList = () => {
 
                         {/* Major Tags */}
                         <div className="major-tags">
-                            {!isLoadingFilters && filterOptions.majors.slice(0, 6).map((major) => (
+                            {!isLoadingFilters && filterOptions.majors.slice(0, 6).map((major, index) => (
                                 <button 
                                     key={major.id}
                                     className={`major-tag ${selectedMajors.includes(major.id) ? 'active' : ''}`}
+                                    data-aos="fade-down"
+                                    data-aos-delay={index * 50}
                                     onClick={() => handleMajorClick(major.id)}
                                 >
                                     {major.TenNghanhNghe}
@@ -368,12 +413,14 @@ const JobList = () => {
                                     </div>
                                 ) : jobs && jobs.length > 0 ? (
                                     <div className="jobs-list">
-                                        {jobs.map((job) => {
+                                        {jobs.map((job, index) => {
                                             const daysRemaining = getDaysRemaining(job.Ngayhethan);
                                             return (
                                                 <div 
                                                     key={job.id} 
                                                     className="job-card"
+                                                    data-aos="fade-down"
+                                                    data-aos-delay={index % 6 * 50}
                                                     onClick={() => navigate(`/candidate/jobs/${job.id}`)}
                                                 >
                                                     {/* Hot badge */}

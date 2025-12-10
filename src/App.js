@@ -49,6 +49,7 @@ function App() {
           {/* Other Routes */}
           <Route path="/admin" element={<div>Admin Dashboard</div>} />
           <Route path="/hr" element={<HrDashboard />} />
+          <Route path="/hr/jobs" element={<HrDashboard />} />
           <Route path="/hr/tests" element={<HrDashboard />} />
           <Route path="/hr/question-banks" element={<HrDashboard />} />
           <Route path="/hr/test-submissions" element={<HrDashboard />} />

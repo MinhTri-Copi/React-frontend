@@ -9,6 +9,8 @@ import {
     deleteRecord,
     uploadCV 
 } from '../../service.js/recordService';
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 import './MyRecords.scss';
 
 const MyRecords = () => {
@@ -25,6 +27,15 @@ const MyRecords = () => {
     const [isUploading, setIsUploading] = useState(false);
 
     useEffect(() => {
+        // Initialize AOS
+        AOS.init({
+            duration: 800,
+            easing: 'ease-in-out',
+            once: true,
+            offset: 100,
+            delay: 0
+        });
+
         // Prefer sessionStorage, fallback to localStorage
         const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
         if (storedUser) {
@@ -33,6 +44,13 @@ const MyRecords = () => {
             fetchRecords(parsedUser.id);
         }
     }, []);
+
+    // Refresh AOS when records change
+    useEffect(() => {
+        if (!isLoading && records.length > 0) {
+            AOS.refresh();
+        }
+    }, [records, isLoading]);
 
     const fetchRecords = async (userId) => {
         setIsLoading(true);
@@ -188,7 +206,7 @@ const MyRecords = () => {
             <div className="records-container">
                 <div className="container">
                     {/* Header */}
-                    <div className="page-header">
+                    <div className="page-header" data-aos="fade-down" data-aos-delay="0">
                         <div>
                             <h1 className="page-title">Hồ sơ của tôi</h1>
                             <p className="page-subtitle">Quản lý CV và hồ sơ xin việc</p>
@@ -202,7 +220,7 @@ const MyRecords = () => {
                     {/* Statistics */}
                     {records && records.length > 0 && (
                         <div className="stats-section">
-                            <div className="stat-card">
+                            <div className="stat-card" data-aos="fade-down" data-aos-delay="100">
                                 <div className="stat-icon">
                                     <i className="fas fa-file-alt"></i>
                                 </div>
@@ -211,7 +229,7 @@ const MyRecords = () => {
                                     <div className="stat-label">Tổng số hồ sơ</div>
                                 </div>
                             </div>
-                            <div className="stat-card">
+                            <div className="stat-card" data-aos="fade-down" data-aos-delay="200">
                                 <div className="stat-icon">
                                     <i className="fas fa-paper-plane"></i>
                                 </div>
@@ -222,7 +240,7 @@ const MyRecords = () => {
                                     <div className="stat-label">Lượt ứng tuyển</div>
                                 </div>
                             </div>
-                            <div className="stat-card">
+                            <div className="stat-card" data-aos="fade-down" data-aos-delay="300">
                                 <div className="stat-icon">
                                     <i className="fas fa-check-circle"></i>
                                 </div>
@@ -246,8 +264,13 @@ const MyRecords = () => {
                         <>
                             {records && records.length > 0 ? (
                                 <div className="records-grid">
-                                    {records.map((record) => (
-                                        <div key={record.id} className="record-card">
+                                    {records.map((record, index) => (
+                                        <div 
+                                            key={record.id} 
+                                            className="record-card"
+                                            data-aos="fade-down"
+                                            data-aos-delay={index % 6 * 50}
+                                        >
                                             <div className="record-icon">
                                                 <i className="fas fa-file-alt"></i>
                                             </div>
@@ -305,7 +328,7 @@ const MyRecords = () => {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="empty-state">
+                                <div className="empty-state" data-aos="fade-down" data-aos-delay="0">
                                     <i className="fas fa-folder-open"></i>
                                     <h3>Chưa có hồ sơ nào</h3>
                                     <p>Hãy tạo hồ sơ đầu tiên để bắt đầu ứng tuyển</p>

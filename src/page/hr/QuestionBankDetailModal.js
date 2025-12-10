@@ -1,12 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './QuestionBankDetailModal.scss';
-import { updateQuestionBankItem } from '../../service.js/questionBankService';
+import { updateQuestionBankItem, confirmTrainingData } from '../../service.js/questionBankService';
 import { toast } from 'react-toastify';
 
 const QuestionBankDetailModal = ({ show, onClose, bank, onUpdate, userId }) => {
     const [editingItem, setEditingItem] = useState(null);
     const [editForm, setEditForm] = useState({});
     const [loading, setLoading] = useState(false);
+    const [confirming, setConfirming] = useState(false);
+    const [confirmedFlag, setConfirmedFlag] = useState(bank?.Metadata?.confirmedTraining === true);
+
+    // Sync confirmed flag when bank prop changes
+    useEffect(() => {
+        setConfirmedFlag(bank?.Metadata?.confirmedTraining === true);
+    }, [bank]);
 
     if (!show || !bank) return null;
 
@@ -64,6 +71,33 @@ const QuestionBankDetailModal = ({ show, onClose, bank, onUpdate, userId }) => {
         }));
     };
 
+    const handleConfirmTraining = async () => {
+        if (!bank?.id) return;
+        if (!userId) {
+            toast.error('Không tìm thấy thông tin người dùng!');
+            return;
+        }
+        try {
+            setConfirming(true);
+            const res = await confirmTrainingData(userId, bank.id);
+            if (res.EC === 0) {
+                toast.success(res.EM || 'Đã bắt đầu sinh training data!');
+                // Cập nhật flag đã xác nhận để ẩn nút
+                setConfirmedFlag(true);
+                if (onUpdate) onUpdate();
+                // Đóng modal ngay, train chạy nền
+                onClose();
+            } else {
+                toast.error(res.EM || 'Không thể sinh training data!');
+            }
+        } catch (error) {
+            console.error('Error confirming training:', error);
+            toast.error('Có lỗi xảy ra khi xác nhận training!');
+        } finally {
+            setConfirming(false);
+        }
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -90,6 +124,19 @@ const QuestionBankDetailModal = ({ show, onClose, bank, onUpdate, userId }) => {
                 </div>
 
                 <div className="modal-body">
+                    <div className="review-alert">
+                        <div className="alert-icon">
+                            <i className="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div className="alert-text">
+                            <h4>Vui lòng rà soát phân loại trước khi train AI</h4>
+                            <p>
+                                Hãy kiểm tra lại loại câu hỏi và đáp án. Sau khi chắc chắn, nhấn nút "Xác nhận"
+                                để LLM sinh dữ liệu và (tùy chọn) train ML ở chế độ nền.
+                            </p>
+                        </div>
+                    </div>
+
                     <div className="detail-section">
                         <h4>Thông tin chung</h4>
                         <div className="info-grid">
@@ -291,7 +338,18 @@ const QuestionBankDetailModal = ({ show, onClose, bank, onUpdate, userId }) => {
                     )}
                 </div>
 
+              
                 <div className="modal-footer">
+                    {!confirmedFlag && (
+                        <button
+                            className="btn-confirm-footer"
+                            onClick={handleConfirmTraining}
+                            disabled={confirming}
+                        >
+                            {confirming ? 'Đang xử lý...' : 'Xác nhận'}
+                        </button>
+                    )}
+                    {/* Only one close button here */}
                     <button className="btn btn-secondary" onClick={onClose}>
                         Đóng
                     </button>
