@@ -31,6 +31,17 @@ const CandidateManagement = () => {
     const [totalRows, setTotalRows] = useState(0);
     const limit = 10;
 
+    // Generate binary code strings (stable across renders)
+    const generateBinaryCode = (length) => {
+        return Array.from({ length }, () => (Math.random() > 0.5 ? '1' : '0'));
+    };
+
+    const [binaryColumns] = useState([
+        generateBinaryCode(20),
+        generateBinaryCode(20),
+        generateBinaryCode(20)
+    ]);
+
     // Modal states
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [selectedApplication, setSelectedApplication] = useState(null);
@@ -197,13 +208,83 @@ const CandidateManagement = () => {
     return (
         <div className="candidate-management">
             <div className="cp-header">
-                <div className="cp-header-left">
-                    <div className="company-logo">
-                        <i className="fas fa-user-tie"></i>
+                {/* Animated Background Effects */}
+                <div className="header-bg-effects">
+                    {/* Animated Gradient Background */}
+                    <div className="animated-gradient"></div>
+                    
+                    {/* Tech Grid Pattern */}
+                    <div className="tech-grid"></div>
+                    
+                    {/* Circuit Lines & Dots */}
+                    <svg className="circuit-lines" viewBox="0 0 1000 200" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="circuitGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="rgba(255,255,255,0.1)" />
+                                <stop offset="50%" stopColor="rgba(255,255,255,0.3)" />
+                                <stop offset="100%" stopColor="rgba(255,255,255,0.1)" />
+                            </linearGradient>
+                        </defs>
+                        <line x1="0" y1="50" x2="200" y2="50" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
+                        <line x1="300" y1="100" x2="500" y2="100" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
+                        <line x1="600" y1="150" x2="800" y2="150" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
+                        <line x1="200" y1="50" x2="200" y2="100" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
+                        <line x1="500" y1="100" x2="500" y2="150" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
+                        <circle cx="200" cy="50" r="4" fill="rgba(255,255,255,0.6)" className="circuit-dot" />
+                        <circle cx="500" cy="100" r="4" fill="rgba(255,255,255,0.6)" className="circuit-dot" />
+                        <circle cx="800" cy="150" r="4" fill="rgba(255,255,255,0.6)" className="circuit-dot" />
+                    </svg>
+                    
+                    {/* Binary Code Effect */}
+                    <div className="binary-code">
+                        {binaryColumns.map((column, colIndex) => (
+                            <div key={colIndex} className="binary-column">
+                                {column.map((digit, i) => (
+                                    <span key={i} className="binary-digit">{digit}</span>
+                                ))}
+                            </div>
+                        ))}
                     </div>
-                    <div className="company-title">
-                        <h1>Quản lý ứng viên</h1>
-                        <p className="company-industry">Theo dõi, đánh giá và duyệt hồ sơ ứng tuyển</p>
+                    
+                    {/* Floating Tech Icons */}
+                    <div className="floating-tech-icons">
+                        <div className="tech-icon" style={{ '--delay': '0s', '--duration': '15s', '--x': '10%', '--y': '20%' }}>
+                            <i className="fab fa-react"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '2s', '--duration': '18s', '--x': '80%', '--y': '30%' }}>
+                            <i className="fab fa-node-js"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '4s', '--duration': '20s', '--x': '20%', '--y': '70%' }}>
+                            <i className="fab fa-python"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '1s', '--duration': '16s', '--x': '70%', '--y': '60%' }}>
+                            <i className="fab fa-js"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '3s', '--duration': '17s', '--x': '50%', '--y': '15%' }}>
+                            <i className="fab fa-java"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '5s', '--duration': '19s', '--x': '90%', '--y': '80%' }}>
+                            <i className="fas fa-database"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '2.5s', '--duration': '21s', '--x': '15%', '--y': '50%' }}>
+                            <i className="fab fa-aws"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '4.5s', '--duration': '14s', '--x': '85%', '--y': '10%' }}>
+                            <i className="fab fa-docker"></i>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="cp-header-content">
+                    <div className="cp-header-left">
+                        <div className="company-logo">
+                            <i className="fas fa-user-tie"></i>
+                        </div>
+                        <div className="company-title">
+                            <h1>Quản lý ứng viên</h1>
+                            <p className="company-industry">Theo dõi, đánh giá và duyệt hồ sơ ứng tuyển</p>
+                        </div>
                     </div>
                 </div>
             </div>
