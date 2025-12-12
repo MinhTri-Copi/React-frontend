@@ -89,13 +89,14 @@ const TrainingTimelineModal = ({ show, onClose, questionBanks = [], userId }) =>
     };
 
     const getStepIcon = (iconName) => {
+        const iconProps = { className: 'step-icon' };
         const iconMap = {
-            'upload': <UploadOutlined />,
-            'tags': <TagsOutlined />,
-            'database': <DatabaseOutlined />,
-            'robot': <RobotOutlined />
+            'upload': <UploadOutlined {...iconProps} />,
+            'tags': <TagsOutlined {...iconProps} />,
+            'database': <DatabaseOutlined {...iconProps} />,
+            'robot': <RobotOutlined {...iconProps} />
         };
-        return iconMap[iconName] || <ClockCircleOutlined />;
+        return iconMap[iconName] || <ClockCircleOutlined {...iconProps} />;
     };
 
     const formatDate = (dateString) => {
@@ -119,6 +120,12 @@ const TrainingTimelineModal = ({ show, onClose, questionBanks = [], userId }) =>
         }
     };
 
+    const getStepStatusClass = (status, index, currentActiveIndex) => {
+        if (status === 'finish') return 'step-completed';
+        if (status === 'process') return 'step-active';
+        return 'step-waiting';
+    };
+
     const renderTimelineContent = (timelineData) => {
         if (!timelineData) {
             return (
@@ -140,6 +147,10 @@ const TrainingTimelineModal = ({ show, onClose, questionBanks = [], userId }) =>
             );
         }
 
+        // Tìm index của bước đang active (process)
+        const activeIndex = timelineData.timeline.findIndex(step => step.status === 'process');
+        const completedCount = timelineData.timeline.filter(step => step.status === 'finish').length;
+
         return (
             <div className="timeline-content">
                 <div className="timeline-summary">
@@ -148,7 +159,7 @@ const TrainingTimelineModal = ({ show, onClose, questionBanks = [], userId }) =>
                         <div className="stat-item">
                             <span className="stat-label">Tiến độ:</span>
                             <span className="stat-value">
-                                {timelineData.summary.completedSteps}/{timelineData.summary.totalSteps} bước
+                                {completedCount}/{timelineData.summary.totalSteps} bước
                             </span>
                         </div>
                         <div className="stat-item">
@@ -160,27 +171,54 @@ const TrainingTimelineModal = ({ show, onClose, questionBanks = [], userId }) =>
                     </div>
                 </div>
 
-                <Timeline
-                    mode="left"
-                    items={timelineData.timeline.map((step, index) => ({
-                        key: index,
-                        dot: getIcon(step.icon, step.status),
-                        color: getStatusColor(step.status),
-                        children: (
-                            <div className="timeline-item-content">
-                                <div className="timeline-item-header">
-                                    <h4>{step.title}</h4>
-                                    {step.timestamp && (
-                                        <span className="timeline-timestamp">
-                                            {formatDate(step.timestamp)}
-                                        </span>
-                                    )}
+                {/* Horizontal Timeline */}
+                <div className="horizontal-timeline">
+                    <div className="timeline-line">
+                        <div 
+                            className="timeline-progress" 
+                            style={{ 
+                                width: `${(completedCount / timelineData.timeline.length) * 100}%` 
+                            }}
+                        />
+                    </div>
+                    
+                    <div className="timeline-steps">
+                        {timelineData.timeline.map((step, index) => {
+                            const statusClass = getStepStatusClass(step.status, index, activeIndex);
+                            const isActive = step.status === 'process';
+                            const isCompleted = step.status === 'finish';
+                            
+                            return (
+                                <div 
+                                    key={index} 
+                                    className={`timeline-step ${statusClass} ${isActive ? 'active-glow' : ''}`}
+                                >
+                                    <div className="step-node">
+                                        <div className="step-icon-wrapper">
+                                            {isCompleted ? (
+                                                <CheckCircleOutlined className="step-icon" />
+                                            ) : isActive ? (
+                                                <LoadingOutlined className="step-icon spinning" />
+                                            ) : (
+                                                getStepIcon(step.icon)
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="step-content">
+                                        <div className="step-title">{step.title}</div>
+                                        <div className="step-description">{step.description}</div>
+                                        {step.timestamp && (
+                                            <div className="step-timestamp">
+                                                {formatDate(step.timestamp)}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <p className="timeline-description">{step.description}</p>
-                            </div>
-                        )
-                    }))}
-                />
+                            );
+                        })}
+                    </div>
+                </div>
             </div>
         );
     };
@@ -203,7 +241,7 @@ const TrainingTimelineModal = ({ show, onClose, questionBanks = [], userId }) =>
             visible={show}
             onCancel={onClose}
             footer={null}
-            width={900}
+            width={1200}
             className="training-timeline-modal"
             maskClosable={true}
             destroyOnClose={false}
