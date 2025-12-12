@@ -121,6 +121,19 @@ const confirmTrainingData = async (userId, bankId) => {
     }
 };
 
+/**
+ * Lấy training status của bộ đề để hiển thị timeline
+ */
+const getTrainingStatus = async (userId, bankId) => {
+    try {
+        const res = await axiosInstance.get(`/hr/question-banks/${bankId}/training-status?userId=${userId}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error getting training status:', error);
+        throw error;
+    }
+};
+
 export {
     uploadQuestionBank,
     getQuestionBanks,
@@ -128,6 +141,6 @@ export {
     deleteQuestionBank,
     updateQuestionBankItem,
     getQuestionBankItems,
-    confirmTrainingData
+    confirmTrainingData,
+    getTrainingStatus
 };
-

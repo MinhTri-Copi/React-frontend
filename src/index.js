@@ -5,6 +5,11 @@ import reportWebVitals from './reportWebVitals';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+// Import Ant Design CSS
+import 'antd/dist/antd.css';
+// Import dayjs for Ant Design
+import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
 
 ReactDOM.render(
   <React.StrictMode>

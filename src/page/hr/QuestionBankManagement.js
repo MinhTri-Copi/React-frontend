@@ -4,6 +4,7 @@ import { getQuestionBanks, deleteQuestionBank, getQuestionBankDetail } from '../
 import { toast } from 'react-toastify';
 import QuestionBankUploadModal from './QuestionBankUploadModal';
 import QuestionBankDetailModal from './QuestionBankDetailModal';
+import TrainingTimelineModal from './TrainingTimelineModal';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 
 const QuestionBankManagement = ({ userId }) => {
@@ -14,6 +15,7 @@ const QuestionBankManagement = ({ userId }) => {
     // Modal states
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showTimelineModal, setShowTimelineModal] = useState(false);
     const [selectedBank, setSelectedBank] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [bankToDelete, setBankToDelete] = useState(null);
@@ -86,6 +88,7 @@ const QuestionBankManagement = ({ userId }) => {
         setShowDeleteConfirm(true);
     };
 
+
     const confirmDelete = async () => {
         if (!bankToDelete) return;
 
@@ -131,6 +134,18 @@ const QuestionBankManagement = ({ userId }) => {
                     </div>
                 </div>
                 <div className="qb-header-right">
+                    <button 
+                        className="btn-timeline-qb" 
+                        onClick={() => {
+                            console.log('🔘 Click nút Tiến trình');
+                            console.log('📊 questionBanks:', questionBanks);
+                            console.log('👤 userId:', userId);
+                            setShowTimelineModal(true);
+                            console.log('✅ Đã set showTimelineModal = true');
+                        }}
+                    >
+                        <i className="fas fa-tasks"></i> Tiến trình
+                    </button>
                     <button className="btn-upload-qb" onClick={handleUpload}>
                         <i className="fas fa-upload"></i> Upload bộ đề
                     </button>
@@ -243,6 +258,22 @@ const QuestionBankManagement = ({ userId }) => {
                 }}
                 bank={selectedBank}
                 onUpdate={handleUpdateQuestion}
+                userId={userId}
+            />
+
+            {/* Training Timeline Modal */}
+            {console.log('🔍 Render TrainingTimelineModal:', { 
+                showTimelineModal, 
+                questionBanksCount: questionBanks.length,
+                userId 
+            })}
+            <TrainingTimelineModal
+                show={showTimelineModal}
+                onClose={() => {
+                    console.log('❌ Đóng modal');
+                    setShowTimelineModal(false);
+                }}
+                questionBanks={questionBanks}
                 userId={userId}
             />
 

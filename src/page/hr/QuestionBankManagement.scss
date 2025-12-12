@@ -129,6 +129,32 @@
             display: flex;
             align-items: center;
             justify-content: flex-end;
+            gap: 1rem;
+
+            .btn-timeline-qb {
+                background: rgba(255, 255, 255, 0.15);
+                color: white;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                padding: 12px 24px;
+                border-radius: 12px;
+                font-size: 1rem;
+                font-weight: 600;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                transition: all 0.3s ease;
+
+                i {
+                    font-size: 16px;
+                }
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.25);
+                    border-color: rgba(255, 255, 255, 0.5);
+                    transform: translateY(-2px);
+                }
+            }
 
             .btn-upload-qb {
                 background: white;
@@ -159,7 +185,9 @@
             .qb-header-right {
                 width: 100%;
                 justify-content: flex-start;
+                flex-direction: column;
 
+                .btn-timeline-qb,
                 .btn-upload-qb {
                     width: 100%;
                     justify-content: center;

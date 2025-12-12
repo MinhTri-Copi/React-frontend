@@ -1,0 +1,156 @@
+.training-timeline-modal {
+    .ant-modal-header {
+        border-bottom: 2px solid #f0f0f0;
+        padding: 20px 24px;
+
+        .timeline-modal-header {
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            font-weight: 600;
+            color: #262626;
+        }
+    }
+
+    .ant-modal-body {
+        padding: 24px;
+    }
+
+    .ant-tabs {
+        .ant-tabs-tab {
+            font-weight: 500;
+        }
+
+        .ant-tabs-content-holder {
+            padding-top: 16px;
+        }
+    }
+
+    .timeline-loading {
+        text-align: center;
+        padding: 40px 20px;
+
+        p {
+            margin-top: 16px;
+            color: #8c8c8c;
+        }
+    }
+
+    .timeline-content {
+        .timeline-summary {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+
+            h3 {
+                margin: 0 0 16px 0;
+                font-size: 18px;
+                font-weight: 600;
+                color: #262626;
+            }
+
+            .summary-stats {
+                display: flex;
+                gap: 24px;
+                flex-wrap: wrap;
+
+                .stat-item {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 4px;
+
+                    .stat-label {
+                        font-size: 12px;
+                        color: #8c8c8c;
+                        text-transform: uppercase;
+                        letter-spacing: 0.5px;
+                    }
+
+                    .stat-value {
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #262626;
+
+                        &.complete {
+                            color: #52c41a;
+                        }
+
+                        &.in-progress {
+                            color: #1890ff;
+                        }
+                    }
+                }
+            }
+        }
+
+        .ant-timeline {
+            padding-left: 0;
+
+            .ant-timeline-item {
+                padding-bottom: 24px;
+
+                .ant-timeline-item-content {
+                    margin-left: 24px;
+                }
+            }
+
+            .timeline-item-content {
+                .timeline-item-header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 8px;
+
+                    h4 {
+                        margin: 0;
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #262626;
+                    }
+
+                    .timeline-timestamp {
+                        font-size: 12px;
+                        color: #8c8c8c;
+                        white-space: nowrap;
+                    }
+                }
+
+                .timeline-description {
+                    margin: 0;
+                    font-size: 14px;
+                    color: #595959;
+                    line-height: 1.5;
+                }
+            }
+        }
+    }
+
+    // Responsive
+    @media (max-width: 768px) {
+        .ant-modal {
+            width: 90% !important;
+            margin: 20px auto;
+        }
+
+        .timeline-content {
+            .timeline-summary {
+                .summary-stats {
+                    flex-direction: column;
+                    gap: 12px;
+                }
+            }
+
+            .ant-timeline {
+                .timeline-item-content {
+                    .timeline-item-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 4px;
+                    }
+                }
+            }
+        }
+    }
+}
+
