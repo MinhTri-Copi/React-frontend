@@ -4,6 +4,7 @@ import { getQuestionBanks, deleteQuestionBank, getQuestionBankDetail } from '../
 import { toast } from 'react-toastify';
 import QuestionBankUploadModal from './QuestionBankUploadModal';
 import QuestionBankDetailModal from './QuestionBankDetailModal';
+import TrainingTimelineModal from './TrainingTimelineModal';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 
 const QuestionBankManagement = ({ userId }) => {
@@ -14,6 +15,7 @@ const QuestionBankManagement = ({ userId }) => {
     // Modal states
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [showTimelineModal, setShowTimelineModal] = useState(false);
     const [selectedBank, setSelectedBank] = useState(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [bankToDelete, setBankToDelete] = useState(null);
@@ -96,6 +98,7 @@ const QuestionBankManagement = ({ userId }) => {
         setBankToDelete(bank);
         setShowDeleteConfirm(true);
     };
+
 
     const confirmDelete = async () => {
         if (!bankToDelete) return;
@@ -189,8 +192,6 @@ const QuestionBankManagement = ({ userId }) => {
                         </div>
                     </div>
                 </div>
-
-                {/* Content */}
                 <div className="cp-header-content">
                     <div className="qb-header-left cp-header-left">
                         <div className="qb-icon company-logo">
@@ -315,6 +316,22 @@ const QuestionBankManagement = ({ userId }) => {
                 }}
                 bank={selectedBank}
                 onUpdate={handleUpdateQuestion}
+                userId={userId}
+            />
+
+            {/* Training Timeline Modal */}
+            {console.log('🔍 Render TrainingTimelineModal:', { 
+                showTimelineModal, 
+                questionBanksCount: questionBanks.length,
+                userId 
+            })}
+            <TrainingTimelineModal
+                show={showTimelineModal}
+                onClose={() => {
+                    console.log('❌ Đóng modal');
+                    setShowTimelineModal(false);
+                }}
+                questionBanks={questionBanks}
                 userId={userId}
             />
 
