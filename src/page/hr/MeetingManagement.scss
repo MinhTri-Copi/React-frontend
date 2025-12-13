@@ -279,36 +279,95 @@
 
     .filters-section {
         margin-bottom: 25px;
-        padding: 20px;
-        background: white;
+        padding: 1.25rem;
+        background: linear-gradient(135deg, #f8fffe 0%, #f0fdf8 100%);
         border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-        animation: fadeDown 0.6s ease-out 0.6s both;
+        border: 2px solid #e0f2e9;
+        box-shadow: 0 2px 8px rgba(0, 128, 96, 0.08);
+        transition: all 0.3s ease;
+        animation: fadeDown 0.6s ease-out 0.2s both;
+
+        &:hover {
+            border-color: #008060;
+            box-shadow: 0 4px 12px rgba(0, 128, 96, 0.12);
+        }
 
         .filter-group {
             display: flex;
-            align-items: center;
-            gap: 15px;
+            flex-direction: column;
+            gap: 0.75rem;
 
             label {
-                font-weight: 600;
-                color: #374151;
-                font-size: 14px;
+                font-weight: 700;
+                color: #1f2937;
+                font-size: 0.95rem;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                margin-bottom: 0.25rem;
             }
 
             select {
-                padding: 10px 15px;
-                border: 1.5px solid #e5e7eb;
-                border-radius: 8px;
-                font-size: 14px;
+                width: 100%;
+                padding: 0.875rem 1rem;
+                border: 2px solid #d1d5db;
+                border-radius: 10px;
+                font-size: 0.95rem;
+                font-weight: 500;
+                color: #374151;
+                background: white;
                 cursor: pointer;
                 transition: all 0.3s ease;
-                min-width: 200px;
+                appearance: none;
+                background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23008060' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+                background-repeat: no-repeat;
+                background-position: right 1rem center;
+                background-size: 14px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 
                 &:focus {
                     outline: none;
                     border-color: #008060;
-                    box-shadow: 0 0 0 3px rgba(0, 128, 96, 0.1);
+                    background-color: #ffffff;
+                    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'%3E%3Cpath fill='%23008060' d='M7 10L2 5h10z'/%3E%3C/svg%3E");
+                    background-repeat: no-repeat;
+                    background-position: right 1rem center;
+                    background-size: 14px;
+                    box-shadow: 0 0 0 3px rgba(0, 128, 96, 0.1), 0 2px 8px rgba(0, 128, 96, 0.15);
+                }
+
+                &:hover {
+                    border-color: #008060;
+                    box-shadow: 0 2px 6px rgba(0, 128, 96, 0.1);
+                }
+
+                option {
+                    padding: 0.75rem 1rem;
+                    font-size: 0.95rem;
+                    color: #374151;
+                    background: white;
+                    border: none;
+                    line-height: 1.8;
+                    min-height: 2.5rem;
+                    display: block;
+
+                    &:hover {
+                        background: #f0fdf8;
+                    }
+
+                    &:checked,
+                    &:focus {
+                        background: #008060;
+                        color: white;
+                    }
+
+                    &[value="all"] {
+                        font-weight: 700;
+                        color: #008060;
+                        background: #f0fdf8;
+                        padding: 0.875rem 1rem;
+                        border-bottom: 2px solid #e0f2e9;
+                    }
                 }
             }
         }
