@@ -3,6 +3,18 @@
     background: #f5f7fa;
     min-height: 100vh;
 
+    // Fade-down animation keyframes
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     .page-header.cp-header {
         position: relative;
         margin-bottom: 30px;
@@ -12,6 +24,7 @@
         box-shadow: 0 8px 24px rgba(0, 128, 96, 0.2);
         color: white;
         background: transparent;
+        animation: fadeDown 0.6s ease-out;
 
         .header-bg-effects {
             position: absolute;
@@ -270,6 +283,7 @@
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        animation: fadeDown 0.6s ease-out 0.6s both;
 
         .filter-group {
             display: flex;
@@ -307,6 +321,7 @@
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        animation: fadeDown 0.6s ease-out 0.8s both;
 
         i {
             font-size: 64px;
@@ -359,6 +374,13 @@
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
             border: 2px solid transparent;
+            animation: fadeDown 0.5s ease-out both;
+
+            @for $i from 1 through 10 {
+                &:nth-child(#{$i}) {
+                    animation-delay: #{0.7 + ($i * 0.05)}s;
+                }
+            }
 
             &:hover {
                 border-color: #008060;

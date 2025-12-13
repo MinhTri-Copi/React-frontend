@@ -20,17 +20,6 @@ const QuestionBankManagement = ({ userId }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [bankToDelete, setBankToDelete] = useState(null);
 
-    // Generate binary code strings (stable across renders)
-    const generateBinaryCode = (length) => {
-        return Array.from({ length }, () => (Math.random() > 0.5 ? '1' : '0'));
-    };
-
-    const [binaryColumns] = useState([
-        generateBinaryCode(20),
-        generateBinaryCode(20),
-        generateBinaryCode(20)
-    ]);
-
     const fetchQuestionBanks = useCallback(async () => {
         if (!userId) return;
         
@@ -134,79 +123,32 @@ const QuestionBankManagement = ({ userId }) => {
 
     return (
         <div className="question-bank-management">
-            <div className="qb-header cp-header">
-                {/* Animated Background Effects */}
-                <div className="header-bg-effects">
-                    <div className="animated-gradient"></div>
-                    <div className="tech-grid"></div>
-                    <svg className="circuit-lines" viewBox="0 0 1000 200" preserveAspectRatio="none">
-                        <defs>
-                            <linearGradient id="circuitGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stopColor="rgba(255,255,255,0.1)" />
-                                <stop offset="50%" stopColor="rgba(255,255,255,0.3)" />
-                                <stop offset="100%" stopColor="rgba(255,255,255,0.1)" />
-                            </linearGradient>
-                        </defs>
-                        <line x1="0" y1="50" x2="200" y2="50" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
-                        <line x1="300" y1="100" x2="500" y2="100" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
-                        <line x1="600" y1="150" x2="800" y2="150" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
-                        <line x1="200" y1="50" x2="200" y2="100" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
-                        <line x1="500" y1="100" x2="500" y2="150" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
-                        <circle cx="200" cy="50" r="4" fill="rgba(255,255,255,0.6)" className="circuit-dot" />
-                        <circle cx="500" cy="100" r="4" fill="rgba(255,255,255,0.6)" className="circuit-dot" />
-                        <circle cx="800" cy="150" r="4" fill="rgba(255,255,255,0.6)" className="circuit-dot" />
-                    </svg>
-                    <div className="binary-code">
-                        {binaryColumns.map((column, colIndex) => (
-                            <div key={colIndex} className="binary-column">
-                                {column.map((digit, i) => (
-                                    <span key={i} className="binary-digit">{digit}</span>
-                                ))}
-                            </div>
-                        ))}
+            <div className="qb-header">
+                <div className="qb-header-left">
+                    <div className="qb-icon">
+                        <i className="fas fa-book"></i>
                     </div>
-                    <div className="floating-tech-icons">
-                        <div className="tech-icon" style={{ '--delay': '0s', '--duration': '15s', '--x': '10%', '--y': '20%' }}>
-                            <i className="fab fa-react"></i>
-                        </div>
-                        <div className="tech-icon" style={{ '--delay': '2s', '--duration': '18s', '--x': '80%', '--y': '30%' }}>
-                            <i className="fab fa-node-js"></i>
-                        </div>
-                        <div className="tech-icon" style={{ '--delay': '4s', '--duration': '20s', '--x': '20%', '--y': '70%' }}>
-                            <i className="fab fa-python"></i>
-                        </div>
-                        <div className="tech-icon" style={{ '--delay': '1s', '--duration': '16s', '--x': '70%', '--y': '60%' }}>
-                            <i className="fab fa-js"></i>
-                        </div>
-                        <div className="tech-icon" style={{ '--delay': '3s', '--duration': '17s', '--x': '50%', '--y': '15%' }}>
-                            <i className="fab fa-java"></i>
-                        </div>
-                        <div className="tech-icon" style={{ '--delay': '5s', '--duration': '19s', '--x': '90%', '--y': '80%' }}>
-                            <i className="fas fa-database"></i>
-                        </div>
-                        <div className="tech-icon" style={{ '--delay': '2.5s', '--duration': '21s', '--x': '15%', '--y': '50%' }}>
-                            <i className="fab fa-aws"></i>
-                        </div>
-                        <div className="tech-icon" style={{ '--delay': '4.5s', '--duration': '14s', '--x': '85%', '--y': '10%' }}>
-                            <i className="fab fa-docker"></i>
-                        </div>
+                    <div className="qb-title">
+                        <h1>Quản lý bộ đề</h1>
+                        <p>Tạo, theo dõi và tái sử dụng bộ câu hỏi</p>
                     </div>
                 </div>
-                <div className="cp-header-content">
-                    <div className="qb-header-left cp-header-left">
-                        <div className="qb-icon company-logo">
-                            <i className="fas fa-book"></i>
-                        </div>
-                        <div className="qb-title company-title">
-                            <h1>Quản lý bộ đề</h1>
-                            <p>Tạo, theo dõi và tái sử dụng bộ câu hỏi</p>
-                        </div>
-                    </div>
-                    <div className="qb-header-right cp-header-right">
-                        <button className="btn-upload-qb" onClick={handleUpload}>
-                            <i className="fas fa-upload"></i> Upload bộ đề
-                        </button>
-                    </div>
+                <div className="qb-header-right">
+                    <button 
+                        className="btn-timeline-qb" 
+                        onClick={() => {
+                            console.log('🔘 Click nút Tiến trình');
+                            console.log('📊 questionBanks:', questionBanks);
+                            console.log('👤 userId:', userId);
+                            setShowTimelineModal(true);
+                            console.log('✅ Đã set showTimelineModal = true');
+                        }}
+                    >
+                        <i className="fas fa-tasks"></i> Tiến trình
+                    </button>
+                    <button className="btn-upload-qb" onClick={handleUpload}>
+                        <i className="fas fa-upload"></i> Upload bộ đề
+                    </button>
                 </div>
             </div>
 

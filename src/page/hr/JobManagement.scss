@@ -1,6 +1,18 @@
 .job-management {
     padding: 10px 0;
 
+    // Fade-down animation keyframes
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     .cp-header {
         position: relative;
         margin-bottom: 30px;
@@ -9,6 +21,7 @@
         overflow: hidden;
         box-shadow: 0 8px 24px rgba(0, 128, 96, 0.2);
         color: white;
+        animation: fadeDown 0.6s ease-out;
 
         // Animated Background Effects Container
         .header-bg-effects {
@@ -343,6 +356,19 @@
             gap: 20px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeDown 0.6s ease-out both;
+
+            &:nth-child(1) {
+                animation-delay: 0.2s;
+            }
+
+            &:nth-child(2) {
+                animation-delay: 0.3s;
+            }
+
+            &:nth-child(3) {
+                animation-delay: 0.4s;
+            }
 
             &:hover {
                 transform: translateY(-4px);
@@ -435,6 +461,7 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 24px;
+        animation: fadeDown 0.6s ease-out 0.6s both;
 
         h2 {
             font-size: 24px;
@@ -493,6 +520,7 @@
         background: white;
         border-radius: 16px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        animation: fadeDown 0.6s ease-out 0.8s both;
 
         i {
             font-size: 64px;
@@ -545,6 +573,7 @@
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         overflow: hidden;
         margin-bottom: 24px;
+        animation: fadeDown 0.6s ease-out 0.7s both;
 
         .job-table {
             width: 100%;
@@ -582,6 +611,13 @@
                 tr {
                     transition: background 0.2s ease;
                     border-bottom: 1px solid #f3f4f6;
+                    animation: fadeDown 0.4s ease-out both;
+
+                    @for $i from 1 through 10 {
+                        &:nth-child(#{$i}) {
+                            animation-delay: #{0.8 + ($i * 0.03)}s;
+                        }
+                    }
 
                     &:hover {
                         background: #f9fafb;

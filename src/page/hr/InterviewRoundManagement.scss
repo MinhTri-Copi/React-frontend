@@ -3,6 +3,18 @@
     background: #f5f7fa;
     min-height: 100vh;
 
+    // Fade-down animation keyframes
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     .cp-header {
         position: relative;
         margin-bottom: 30px;
@@ -11,6 +23,7 @@
         overflow: hidden;
         box-shadow: 0 8px 24px rgba(0, 128, 96, 0.2);
         color: white;
+        animation: fadeDown 0.6s ease-out;
 
         .header-bg-effects {
             position: absolute;
@@ -289,6 +302,7 @@
         padding: 20px;
         margin-bottom: 24px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        animation: fadeDown 0.6s ease-out 0.6s both;
 
         .filter-group {
             display: flex;
@@ -338,6 +352,7 @@
             border-radius: 16px;
             padding: 60px 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            animation: fadeDown 0.6s ease-out 0.8s both;
 
             i {
                 font-size: 64px;
@@ -375,12 +390,20 @@
             display: flex;
             flex-direction: column;
             gap: 24px;
+            animation: fadeDown 0.6s ease-out 0.7s both;
 
             .job-rounds-group {
                 background: white;
                 border-radius: 16px;
                 padding: 24px;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+                animation: fadeDown 0.5s ease-out both;
+
+                @for $i from 1 through 10 {
+                    &:nth-child(#{$i}) {
+                        animation-delay: #{0.8 + ($i * 0.05)}s;
+                    }
+                }
 
                 .group-header {
                     display: flex;
@@ -434,6 +457,13 @@
                         padding: 20px;
                         transition: all 0.2s;
                         background: #f8fafc;
+                        animation: fadeDown 0.4s ease-out both;
+
+                        @for $i from 1 through 10 {
+                            &:nth-child(#{$i}) {
+                                animation-delay: #{1.0 + ($i * 0.03)}s;
+                            }
+                        }
 
                         &:hover {
                             border-color: #008060;
