@@ -33,6 +33,17 @@ const MeetingManagement = ({ userId }) => {
     const [selectedMeetingForEvaluation, setSelectedMeetingForEvaluation] = useState(null);
     const [showEvaluationModal, setShowEvaluationModal] = useState(false);
 
+    // Generate binary code strings (stable across renders)
+    const generateBinaryCode = (length) => {
+        return Array.from({ length }, () => (Math.random() > 0.5 ? '1' : '0'));
+    };
+
+    const [binaryColumns] = useState([
+        generateBinaryCode(20),
+        generateBinaryCode(20),
+        generateBinaryCode(20)
+    ]);
+
     useEffect(() => {
         if (userId) {
             fetchMeetings();
@@ -282,19 +293,80 @@ const MeetingManagement = ({ userId }) => {
 
     return (
         <div className="meeting-management">
-            <div className="page-header">
-                <div className="header-left">
-                    <h1>
-                        <i className="fas fa-video"></i>
-                        Quản lý Meeting
-                    </h1>
-                    <p>Quản lý các cuộc phỏng vấn trực tuyến</p>
+            <div className="page-header cp-header">
+                {/* Animated Background Effects */}
+                <div className="header-bg-effects">
+                    <div className="animated-gradient"></div>
+                    <div className="tech-grid"></div>
+                    <svg className="circuit-lines" viewBox="0 0 1000 200" preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="circuitGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stopColor="rgba(255,255,255,0.1)" />
+                                <stop offset="50%" stopColor="rgba(255,255,255,0.3)" />
+                                <stop offset="100%" stopColor="rgba(255,255,255,0.1)" />
+                            </linearGradient>
+                        </defs>
+                        <line x1="0" y1="50" x2="200" y2="50" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
+                        <line x1="300" y1="100" x2="500" y2="100" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
+                        <line x1="600" y1="150" x2="800" y2="150" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
+                        <line x1="200" y1="50" x2="200" y2="100" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
+                        <line x1="500" y1="100" x2="500" y2="150" stroke="url(#circuitGradient)" strokeWidth="2" className="circuit-line" />
+                        <circle cx="200" cy="50" r="4" fill="rgba(255,255,255,0.6)" className="circuit-dot" />
+                        <circle cx="500" cy="100" r="4" fill="rgba(255,255,255,0.6)" className="circuit-dot" />
+                        <circle cx="800" cy="150" r="4" fill="rgba(255,255,255,0.6)" className="circuit-dot" />
+                    </svg>
+                    <div className="binary-code">
+                        {binaryColumns.map((column, colIndex) => (
+                            <div key={colIndex} className="binary-column">
+                                {column.map((digit, i) => (
+                                    <span key={i} className="binary-digit">{digit}</span>
+                                ))}
+                            </div>
+                        ))}
+                    </div>
+                    <div className="floating-tech-icons">
+                        <div className="tech-icon" style={{ '--delay': '0s', '--duration': '15s', '--x': '10%', '--y': '20%' }}>
+                            <i className="fab fa-react"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '2s', '--duration': '18s', '--x': '80%', '--y': '30%' }}>
+                            <i className="fab fa-node-js"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '4s', '--duration': '20s', '--x': '20%', '--y': '70%' }}>
+                            <i className="fab fa-python"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '1s', '--duration': '16s', '--x': '70%', '--y': '60%' }}>
+                            <i className="fab fa-js"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '3s', '--duration': '17s', '--x': '50%', '--y': '15%' }}>
+                            <i className="fab fa-java"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '5s', '--duration': '19s', '--x': '90%', '--y': '80%' }}>
+                            <i className="fas fa-database"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '2.5s', '--duration': '21s', '--x': '15%', '--y': '50%' }}>
+                            <i className="fab fa-aws"></i>
+                        </div>
+                        <div className="tech-icon" style={{ '--delay': '4.5s', '--duration': '14s', '--x': '85%', '--y': '10%' }}>
+                            <i className="fab fa-docker"></i>
+                        </div>
+                    </div>
                 </div>
-                <div className="header-right">
-                    <button className="btn-create-meeting" onClick={handleCreateMeeting}>
-                        <i className="fas fa-plus"></i>
-                        Tạo Meeting
-                    </button>
+
+                {/* Content */}
+                <div className="cp-header-content">
+                    <div className="header-left cp-header-left">
+                        <h1>
+                            <i className="fas fa-video"></i>
+                            Quản lý Meeting
+                        </h1>
+                        <p>Quản lý các cuộc phỏng vấn trực tuyến</p>
+                    </div>
+                    <div className="header-right cp-header-right">
+                        <button className="btn-create-meeting" onClick={handleCreateMeeting}>
+                            <i className="fas fa-plus"></i>
+                            Tạo Meeting
+                        </button>
+                    </div>
                 </div>
             </div>
 

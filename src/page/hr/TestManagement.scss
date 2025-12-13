@@ -3,18 +3,205 @@
     max-width: 1800px; // tương đương trang tin tuyển dụng
     margin: 0 auto;
 
+    // Fade-down animation keyframes
+    @keyframes fadeDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
     .cp-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 1.5rem;
+        position: relative;
         margin-bottom: 30px;
-        padding: 24px;
-        border-radius: 16px;
         min-height: 140px;
-        background: linear-gradient(135deg, #008060, #2bab60);
-        color: white;
+        border-radius: 16px;
+        overflow: hidden;
         box-shadow: 0 8px 24px rgba(0, 128, 96, 0.2);
+        color: white;
+        animation: fadeDown 0.6s ease-out;
+
+        .header-bg-effects {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
+
+        .animated-gradient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #008060, #2bab60, #008060, #1a7a4e);
+            background-size: 400% 400%;
+            animation: gradientShift 8s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .tech-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.3;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .circuit-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+            z-index: 1;
+
+            .circuit-line {
+                stroke-dasharray: 1000;
+                stroke-dashoffset: 1000;
+                animation: circuitFlow 3s ease-in-out infinite;
+            }
+
+            .circuit-dot {
+                animation: circuitPulse 2s ease-in-out infinite;
+            }
+        }
+
+        @keyframes circuitFlow {
+            0% { stroke-dashoffset: 1000; opacity: 0; }
+            50% { opacity: 1; }
+            100% { stroke-dashoffset: 0; opacity: 0.5; }
+        }
+
+        @keyframes circuitPulse {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .binary-code {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            gap: 40px;
+            padding: 20px;
+            opacity: 0.15;
+            overflow: hidden;
+            z-index: 1;
+
+            .binary-column {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                animation: binaryScroll 15s linear infinite;
+                font-family: 'Courier New', monospace;
+                font-size: 14px;
+                color: rgba(255, 255, 255, 0.6);
+
+                &:nth-child(2) { animation-delay: -5s; }
+                &:nth-child(3) { animation-delay: -10s; }
+
+                .binary-digit {
+                    line-height: 1.2;
+                    transition: opacity 0.3s ease;
+                    
+                    &:hover {
+                        opacity: 1;
+                        color: rgba(255, 255, 255, 0.9);
+                    }
+                }
+            }
+        }
+
+        @keyframes binaryScroll {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        .floating-tech-icons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1;
+
+            .tech-icon {
+                position: absolute;
+                font-size: 24px;
+                color: rgba(255, 255, 255, 0.3);
+                animation: floatIcon var(--duration, 15s) ease-in-out infinite;
+                animation-delay: var(--delay, 0s);
+                left: var(--x, 50%);
+                top: var(--y, 50%);
+                transform: translate(-50%, -50%);
+                transition: all 0.3s ease;
+
+                &:hover {
+                    color: rgba(255, 255, 255, 0.7);
+                    transform: translate(-50%, -50%) scale(1.2);
+                }
+
+                i {
+                    display: block;
+                }
+            }
+        }
+
+        @keyframes floatIcon {
+            0%, 100% {
+                transform: translate(-50%, -50%) translateY(0px) rotate(0deg);
+                opacity: 0.3;
+            }
+            25% {
+                transform: translate(-50%, -50%) translateY(-20px) rotate(5deg);
+                opacity: 0.5;
+            }
+            50% {
+                transform: translate(-50%, -50%) translateY(-10px) rotate(-5deg);
+                opacity: 0.4;
+            }
+            75% {
+                transform: translate(-50%, -50%) translateY(-25px) rotate(3deg);
+                opacity: 0.6;
+            }
+        }
+
+        .cp-header-content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 24px;
+        }
 
         .cp-header-left {
             display: flex;
@@ -25,11 +212,14 @@
                 width: 80px;
                 height: 80px;
                 background: rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
                 border-radius: 16px;
                 border: 2px solid rgba(255, 255, 255, 0.3);
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                position: relative;
+                z-index: 11;
 
                 i {
                     font-size: 2.5rem;
@@ -37,15 +227,20 @@
             }
 
             .company-title {
+                position: relative;
+                z-index: 11;
+
                 h1 {
                     margin: 0 0 0.5rem 0;
                     font-size: 2rem;
                     font-weight: 700;
+                    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
                 }
 
                 .company-industry {
                     margin: 0;
-                    opacity: 0.9;
+                    opacity: 0.95;
+                    text-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
                 }
             }
         }
@@ -56,6 +251,8 @@
             justify-content: flex-end;
             gap: 12px;
             flex-wrap: wrap;
+            position: relative;
+            z-index: 11;
 
             .filter-group {
                 display: flex;
@@ -68,11 +265,12 @@
                     font-weight: 600;
                     font-size: 14px;
                     color: white;
+                    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
                 }
 
                 select {
                     width: 100%;
-                    padding: 12px 12px; // tăng padding để cao tương đương nút
+                    padding: 12px 12px;
                     border-radius: 10px;
                     border: none;
                     outline: none;
@@ -95,7 +293,8 @@
                 align-items: center;
                 gap: 0.5rem;
                 transition: all 0.3s ease;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+                backdrop-filter: blur(10px);
 
                 &:hover {
                     transform: translateY(-2px);
@@ -105,8 +304,10 @@
         }
 
         @media (max-width: 768px) {
-            flex-direction: column;
-            align-items: flex-start;
+            .cp-header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
 
             .cp-header-right {
                 width: 100%;
@@ -116,6 +317,15 @@
                     width: 100%;
                     justify-content: center;
                 }
+            }
+
+            .floating-tech-icons .tech-icon {
+                font-size: 18px;
+            }
+
+            .binary-code {
+                gap: 20px;
+                font-size: 10px;
             }
         }
     }
@@ -133,6 +343,7 @@
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        animation: fadeDown 0.6s ease-out 0.8s both;
 
         i {
             font-size: 80px;
@@ -152,6 +363,7 @@
         grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); // rộng hơn nữa
         gap: 24px;
         margin-bottom: 30px;
+        animation: fadeDown 0.6s ease-out 0.7s both;
     }
 
     .test-card {
@@ -160,6 +372,13 @@
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
         overflow: hidden;
+        animation: fadeDown 0.5s ease-out both;
+
+        @for $i from 1 through 10 {
+            &:nth-child(#{$i}) {
+                animation-delay: #{0.8 + ($i * 0.05)}s;
+            }
+        }
 
         &:hover {
             transform: translateY(-4px);
