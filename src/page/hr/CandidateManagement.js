@@ -94,7 +94,34 @@ const CandidateManagement = () => {
             setLoading(true);
             const res = await getJobApplications(userId, status, jobId, page, limit, search);
             if (res.EC === 0) {
-                setApplications(res.DT.applications);
+                let sortedApplications = res.DT.applications || [];
+                
+                // Sắp xếp: ưu tiên "Đang chờ" (statusId = 1) lên đầu
+                // Khi chọn "Đang chờ" hoặc "Tất cả", các ứng viên "Đang chờ" sẽ được ưu tiên hiển thị trước
+                if (status === '1' || status === 'all') {
+                    sortedApplications = sortedApplications.sort((a, b) => {
+                        const aStatusId = a.applicationStatusId || a.ApplicationStatus?.id;
+                        const bStatusId = b.applicationStatusId || b.ApplicationStatus?.id;
+                        
+                        // Luôn ưu tiên "Đang chờ" (statusId = 1) lên đầu
+                        if (aStatusId === 1 && bStatusId !== 1) return -1;
+                        if (aStatusId !== 1 && bStatusId === 1) return 1;
+                        
+                        // Nếu cùng trạng thái, sắp xếp theo ngày nộp (mới nhất trước)
+                        const aDate = new Date(a.Ngaynop || 0);
+                        const bDate = new Date(b.Ngaynop || 0);
+                        return bDate - aDate;
+                    });
+                } else {
+                    // Các trạng thái khác, sắp xếp theo ngày nộp (mới nhất trước)
+                    sortedApplications = sortedApplications.sort((a, b) => {
+                        const aDate = new Date(a.Ngaynop || 0);
+                        const bDate = new Date(b.Ngaynop || 0);
+                        return bDate - aDate;
+                    });
+                }
+                
+                setApplications(sortedApplications);
                 setTotalPages(res.DT.totalPages);
                 setTotalRows(res.DT.totalRows);
                 setCurrentPage(res.DT.currentPage);

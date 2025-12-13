@@ -78,7 +78,24 @@ const JobManagement = ({ userId }) => {
 
             if (res && res.EC === 0) {
                 setStats(res.DT.stats);
-                setJobs(res.DT.jobs);
+                
+                // Sắp xếp: ưu tiên các tin "đang tuyển" (TrangthaiId = 1) lên đầu
+                let sortedJobs = res.DT.jobs || [];
+                sortedJobs = sortedJobs.sort((a, b) => {
+                    const aStatusId = a.TrangthaiId || a.JobPostingStatus?.id;
+                    const bStatusId = b.TrangthaiId || b.JobPostingStatus?.id;
+                    
+                    // Ưu tiên "đang tuyển" (statusId = 1) lên đầu
+                    if (aStatusId === 1 && bStatusId !== 1) return -1;
+                    if (aStatusId !== 1 && bStatusId === 1) return 1;
+                    
+                    // Nếu cùng trạng thái, sắp xếp theo ngày đăng (mới nhất trước)
+                    const aDate = new Date(a.Ngaydang || 0);
+                    const bDate = new Date(b.Ngaydang || 0);
+                    return bDate - aDate;
+                });
+                
+                setJobs(sortedJobs);
                 setTotalPages(res.DT.pagination.totalPages);
                 setTotalRows(res.DT.pagination.totalRows);
             } else {
