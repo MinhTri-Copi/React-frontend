@@ -99,7 +99,7 @@ const JobDetail = () => {
             }
         } catch (error) {
             console.log(error);
-            toast.error('Không thể tải danh sách hồ sơ!');
+            toast.error('Không thể tải danh sách CV!');
         } finally {
             setRecordsLoading(false);
             setRecordsFetched(true);
@@ -164,7 +164,7 @@ const JobDetail = () => {
 
     const handleSubmitApplication = async () => {
         if (!selectedRecordId) {
-            toast.error('Vui lòng chọn hồ sơ để ứng tuyển!');
+            toast.error('Vui lòng chọn CV để ứng tuyển!');
             return;
         }
 
@@ -434,7 +434,7 @@ const JobDetail = () => {
                                     <div className="deadline-info">
                                         <i className="fas fa-calendar-alt"></i>
                                         <div>
-                                            <p className="deadline-label">Hạn nộp hồ sơ:</p>
+                                            <p className="deadline-label">Hạn nộp CV:</p>
                                             <p className="deadline-date">
                                                 {formatDate(job.Ngayhethan) || 'Không giới hạn'}
                                             </p>
@@ -564,7 +564,7 @@ const JobDetail = () => {
                             <div className="section-header">
                                 <h4>
                                     <i className="fas fa-file-signature"></i>
-                                    Chọn Hồ sơ để ứng tuyển
+                                    Chọn CV để ứng tuyển
                                 </h4>
                                 <span>(*) Bắt buộc</span>
                             </div>
@@ -574,13 +574,13 @@ const JobDetail = () => {
                                     <i className="fas fa-file-upload"></i>
                                 </div>
                                 <div className="cv-content">
-                                    <p>Chọn hồ sơ đã tạo để gửi tới nhà tuyển dụng.</p>
+                                    <p>Chọn CV đã tạo để gửi tới nhà tuyển dụng.</p>
                                     <small>Hỗ trợ định dạng .doc, .docx, .pdf với kích thước dưới 5MB.</small>
 
                                     {recordsLoading ? (
                                         <div className="loading-inline">
                                             <i className="fas fa-spinner fa-spin"></i>
-                                            <span>Đang tải hồ sơ...</span>
+                                            <span>Đang tải CV...</span>
                                         </div>
                                     ) : records.length > 0 ? (
                                         <div className="cv-actions">
@@ -599,19 +599,19 @@ const JobDetail = () => {
                                                 type="button"
                                                 onClick={() => navigate('/candidate/my-records')}
                                             >
-                                                Quản lý hồ sơ
+                                                Quản lý CV
                                             </button>
                                         </div>
                                     ) : (
                                         <div className="no-records">
-                                            <p>Bạn chưa có hồ sơ nào. Vui lòng tạo hồ sơ trước khi ứng tuyển.</p>
+                                            <p>Bạn chưa có CV nào. Vui lòng tạo CV trước khi ứng tuyển.</p>
                                             <button 
                                                 className="btn-create-record"
                                                 type="button"
                                                 onClick={() => navigate('/candidate/my-records')}
                                             >
                                                 <i className="fas fa-plus-circle"></i>
-                                                Tạo hồ sơ ngay
+                                                Tạo CV ngay
                                             </button>
                                         </div>
                                     )}
@@ -687,7 +687,7 @@ const JobDetail = () => {
                                 onClick={handleSubmitApplication}
                                 disabled={isApplying || records.length === 0}
                             >
-                                {isApplying ? 'Đang gửi...' : 'Nộp hồ sơ ứng tuyển'}
+                                {isApplying ? 'Đang gửi...' : 'Nộp CV ứng tuyển'}
                             </button>
                         </div>
                     </div>

@@ -9,6 +9,9 @@ const getMeetingsForHr = async (userId, filters = {}) => {
         if (filters.jobApplicationId) {
             params.append('jobApplicationId', filters.jobApplicationId);
         }
+        if (filters.jobPostingId) {
+            params.append('jobPostingId', filters.jobPostingId);
+        }
         const res = await axiosInstance.get(`/hr/meetings?${params.toString()}`);
         return res.data;
     } catch (error) {

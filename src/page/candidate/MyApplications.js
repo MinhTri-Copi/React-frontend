@@ -3,6 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
 import { getMyApplications, startTest } from '../../service.js/jobApplicationService';
+import { 
+    getDocumentsByApplication, 
+    checkCanSubmitDocuments, 
+    createOrUpdateDocument,
+    deleteDocument 
+} from '../../service.js/applicationDocumentService';
+import { uploadCV } from '../../service.js/recordService';
+import SubmitDocumentModal from './SubmitDocumentModal';
 import { toast } from 'react-toastify';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -41,6 +49,18 @@ const MyApplications = () => {
     const [applications, setApplications] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [startingTestId, setStartingTestId] = useState(null);
+    const [showDocumentModal, setShowDocumentModal] = useState(false);
+    const [selectedApplication, setSelectedApplication] = useState(null);
+    const [documents, setDocuments] = useState([]);
+    const [canSubmit, setCanSubmit] = useState(false);
+    const [documentForm, setDocumentForm] = useState({
+        documentType: '',
+        file: null,
+        expiryDate: '',
+        bankAccountNumber: '',
+        notes: ''
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -317,6 +337,20 @@ const MyApplications = () => {
                                                     </button>
                                                 );
                                             })()}
+                                            
+                                            {/* Button Nộp Hồ Sơ - Chỉ hiển thị khi status = 2 (Đã được nhận) */}
+                                            {(app.applicationStatusId === 2 || app.ApplicationStatus?.id === 2) && (
+                                                <button 
+                                                    className="btn-submit-documents"
+                                                    onClick={() => {
+                                                        setSelectedApplication(app);
+                                                        setShowDocumentModal(true);
+                                                    }}
+                                                >
+                                                    <i className="fas fa-file-upload"></i>
+                                                    Nộp Hồ Sơ
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -334,6 +368,20 @@ const MyApplications = () => {
                     )}
                 </div>
             </div>
+            
+            {/* Submit Document Modal */}
+            {selectedApplication && (
+                <SubmitDocumentModal
+                    isOpen={showDocumentModal}
+                    onClose={() => {
+                        setShowDocumentModal(false);
+                        setSelectedApplication(null);
+                    }}
+                    applicationId={selectedApplication.id}
+                    userId={user?.id}
+                />
+            )}
+            
             <Footer />
         </div>
     );

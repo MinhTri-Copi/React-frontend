@@ -569,6 +569,7 @@ const CandidateManagement = () => {
             {showDetailModal && selectedApplication && (
                 <ApplicationDetailModal
                     application={selectedApplication}
+                    userId={user?.id}
                     onClose={() => {
                         setShowDetailModal(false);
                         setSelectedApplication(null);

@@ -1,7 +1,60 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
+import { getDocumentsByApplication, updateDocumentStatus } from '../../service.js/applicationDocumentService';
 import './ApplicationDetailModal.scss';
 
-const ApplicationDetailModal = ({ application, onClose, onApprove, onReject }) => {
+const DOCUMENT_TYPES = {
+    'job_application_letter': 'Đơn xin việc',
+    'id_card_copy': 'Bản sao Căn cước công dân',
+    'resume_certified': 'Sơ yếu lý lịch có chứng thực',
+    'degree_certified': 'Bản sao bằng cấp có chứng thực',
+    'health_certificate': 'Giấy khám sức khỏe',
+    'bank_account': 'Số tài khoản ngân hàng BIDV'
+};
+
+const ApplicationDetailModal = ({ application, onClose, onApprove, onReject, userId }) => {
+    const [documents, setDocuments] = useState([]);
+    const [loadingDocuments, setLoadingDocuments] = useState(false);
+    const [updatingStatus, setUpdatingStatus] = useState(null);
+
+    useEffect(() => {
+        if (application?.id && userId) {
+            fetchDocuments();
+        }
+    }, [application?.id, userId]);
+
+    const fetchDocuments = async () => {
+        setLoadingDocuments(true);
+        try {
+            const res = await getDocumentsByApplication(application.id, userId);
+            if (res && res.EC === 0) {
+                setDocuments(res.DT || []);
+            }
+        } catch (error) {
+            console.error('Error fetching documents:', error);
+        } finally {
+            setLoadingDocuments(false);
+        }
+    };
+
+    const handleUpdateStatus = async (documentId, status, notes = '') => {
+        setUpdatingStatus(documentId);
+        try {
+            const res = await updateDocumentStatus(documentId, status, notes, userId);
+            if (res && res.EC === 0) {
+                toast.success(res.EM);
+                fetchDocuments();
+            } else {
+                toast.error(res.EM || 'Có lỗi xảy ra!');
+            }
+        } catch (error) {
+            console.error('Error updating document status:', error);
+            toast.error('Có lỗi xảy ra khi cập nhật trạng thái!');
+        } finally {
+            setUpdatingStatus(null);
+        }
+    };
+
     if (!application) return null;
 
     const candidate = application.Record?.User;
@@ -185,6 +238,102 @@ const ApplicationDetailModal = ({ application, onClose, onApprove, onReject }) =
                                 )}
                             </div>
                         </div>
+                    </div>
+
+                    {/* Application Documents */}
+                    <div className="documents-section">
+                        <h3><i className="fas fa-file-alt"></i> Hồ sơ bổ sung</h3>
+                        {loadingDocuments ? (
+                            <div className="loading-state">
+                                <i className="fas fa-spinner fa-spin"></i>
+                                <p>Đang tải tài liệu...</p>
+                            </div>
+                        ) : documents.length === 0 ? (
+                            <div className="empty-state">
+                                <i className="fas fa-folder-open"></i>
+                                <p>Ứng viên chưa nộp tài liệu bổ sung</p>
+                            </div>
+                        ) : (
+                            <div className="documents-list">
+                                {documents.map(doc => (
+                                    <div key={doc.id} className="document-item">
+                                        <div className="doc-header">
+                                            <div className="doc-info">
+                                                <i className="fas fa-file-pdf"></i>
+                                                <div>
+                                                    <h4>{DOCUMENT_TYPES[doc.documentType] || doc.documentType}</h4>
+                                                    {doc.expiryDate && (
+                                                        <p className="expiry-date">
+                                                            <i className="fas fa-calendar-times"></i>
+                                                            Hết hạn: {formatDate(doc.expiryDate)}
+                                                        </p>
+                                                    )}
+                                                    {doc.bankAccountNumber && (
+                                                        <p className="bank-account">
+                                                            <i className="fas fa-university"></i>
+                                                            Số tài khoản: {doc.bankAccountNumber}
+                                                        </p>
+                                                    )}
+                                                    {doc.notes && (
+                                                        <p className="doc-notes">{doc.notes}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <span className={`status-badge status-${doc.status}`}>
+                                                {doc.status === 'pending' ? 'Chờ duyệt' : 
+                                                 doc.status === 'approved' ? 'Đã duyệt' : 'Từ chối'}
+                                            </span>
+                                        </div>
+                                        <div className="doc-actions">
+                                            {doc.fileUrl && (
+                                                <a 
+                                                    href={`http://localhost:8082${doc.fileUrl}`} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="btn-view-file"
+                                                >
+                                                    <i className="fas fa-eye"></i>
+                                                    Xem file
+                                                </a>
+                                            )}
+                                            {doc.status === 'pending' && (
+                                                <>
+                                                    <button 
+                                                        className="btn-approve-doc"
+                                                        onClick={() => handleUpdateStatus(doc.id, 'approved')}
+                                                        disabled={updatingStatus === doc.id}
+                                                    >
+                                                        {updatingStatus === doc.id ? (
+                                                            <i className="fas fa-spinner fa-spin"></i>
+                                                        ) : (
+                                                            <i className="fas fa-check"></i>
+                                                        )}
+                                                        Duyệt
+                                                    </button>
+                                                    <button 
+                                                        className="btn-reject-doc"
+                                                        onClick={() => {
+                                                            const notes = window.prompt('Lý do từ chối (tùy chọn):');
+                                                            if (notes !== null) {
+                                                                handleUpdateStatus(doc.id, 'rejected', notes);
+                                                            }
+                                                        }}
+                                                        disabled={updatingStatus === doc.id}
+                                                    >
+                                                        {updatingStatus === doc.id ? (
+                                                            <i className="fas fa-spinner fa-spin"></i>
+                                                        ) : (
+                                                            <i className="fas fa-times"></i>
+                                                        )}
+                                                        Từ chối
+                                                    </button>
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
 

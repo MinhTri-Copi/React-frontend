@@ -18,6 +18,7 @@ const MeetingManagement = ({ userId }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [statusFilter, setStatusFilter] = useState('all');
+    const [jobPostingFilter, setJobPostingFilter] = useState('all');
     const [formData, setFormData] = useState({
         jobPostingId: '',
         interviewRoundId: '',
@@ -49,12 +50,16 @@ const MeetingManagement = ({ userId }) => {
             fetchMeetings();
             fetchJobPostings();
         }
-    }, [userId, statusFilter]);
+    }, [userId, statusFilter, jobPostingFilter]);
 
     const fetchMeetings = async () => {
         setIsLoading(true);
         try {
-            const res = await getMeetingsForHr(userId, { status: statusFilter });
+            const filters = { status: statusFilter };
+            if (jobPostingFilter && jobPostingFilter !== 'all') {
+                filters.jobPostingId = parseInt(jobPostingFilter);
+            }
+            const res = await getMeetingsForHr(userId, filters);
             if (res && res.EC === 0) {
                 setMeetings(res.DT || []);
             } else {
@@ -383,6 +388,20 @@ const MeetingManagement = ({ userId }) => {
                         <option value="done">Đã hoàn thành</option>
                         <option value="cancel">Đã hủy</option>
                         <option value="rescheduled">Đã dời lịch</option>
+                    </select>
+                </div>
+                <div className="filter-group">
+                    <label>Lọc theo bài đăng:</label>
+                    <select 
+                        value={jobPostingFilter} 
+                        onChange={(e) => setJobPostingFilter(e.target.value)}
+                    >
+                        <option value="all">Tất cả bài đăng</option>
+                        {jobPostings.map(job => (
+                            <option key={job.id} value={job.id}>
+                                {job.Tieude} - {job.Company?.Tencongty}
+                            </option>
+                        ))}
                     </select>
                 </div>
             </div>

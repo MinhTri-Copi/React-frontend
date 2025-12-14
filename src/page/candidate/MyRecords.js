@@ -64,7 +64,7 @@ const MyRecords = () => {
             }
         } catch (error) {
             console.log(error);
-            toast.error('Có lỗi khi tải danh sách hồ sơ!');
+            toast.error('Có lỗi khi tải danh sách CV!');
         } finally {
             setIsLoading(false);
         }
@@ -119,7 +119,7 @@ const MyRecords = () => {
     const handleSubmit = async () => {
         // Validate
         if (!tieude.trim()) {
-            toast.error('Vui lòng nhập tiêu đề hồ sơ!');
+            toast.error('Vui lòng nhập tiêu đề CV!');
             return;
         }
 
@@ -177,7 +177,7 @@ const MyRecords = () => {
     };
 
     const handleDelete = async (id) => {
-        if (window.confirm('Bạn có chắc muốn xóa hồ sơ này?')) {
+        if (window.confirm('Bạn có chắc muốn xóa CV này?')) {
             try {
                 let res = await deleteRecord(id, user.id);
                 
@@ -189,7 +189,7 @@ const MyRecords = () => {
                 }
             } catch (error) {
                 console.log(error);
-                toast.error('Có lỗi khi xóa hồ sơ!');
+                toast.error('Có lỗi khi xóa CV!');
             }
         }
     };
@@ -208,12 +208,12 @@ const MyRecords = () => {
                     {/* Header */}
                     <div className="page-header" data-aos="fade-down" data-aos-delay="0">
                         <div>
-                            <h1 className="page-title">Hồ sơ của tôi</h1>
-                            <p className="page-subtitle">Quản lý CV và hồ sơ xin việc</p>
+                            <h1 className="page-title">CV của tôi</h1>
+                            <p className="page-subtitle">Quản lý CV xin việc</p>
                         </div>
                         <button className="btn-create" onClick={() => handleOpenModal()}>
                             <i className="fas fa-plus"></i>
-                            Tạo hồ sơ mới
+                            Tạo CV mới
                         </button>
                     </div>
 
@@ -226,7 +226,7 @@ const MyRecords = () => {
                                 </div>
                                 <div className="stat-info">
                                     <div className="stat-value">{records.length}</div>
-                                    <div className="stat-label">Tổng số hồ sơ</div>
+                                    <div className="stat-label">Tổng số CV</div>
                                 </div>
                             </div>
                             <div className="stat-card" data-aos="fade-down" data-aos-delay="200">
@@ -248,7 +248,7 @@ const MyRecords = () => {
                                     <div className="stat-value">
                                         {records.filter(r => r.File_url).length}
                                     </div>
-                                    <div className="stat-label">Hồ sơ có file</div>
+                                    <div className="stat-label">CV có file</div>
                                 </div>
                             </div>
                         </div>
@@ -258,7 +258,7 @@ const MyRecords = () => {
                     {isLoading ? (
                         <div className="loading-container">
                             <i className="fas fa-spinner fa-spin"></i>
-                            <p>Đang tải hồ sơ...</p>
+                            <p>Đang tải CV...</p>
                         </div>
                     ) : (
                         <>
@@ -330,11 +330,11 @@ const MyRecords = () => {
                             ) : (
                                 <div className="empty-state" data-aos="fade-down" data-aos-delay="0">
                                     <i className="fas fa-folder-open"></i>
-                                    <h3>Chưa có hồ sơ nào</h3>
-                                    <p>Hãy tạo hồ sơ đầu tiên để bắt đầu ứng tuyển</p>
+                                    <h3>Chưa có CV nào</h3>
+                                    <p>Hãy tạo CV đầu tiên để bắt đầu ứng tuyển</p>
                                     <button className="btn-create-empty" onClick={() => handleOpenModal()}>
                                         <i className="fas fa-plus"></i>
-                                        Tạo hồ sơ ngay
+                                        Tạo CV ngay
                                     </button>
                                 </div>
                             )}
@@ -348,7 +348,7 @@ const MyRecords = () => {
                 <div className="modal-overlay" onClick={handleCloseModal}>
                     <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2>{isEditing ? 'Chỉnh sửa hồ sơ' : 'Tạo hồ sơ mới'}</h2>
+                            <h2>{isEditing ? 'Chỉnh sửa CV' : 'Tạo CV mới'}</h2>
                             <button className="btn-close" onClick={handleCloseModal}>
                                 <i className="fas fa-times"></i>
                             </button>
@@ -357,7 +357,7 @@ const MyRecords = () => {
                         <div className="modal-body">
                             <div className="form-group">
                                 <label>
-                                    Tiêu đề hồ sơ <span className="required">*</span>
+                                    Tiêu đề CV <span className="required">*</span>
                                 </label>
                                 <input
                                     type="text"

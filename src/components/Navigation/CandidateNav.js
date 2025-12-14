@@ -113,7 +113,7 @@ const CandidateNav = () => {
                                         }}
                                     >
                                         <i className="fas fa-file-alt"></i>
-                                        <span>Hồ sơ của tôi</span>
+                                        <span>CV của tôi</span>
                                     </NavLink>
                                     <NavLink 
                                         to="/candidate/my-applications" 
