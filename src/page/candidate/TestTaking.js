@@ -7,6 +7,9 @@ import { logViolation, getViolationCount } from '../../service.js/violationServi
 import { toast } from 'react-toastify';
 import './TestTaking.scss';
 
+// Toggle to enable/disable anti-cheat. Set to false to turn off.
+const ANTI_CHEAT_ENABLED = false;
+
 const MAX_VIOLATIONS = 5; // Số lần vi phạm tối đa cho phép
 
 const VIOLATION_TYPES = {
@@ -72,10 +75,14 @@ const TestTaking = () => {
                 if (res.data && res.data.EC === 0) {
                     setSubmission(res.data.DT);
                     
-                    // Fetch existing violation count
-                    const countRes = await getViolationCount(submissionId, user.id);
-                    if (countRes.data && countRes.data.EC === 0) {
-                        setViolationCount(countRes.data.DT.count || 0);
+                    // Fetch existing violation count (disabled when anti-cheat off)
+                    if (ANTI_CHEAT_ENABLED) {
+                        const countRes = await getViolationCount(submissionId, user.id);
+                        if (countRes.data && countRes.data.EC === 0) {
+                            setViolationCount(countRes.data.DT.count || 0);
+                        }
+                    } else {
+                        setViolationCount(0);
                     }
                 } else {
                     toast.error(res.data?.EM || 'Không thể tải thông tin bài test!');
@@ -125,6 +132,7 @@ const TestTaking = () => {
 
     // Log violation to server
     const recordViolation = useCallback(async (type, message) => {
+        if (!ANTI_CHEAT_ENABLED) return;
         if (!user || !submission || !isTestActive.current || isLocked) return;
         
         // Prevent duplicate logs within short time
@@ -173,6 +181,7 @@ const TestTaking = () => {
 
     // Fullscreen change handler
     useEffect(() => {
+        if (!ANTI_CHEAT_ENABLED) return;
         const handleFullscreenChange = () => {
             const isFs = !!(
                 document.fullscreenElement ||
@@ -201,6 +210,7 @@ const TestTaking = () => {
 
     // Visibility change (tab switch) handler
     useEffect(() => {
+        if (!ANTI_CHEAT_ENABLED) return;
         const handleVisibilityChange = () => {
             if (document.hidden && isTestActive.current && !isLocked) {
                 recordViolation(VIOLATION_TYPES.TAB_SWITCH, VIOLATION_MESSAGES[VIOLATION_TYPES.TAB_SWITCH]);
@@ -213,6 +223,7 @@ const TestTaking = () => {
 
     // Window blur (focus loss) handler
     useEffect(() => {
+        if (!ANTI_CHEAT_ENABLED) return;
         const handleBlur = () => {
             if (isTestActive.current && !isLocked) {
                 recordViolation(VIOLATION_TYPES.BLUR, VIOLATION_MESSAGES[VIOLATION_TYPES.BLUR]);
@@ -225,6 +236,7 @@ const TestTaking = () => {
 
     // Window resize (minimize detection) handler
     useEffect(() => {
+        if (!ANTI_CHEAT_ENABLED) return;
         let lastWidth = window.innerWidth;
         let lastHeight = window.innerHeight;
 
@@ -249,6 +261,7 @@ const TestTaking = () => {
 
     // DevTools and keyboard shortcut prevention
     useEffect(() => {
+        if (!ANTI_CHEAT_ENABLED) return;
         const handleKeyDown = (e) => {
             if (!isTestActive.current || isLocked) return;
 
@@ -281,6 +294,7 @@ const TestTaking = () => {
 
     // Right-click context menu prevention
     useEffect(() => {
+        if (!ANTI_CHEAT_ENABLED) return;
         const handleContextMenu = (e) => {
             if (isTestActive.current && !isLocked) {
                 // Allow context menu only on input/textarea
@@ -296,6 +310,7 @@ const TestTaking = () => {
 
     // Prevent copy on question text
     useEffect(() => {
+        if (!ANTI_CHEAT_ENABLED) return;
         const handleCopy = (e) => {
             if (isTestActive.current && !isLocked) {
                 // Allow copy only from input/textarea
@@ -312,6 +327,7 @@ const TestTaking = () => {
 
     // Handle paste in essay answers (optional - can be enabled/disabled)
     const handlePaste = (e, questionType) => {
+        if (!ANTI_CHEAT_ENABLED) return;
         if (questionType === 'tuluan' && isTestActive.current && !isLocked) {
             e.preventDefault();
             recordViolation(VIOLATION_TYPES.PASTE, VIOLATION_MESSAGES[VIOLATION_TYPES.PASTE]);
@@ -454,7 +470,7 @@ const TestTaking = () => {
     return (
         <div className={`candidate-test-page ${isTestActive.current ? 'test-active' : ''}`}>
             {/* Fullscreen Prompt Modal */}
-            {showFullscreenPrompt && submission?.Trangthai === 'danglam' && !isFullscreen && (
+            {ANTI_CHEAT_ENABLED && showFullscreenPrompt && submission?.Trangthai === 'danglam' && !isFullscreen && (
                 <div className="fullscreen-prompt-overlay">
                     <div className="fullscreen-prompt-modal">
                         <div className="prompt-icon">
@@ -480,7 +496,7 @@ const TestTaking = () => {
             )}
 
             {/* Violation Warning Toast */}
-            {showViolationWarning && (
+            {ANTI_CHEAT_ENABLED && showViolationWarning && (
                 <div className="violation-warning">
                     <div className="warning-content">
                         <i className="fas fa-exclamation-circle"></i>
@@ -496,7 +512,7 @@ const TestTaking = () => {
             )}
 
             {/* Violation Counter (always visible when test is active) */}
-            {submission?.Trangthai === 'danglam' && violationCount > 0 && (
+            {ANTI_CHEAT_ENABLED && submission?.Trangthai === 'danglam' && violationCount > 0 && (
                 <div className={`violation-counter ${violationCount >= MAX_VIOLATIONS - 1 ? 'danger' : violationCount >= 2 ? 'warning' : ''}`}>
                     <i className="fas fa-exclamation-triangle"></i>
                     <span>Vi phạm: {violationCount}/{MAX_VIOLATIONS}</span>
