@@ -61,11 +61,23 @@ const updateDocumentStatus = async (documentId, status, notes, userId) => {
     }
 };
 
+const getAllDocumentsForHr = async (userId, filters = {}) => {
+    try {
+        const params = new URLSearchParams({ userId, ...filters });
+        const res = await axiosInstance.get(`/hr/documents?${params.toString()}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error fetching documents for HR:', error);
+        throw error;
+    }
+};
+
 export {
     getDocumentsByApplication,
     checkCanSubmitDocuments,
     createOrUpdateDocument,
     deleteDocument,
-    updateDocumentStatus
+    updateDocumentStatus,
+    getAllDocumentsForHr
 };
 

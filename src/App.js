@@ -56,6 +56,7 @@ function App() {
           <Route path="/hr/interview-rounds" element={<HrDashboard />} />
           <Route path="/hr/meetings" element={<HrDashboard />} />
           <Route path="/hr/candidates" element={<HrDashboard />} />
+          <Route path="/hr/documents" element={<HrDashboard />} />
           <Route path="/hr/company-profile" element={<HrDashboard />} />
           <Route path="/" element={<Login />} />
           <Route path="*" element={<div>Access Denied</div>} /> 

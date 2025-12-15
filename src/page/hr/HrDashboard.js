@@ -11,9 +11,10 @@ import TestSubmissionList from './TestSubmissionList';
 import InterviewRoundManagement from './InterviewRoundManagement';
 import MeetingManagement from './MeetingManagement';
 import QuestionBankManagement from './QuestionBankManagement';
+import DocumentManagement from './DocumentManagement';
 
 // Order: Thống kê, Quản lý tin tuyển dụng, QL ứng viên, Quản lý bài test,
-// DS bài test đã nộp, Meet, Vòng phỏng vấn, Bộ đề, QL hồ sơ công ty
+// DS bài test đã nộp, Meet, Vòng phỏng vấn, Bộ đề, QL hồ sơ bổ sung, QL hồ sơ công ty
 const sidebarItems = [
     { id: 'analytics', label: 'Thống kê', icon: 'fas fa-chart-line' },
     { id: 'jobs', label: 'Quản lý tin tuyển dụng', icon: 'fas fa-briefcase' },
@@ -23,6 +24,7 @@ const sidebarItems = [
     { id: 'meetings', label: 'Meet', icon: 'fas fa-video' },
     { id: 'interview-rounds', label: 'Vòng phỏng vấn', icon: 'fas fa-video' },
     { id: 'question-banks', label: 'Bộ đề', icon: 'fas fa-book' },
+    { id: 'documents', label: 'QL hồ sơ bổ sung', icon: 'fas fa-file-alt' },
     { id: 'company', label: 'QL hồ sơ công ty', icon: 'fas fa-building' }
 ];
 
@@ -56,6 +58,8 @@ const HrDashboard = () => {
             setActiveMenu('interview-rounds');
         } else if (path === '/hr/meetings') {
             setActiveMenu('meetings');
+        } else if (path === '/hr/documents') {
+            setActiveMenu('documents');
         } else if (path === '/hr') {
             // Don't override if already set to 'jobs' or 'analytics'
             // Only set to 'analytics' on initial load
@@ -100,6 +104,8 @@ const HrDashboard = () => {
             navigate('/hr/meetings');
         } else if (itemId === 'candidates') {
             navigate('/hr/candidates');
+        } else if (itemId === 'documents') {
+            navigate('/hr/documents');
         } else if (itemId === 'company') {
             navigate('/hr/company-profile');
         } else {
@@ -224,6 +230,8 @@ const HrDashboard = () => {
                         <MeetingManagement userId={user?.id} />
                     ) : activeMenu === 'candidates' ? (
                         <CandidateManagement />
+                    ) : activeMenu === 'documents' ? (
+                        <DocumentManagement userId={user?.id} />
                     ) : activeMenu === 'company' ? (
                         <CompanyProfile />
                     ) : activeMenu === 'analytics' ? (

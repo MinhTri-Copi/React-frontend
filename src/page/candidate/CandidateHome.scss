@@ -518,7 +518,7 @@
 
             .section-header {
                 text-align: center;
-                margin-bottom: 100px;
+                margin-bottom: 150px;
                 position: relative;
                 z-index: 10;
 
@@ -541,11 +541,11 @@
             .features-layout-circular {
                 position: relative;
                 width: 100%;
-                min-height: 1000px;
+                min-height: 1200px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                padding: 120px 40px;
+                padding: 180px 40px 120px;
 
                 .features-center {
                     position: absolute;
