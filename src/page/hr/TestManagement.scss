@@ -345,7 +345,7 @@
         background: white;
         border-radius: 12px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        animation: fadeDown 0.6s ease-out 0.8s both;
+        animation: fadeDown 0.6s ease-out 0.0s both;
 
         i {
             font-size: 80px;
@@ -365,7 +365,7 @@
         grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); // rộng hơn nữa
         gap: 24px;
         margin-bottom: 30px;
-        animation: fadeDown 0.6s ease-out 0.7s both;
+        animation: fadeDown 0.6s ease-out 0.0s both;
     }
 
     .test-card {
@@ -378,7 +378,7 @@
 
         @for $i from 1 through 10 {
             &:nth-child(#{$i}) {
-                animation-delay: #{0.8 + ($i * 0.05)}s;
+                animation-delay: #{0.1 + ($i * 0.2)}s;
             }
         }
 

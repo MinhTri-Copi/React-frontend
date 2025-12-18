@@ -306,7 +306,7 @@
         border: 2px solid #e0f2e9;
         box-shadow: 0 2px 8px rgba(0, 128, 96, 0.08);
         transition: all 0.3s ease;
-        animation: fadeDown 0.6s ease-out 0.2s both;
+        animation: fadeDown 0.6s ease-out 0.0s both;
 
         &:hover {
             border-color: #008060;
@@ -420,7 +420,7 @@
             border-radius: 16px;
             padding: 60px 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-            animation: fadeDown 0.6s ease-out 0.8s both;
+            animation: fadeDown 0.6s ease-out 0.0s both;
 
             i {
                 font-size: 64px;
@@ -458,7 +458,7 @@
             display: flex;
             flex-direction: column;
             gap: 24px;
-            animation: fadeDown 0.6s ease-out 0.7s both;
+            animation: fadeDown 0.6s ease-out 0.0s both;
 
             .job-rounds-group {
                 background: white;
@@ -469,7 +469,7 @@
 
                 @for $i from 1 through 10 {
                     &:nth-child(#{$i}) {
-                        animation-delay: #{0.8 + ($i * 0.05)}s;
+                        animation-delay: #{0.1 + ($i * 0.2)}s;
                     }
                 }
 
@@ -529,7 +529,7 @@
 
                         @for $i from 1 through 10 {
                             &:nth-child(#{$i}) {
-                                animation-delay: #{1.0 + ($i * 0.03)}s;
+                                animation-delay: #{0.1 + ($i * 0.2)}s;
                             }
                         }
 
