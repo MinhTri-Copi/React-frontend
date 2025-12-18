@@ -5,6 +5,8 @@ import Footer from '../../components/Footer/Footer';
 import ReactPaginate from 'react-paginate';
 import { toast } from 'react-toastify';
 import { getListJobPosting, getFilterOptions } from '../../service.js/jobPostingService';
+import { findMatchingJobs } from '../../service.js/cvMatchingService';
+import { getCVStatus } from '../../service.js/recordService';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import './JobList.scss';
@@ -44,6 +46,13 @@ const JobList = () => {
     // Sort option
     const [sortOption, setSortOption] = useState('newest');
 
+    // CV Matching
+    const [isFindingMatchingJobs, setIsFindingMatchingJobs] = useState(false);
+    const [matchingJobs, setMatchingJobs] = useState([]);
+    const [showMatchingResults, setShowMatchingResults] = useState(false);
+    const [cvStatus, setCvStatus] = useState(null); // { status: 'NO_CV' | 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED', hasCV: boolean }
+    const [isCheckingCVStatus, setIsCheckingCVStatus] = useState(false);
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -58,7 +67,19 @@ const JobList = () => {
 
         fetchFilterOptions();
         fetchJobs(1);
+        checkCVStatus();
     }, []);
+
+    // Polling CV status nếu đang PROCESSING
+    useEffect(() => {
+        if (cvStatus?.status === 'PROCESSING') {
+            const interval = setInterval(() => {
+                checkCVStatus();
+            }, 3000); // Poll mỗi 3 giây
+
+            return () => clearInterval(interval);
+        }
+    }, [cvStatus?.status]);
 
     // Refresh AOS when jobs change
     useEffect(() => {
@@ -218,6 +239,82 @@ const JobList = () => {
                             filters.salaryRange || filters.companyId || filters.formatId || 
                             filters.majorId;
 
+    // Check CV extraction status
+    const checkCVStatus = async () => {
+        setIsCheckingCVStatus(true);
+        try {
+            const res = await getCVStatus();
+            if (res && res.data && res.data.EC === 0) {
+                setCvStatus(res.data.DT);
+            } else {
+                setCvStatus({ status: 'NO_CV', hasCV: false });
+            }
+        } catch (error) {
+            console.error('Error checking CV status:', error);
+            setCvStatus({ status: 'NO_CV', hasCV: false });
+        } finally {
+            setIsCheckingCVStatus(false);
+        }
+    };
+
+    // Handle find matching jobs
+    const handleFindMatchingJobs = async () => {
+        // Check CV status trước
+        if (!cvStatus || !cvStatus.hasCV) {
+            toast.warning('Vui lòng upload CV trước khi tìm việc phù hợp.');
+            return;
+        }
+
+        if (cvStatus.status === 'PROCESSING' || cvStatus.status === 'PENDING') {
+            toast.info('CV đang được xử lý. Vui lòng đợi một chút...');
+            return;
+        }
+
+        if (cvStatus.status === 'FAILED') {
+            toast.error('CV xử lý thất bại. Vui lòng upload lại CV.');
+            return;
+        }
+
+        if (cvStatus.status !== 'READY') {
+            toast.warning('CV chưa sẵn sàng. Vui lòng upload CV trước.');
+            return;
+        }
+
+        setIsFindingMatchingJobs(true);
+        try {
+            // Convert filters to API format
+            const apiFilters = {
+                location: filters.location || undefined,
+                experience: filters.experience || undefined,
+                majorId: filters.majorId ? parseInt(filters.majorId) : undefined
+            };
+
+            // Handle salary range
+            if (filters.salaryRange) {
+                const range = filterOptions.salaryRanges.find(r => r.value === filters.salaryRange);
+                if (range) {
+                    apiFilters.minSalary = range.min;
+                    apiFilters.maxSalary = range.max;
+                }
+            }
+
+            const res = await findMatchingJobs(apiFilters);
+            
+            if (res && res.EC === 0) {
+                setMatchingJobs(res.DT || []);
+                setShowMatchingResults(true);
+                toast.success(`Tìm thấy ${res.DT?.length || 0} công việc phù hợp với CV của bạn!`);
+            } else {
+                toast.error(res?.EM || 'Không tìm thấy công việc phù hợp.');
+            }
+        } catch (error) {
+            console.error('Error finding matching jobs:', error);
+            toast.error('Lỗi khi tìm công việc phù hợp. Vui lòng thử lại.');
+        } finally {
+            setIsFindingMatchingJobs(false);
+        }
+    };
+
     return (
         <div className="job-list-page">
             <CandidateNav />
@@ -280,6 +377,50 @@ const JobList = () => {
                                 />
                             </div>
                             
+                            <div className="find-matching-wrapper">
+                                <button 
+                                    className="btn-find-matching"
+                                    onClick={handleFindMatchingJobs}
+                                    disabled={isFindingMatchingJobs || cvStatus?.status === 'PROCESSING' || cvStatus?.status === 'PENDING' || !cvStatus?.hasCV}
+                                    title={
+                                        !cvStatus?.hasCV 
+                                            ? "Vui lòng upload CV trước" 
+                                            : cvStatus?.status === 'PROCESSING' || cvStatus?.status === 'PENDING'
+                                            ? "CV đang được xử lý..."
+                                            : "Tìm công việc phù hợp với CV của bạn"
+                                    }
+                                >
+                                    {isFindingMatchingJobs ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i>
+                                            Đang tìm...
+                                        </>
+                                    ) : cvStatus?.status === 'PROCESSING' || cvStatus?.status === 'PENDING' ? (
+                                        <>
+                                            <i className="fas fa-hourglass-half fa-spin"></i>
+                                            CV đang xử lý...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-magic"></i>
+                                            Tìm việc phù hợp
+                                        </>
+                                    )}
+                                </button>
+                                {cvStatus?.status === 'PROCESSING' && (
+                                    <div className="cv-status-indicator">
+                                        <i className="fas fa-info-circle"></i>
+                                        <span>CV đang được xử lý, vui lòng đợi...</span>
+                                    </div>
+                                )}
+                                {cvStatus?.status === 'FAILED' && (
+                                    <div className="cv-status-indicator error">
+                                        <i className="fas fa-exclamation-triangle"></i>
+                                        <span>CV xử lý thất bại. Vui lòng upload lại.</span>
+                                    </div>
+                                )}
+                            </div>
+
                             <div className="filter-dropdowns">
                                 <select 
                                     className="filter-select"
@@ -494,6 +635,87 @@ const JobList = () => {
                                         <button className="btn-clear" onClick={handleClearFilters}>
                                             Xóa bộ lọc
                                         </button>
+                                    </div>
+                                )}
+
+                                {/* Show matching results if available */}
+                                {showMatchingResults && matchingJobs.length > 0 && (
+                                    <div className="matching-results-section">
+                                        <div className="matching-header">
+                                            <h3>
+                                                <i className="fas fa-star"></i>
+                                                Công việc phù hợp với CV của bạn ({matchingJobs.length})
+                                            </h3>
+                                            <button 
+                                                className="btn-close-matching"
+                                                onClick={() => setShowMatchingResults(false)}
+                                            >
+                                                <i className="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                        <div className="matching-jobs-list">
+                                            {matchingJobs.map((match, index) => {
+                                                const job = match.jobPosting;
+                                                const daysRemaining = getDaysRemaining(job.Ngayhethan);
+                                                return (
+                                                    <div 
+                                                        key={job.id} 
+                                                        className="job-card matching-job"
+                                                        data-aos="fade-down"
+                                                        data-aos-delay={index % 6 * 50}
+                                                        onClick={() => navigate(`/candidate/jobs/${job.id}`)}
+                                                    >
+                                                        <div className="match-score-badge">
+                                                            <i className="fas fa-check-circle"></i>
+                                                            {match.matchScore}% phù hợp
+                                                        </div>
+                                                        {match.reasons && match.reasons.length > 0 && (
+                                                            <div className="match-reasons">
+                                                                {match.reasons.slice(0, 3).map((reason, idx) => (
+                                                                    <span key={idx} className="reason-tag">
+                                                                        {reason}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                        
+                                                        <div className="job-card-content">
+                                                            <div className="company-logo">
+                                                                {job.Company?.name?.charAt(0) || job.Company?.Tencongty?.charAt(0) || 'C'}
+                                                            </div>
+                                                            
+                                                            <div className="job-info">
+                                                                <h3 className="job-title">
+                                                                    {job.Tieude}
+                                                                </h3>
+                                                                <p className="company-name">{job.Company?.name || job.Company?.Tencongty}</p>
+                                                                
+                                                                <div className="job-meta">
+                                                                    <span className="location">
+                                                                        <i className="fas fa-map-marker-alt"></i>
+                                                                        {job.Diadiem}
+                                                                    </span>
+                                                                    {daysRemaining !== null && (
+                                                                        <span className="deadline">
+                                                                            <i className="far fa-clock"></i>
+                                                                            Còn {daysRemaining} ngày
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <div className="job-actions">
+                                                                <div className="salary">
+                                                                    <i className="fas fa-dollar-sign"></i>
+                                                                    {formatSalary(job.Luongtoithieu, job.Luongtoida)}
+                                                                </div>
+                                                                <button className="btn-apply">Ứng tuyển</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 )}
 

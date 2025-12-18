@@ -34,12 +34,17 @@ const uploadCV = async (file, userId) => {
     });
 };
 
+const getCVStatus = async () => {
+    return await axiosInstance.get('/candidate/cv-status');
+};
+
 export { 
     getMyRecords, 
     getRecordById, 
     createRecord, 
     updateRecord, 
     deleteRecord,
-    uploadCV
+    uploadCV,
+    getCVStatus
 };
 

@@ -293,6 +293,65 @@
                         }
                     }
 
+                    .find-matching-wrapper {
+                        position: relative;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+
+                        .cv-status-indicator {
+                            font-size: 12px;
+                            color: #008060;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                            padding: 4px 8px;
+                            background: rgba(0, 128, 96, 0.1);
+                            border-radius: 4px;
+                            margin-top: 4px;
+
+                            &.error {
+                                color: #dc3545;
+                                background: rgba(220, 53, 69, 0.1);
+                            }
+
+                            i {
+                                font-size: 10px;
+                            }
+                        }
+                    }
+
+                    .btn-find-matching {
+                        padding: 12px 20px;
+                        background: linear-gradient(135deg, #008060, #2bab60);
+                        color: white;
+                        border: none;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        font-size: 14px;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        transition: all 0.3s ease;
+                        white-space: nowrap;
+
+                        &:hover:not(:disabled) {
+                            background: linear-gradient(135deg, #006d4d, #008060);
+                            transform: translateY(-2px);
+                            box-shadow: 0 4px 12px rgba(0, 128, 96, 0.3);
+                        }
+
+                        &:disabled {
+                            opacity: 0.7;
+                            cursor: not-allowed;
+                        }
+
+                        i {
+                            font-size: 14px;
+                        }
+                    }
+
                     .filter-dropdowns {
                         display: flex;
                         gap: 10px;
@@ -511,12 +570,107 @@
                             }
                         }
 
+                        .matching-results-section {
+                            margin-bottom: 30px;
+                            background: white;
+                            border-radius: 12px;
+                            padding: 20px;
+                            border: 2px solid #008060;
+
+                            .matching-header {
+                                display: flex;
+                                justify-content: space-between;
+                                align-items: center;
+                                margin-bottom: 20px;
+                                padding-bottom: 15px;
+                                border-bottom: 2px solid #f3f4f6;
+
+                                h3 {
+                                    color: #008060;
+                                    font-size: 18px;
+                                    font-weight: 700;
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 10px;
+
+                                    i {
+                                        color: #fbbf24;
+                                    }
+                                }
+
+                                .btn-close-matching {
+                                    background: transparent;
+                                    border: none;
+                                    color: #9ca3af;
+                                    cursor: pointer;
+                                    padding: 5px;
+                                    border-radius: 4px;
+                                    transition: all 0.2s;
+
+                                    &:hover {
+                                        background: #f3f4f6;
+                                        color: #333;
+                                    }
+                                }
+                            }
+
+                            .matching-jobs-list {
+                                display: flex;
+                                flex-direction: column;
+                                gap: 15px;
+                            }
+                        }
+
                         .jobs-list {
                             display: flex;
                             flex-direction: column;
                             gap: 15px;
 
                             .job-card {
+                                &.matching-job {
+                                    border: 2px solid #008060;
+                                    background: linear-gradient(to right, #ffffff, #f0fdf4);
+
+                                    .match-score-badge {
+                                        position: absolute;
+                                        top: 15px;
+                                        right: 15px;
+                                        background: linear-gradient(135deg, #008060, #2bab60);
+                                        color: white;
+                                        padding: 6px 12px;
+                                        border-radius: 20px;
+                                        font-size: 12px;
+                                        font-weight: 700;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 6px;
+                                        box-shadow: 0 2px 8px rgba(0, 128, 96, 0.3);
+                                        z-index: 2;
+
+                                        i {
+                                            font-size: 10px;
+                                        }
+                                    }
+
+                                    .match-reasons {
+                                        display: flex;
+                                        flex-wrap: wrap;
+                                        gap: 6px;
+                                        margin-top: 10px;
+                                        margin-bottom: 10px;
+                                        padding-top: 45px; // Space for badge
+
+                                        .reason-tag {
+                                            font-size: 11px;
+                                            color: #008060;
+                                            background: rgba(0, 128, 96, 0.1);
+                                            padding: 4px 10px;
+                                            border-radius: 12px;
+                                            border: 1px solid rgba(0, 128, 96, 0.2);
+                                            white-space: nowrap;
+                                        }
+                                    }
+                                }
                                 background: white;
                                 border-radius: 12px;
                                 padding: 20px;
