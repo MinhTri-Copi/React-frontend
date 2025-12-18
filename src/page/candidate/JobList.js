@@ -49,7 +49,7 @@ const JobList = () => {
     // CV Matching
     const [isFindingMatchingJobs, setIsFindingMatchingJobs] = useState(false);
     const [matchingJobs, setMatchingJobs] = useState([]);
-    const [showMatchingResults, setShowMatchingResults] = useState(false);
+    const [isShowingMatchingJobs, setIsShowingMatchingJobs] = useState(false); // Đang hiển thị matching jobs hay normal jobs
     const [cvStatus, setCvStatus] = useState(null); // { status: 'NO_CV' | 'PENDING' | 'PROCESSING' | 'READY' | 'FAILED', hasCV: boolean }
     const [isCheckingCVStatus, setIsCheckingCVStatus] = useState(false);
 
@@ -187,7 +187,14 @@ const JobList = () => {
             majorId: ''
         });
         setSelectedMajors([]);
+        setIsShowingMatchingJobs(false); // Reset về normal jobs
         fetchJobs(1, {});
+    };
+
+    // Quay lại danh sách jobs bình thường
+    const handleBackToNormalJobs = () => {
+        setIsShowingMatchingJobs(false);
+        fetchJobs(1, filters);
     };
 
     const formatSalary = (min, max) => {
@@ -301,9 +308,23 @@ const JobList = () => {
             const res = await findMatchingJobs(apiFilters);
             
             if (res && res.EC === 0) {
-                setMatchingJobs(res.DT || []);
-                setShowMatchingResults(true);
-                toast.success(`Tìm thấy ${res.DT?.length || 0} công việc phù hợp với CV của bạn!`);
+                const matches = res.DT || [];
+                setMatchingJobs(matches);
+                
+                // Convert matching jobs thành format jobs để hiển thị trong danh sách chính
+                const matchingJobsFormatted = matches.map(match => ({
+                    ...match.jobPosting,
+                    matchScore: match.matchScore,
+                    scoreRatio: match.scoreRatio,
+                    matchReasons: match.reasons || [],
+                    isMatching: true // Flag để biết đây là matching job
+                }));
+                
+                setJobs(matchingJobsFormatted);
+                setTotalPages(1); // Matching jobs không phân trang
+                setTotalRows(matchingJobsFormatted.length);
+                setIsShowingMatchingJobs(true);
+                toast.success(`Tìm thấy ${matches.length} công việc phù hợp với CV của bạn!`);
             } else {
                 toast.error(res?.EM || 'Không tìm thấy công việc phù hợp.');
             }
@@ -486,14 +507,29 @@ const JobList = () => {
 
                         {/* Results count */}
                         <div className="results-info">
-                            <p>
-                                Tìm thấy <strong>{totalRows}</strong> việc làm phù hợp với yêu cầu của bạn.
-                            </p>
-                            {hasActiveFilters && (
-                                <button className="btn-clear-filters" onClick={handleClearFilters}>
-                                    <i className="fas fa-times"></i>
-                                    Xóa bộ lọc
-                                </button>
+                            {isShowingMatchingJobs ? (
+                                <>
+                                    <p>
+                                        <i className="fas fa-star" style={{ color: '#008060', marginRight: '8px' }}></i>
+                                        Tìm thấy <strong>{totalRows}</strong> công việc phù hợp với CV của bạn.
+                                    </p>
+                                    <button className="btn-clear-filters" onClick={handleBackToNormalJobs}>
+                                        <i className="fas fa-arrow-left"></i>
+                                        Xem tất cả việc làm
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <p>
+                                        Tìm thấy <strong>{totalRows}</strong> việc làm phù hợp với yêu cầu của bạn.
+                                    </p>
+                                    {hasActiveFilters && (
+                                        <button className="btn-clear-filters" onClick={handleClearFilters}>
+                                            <i className="fas fa-times"></i>
+                                            Xóa bộ lọc
+                                        </button>
+                                    )}
+                                </>
                             )}
                         </div>
                     </div>
@@ -556,17 +592,37 @@ const JobList = () => {
                                     <div className="jobs-list">
                                         {jobs.map((job, index) => {
                                             const daysRemaining = getDaysRemaining(job.Ngayhethan);
+                                            const isMatchingJob = job.isMatching || false;
                                             return (
                                                 <div 
                                                     key={job.id} 
-                                                    className="job-card"
+                                                    className={`job-card ${isMatchingJob ? 'matching-job' : ''}`}
                                                     data-aos="fade-down"
                                                     data-aos-delay={index % 6 * 50}
                                                     onClick={() => navigate(`/candidate/jobs/${job.id}`)}
                                                 >
+                                                    {/* Match score badge (nếu là matching job) */}
+                                                    {isMatchingJob && job.matchScore !== undefined && (
+                                                        <div className="match-score-badge">
+                                                            <i className="fas fa-check-circle"></i>
+                                                            {job.matchScore}% phù hợp
+                                                        </div>
+                                                    )}
+                                                    
                                                     {/* Hot badge */}
                                                     {job.isHot && (
                                                         <span className="hot-badge">HOT</span>
+                                                    )}
+                                                    
+                                                    {/* Match reasons (nếu có) */}
+                                                    {isMatchingJob && job.matchReasons && job.matchReasons.length > 0 && (
+                                                        <div className="match-reasons">
+                                                            {job.matchReasons.slice(0, 3).map((reason, idx) => (
+                                                                <span key={idx} className="reason-tag">
+                                                                    {reason}
+                                                                </span>
+                                                            ))}
+                                                        </div>
                                                     )}
                                                     
                                                     <div className="job-card-content">
@@ -638,88 +694,7 @@ const JobList = () => {
                                     </div>
                                 )}
 
-                                {/* Show matching results if available */}
-                                {showMatchingResults && matchingJobs.length > 0 && (
-                                    <div className="matching-results-section">
-                                        <div className="matching-header">
-                                            <h3>
-                                                <i className="fas fa-star"></i>
-                                                Công việc phù hợp với CV của bạn ({matchingJobs.length})
-                                            </h3>
-                                            <button 
-                                                className="btn-close-matching"
-                                                onClick={() => setShowMatchingResults(false)}
-                                            >
-                                                <i className="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                        <div className="matching-jobs-list">
-                                            {matchingJobs.map((match, index) => {
-                                                const job = match.jobPosting;
-                                                const daysRemaining = getDaysRemaining(job.Ngayhethan);
-                                                return (
-                                                    <div 
-                                                        key={job.id} 
-                                                        className="job-card matching-job"
-                                                        data-aos="fade-down"
-                                                        data-aos-delay={index % 6 * 50}
-                                                        onClick={() => navigate(`/candidate/jobs/${job.id}`)}
-                                                    >
-                                                        <div className="match-score-badge">
-                                                            <i className="fas fa-check-circle"></i>
-                                                            {match.matchScore}% phù hợp
-                                                        </div>
-                                                        {match.reasons && match.reasons.length > 0 && (
-                                                            <div className="match-reasons">
-                                                                {match.reasons.slice(0, 3).map((reason, idx) => (
-                                                                    <span key={idx} className="reason-tag">
-                                                                        {reason}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        )}
-                                                        
-                                                        <div className="job-card-content">
-                                                            <div className="company-logo">
-                                                                {job.Company?.name?.charAt(0) || job.Company?.Tencongty?.charAt(0) || 'C'}
-                                                            </div>
-                                                            
-                                                            <div className="job-info">
-                                                                <h3 className="job-title">
-                                                                    {job.Tieude}
-                                                                </h3>
-                                                                <p className="company-name">{job.Company?.name || job.Company?.Tencongty}</p>
-                                                                
-                                                                <div className="job-meta">
-                                                                    <span className="location">
-                                                                        <i className="fas fa-map-marker-alt"></i>
-                                                                        {job.Diadiem}
-                                                                    </span>
-                                                                    {daysRemaining !== null && (
-                                                                        <span className="deadline">
-                                                                            <i className="far fa-clock"></i>
-                                                                            Còn {daysRemaining} ngày
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                            
-                                                            <div className="job-actions">
-                                                                <div className="salary">
-                                                                    <i className="fas fa-dollar-sign"></i>
-                                                                    {formatSalary(job.Luongtoithieu, job.Luongtoida)}
-                                                                </div>
-                                                                <button className="btn-apply">Ứng tuyển</button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {totalPages > 1 && (
+                                {!isShowingMatchingJobs && totalPages > 1 && (
                                     <div className="pagination-container">
                                         <ReactPaginate
                                             nextLabel="Tiếp >"
