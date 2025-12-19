@@ -339,7 +339,7 @@
         border-radius: 16px;
         padding: 20px;
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        animation: fadeDown 0.6s ease-out 0.6s both;
+        animation: fadeDown 0.6s ease-out 0.0s both;
 
         .search-box {
             display: flex;
@@ -698,14 +698,14 @@
         border-radius: 20px;
         box-shadow: 0 15px 40px rgba(15, 23, 42, 0.05);
         padding: 24px;
-        animation: fadeDown 0.6s ease-out 0.7s both;
+        animation: fadeDown 0.6s ease-out 0.0s both;
 
         .loading-state,
         .empty-state {
             padding: 60px 20px;
             text-align: center;
             color: #6b7280;
-            animation: fadeDown 0.6s ease-out 0.8s both;
+            animation: fadeDown 0.6s ease-out 0.0s both;
 
             i {
                 font-size: 48px;
@@ -737,7 +737,7 @@
 
                 @for $i from 1 through 10 {
                     &:nth-child(#{$i}) {
-                        animation-delay: #{0.8 + ($i * 0.03)}s;
+                        animation-delay: #{0.1 + ($i * 0.2)}s;
                     }
                 }
 

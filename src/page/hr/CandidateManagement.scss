@@ -587,7 +587,7 @@
         border-radius: 12px;
         padding: 1.5rem;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        animation: fadeDown 0.6s ease-out 0.7s both;
+        animation: fadeDown 0.6s ease-out 0.0s both;
 
         .loading-state,
         .empty-state {
@@ -650,7 +650,7 @@
 
                     @for $i from 1 through 10 {
                         &:nth-child(#{$i}) {
-                            animation-delay: #{0.8 + ($i * 0.03)}s;
+                            animation-delay: #{0.1 + ($i * 0.02)}s;
                         }
                     }
 

@@ -552,7 +552,7 @@ const CandidateHome = () => {
                                 <div className="tip-icon">
                                     <i className="fas fa-clipboard-check"></i>
                                 </div>
-                                <h3>Làm bài test tốt</h3>
+                                <h3>Làm tốt bài test</h3>
                                 <p>Chuẩn bị kiến thức và kỹ năng để hoàn thành bài test một cách tốt nhất</p>
                             </div>
                             <div className="tip-card" data-aos="fade-up" data-aos-delay="300">
