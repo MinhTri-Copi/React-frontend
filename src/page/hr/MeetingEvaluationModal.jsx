@@ -11,9 +11,19 @@ const MeetingEvaluationModal = ({ meeting, isOpen, onClose, onSuccess }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [approveCandidate, setApproveCandidate] = useState(false);
 
+    // Check if evaluation is locked (already evaluated or approved)
+    const isLocked = meeting?.evaluation_locked || false;
+    const isEvaluated = meeting?.score !== null && meeting?.score !== undefined && meeting?.feedback !== null && meeting?.feedback !== undefined;
+
     if (!isOpen || !meeting) return null;
 
     const handleSubmit = async () => {
+        // Check if locked
+        if (isLocked) {
+            toast.error('Đánh giá đã bị khóa! Không thể chỉnh sửa.');
+            return;
+        }
+
         // Validate
         if (score === '' || score < 0 || score > 100) {
             toast.error('Vui lòng nhập điểm từ 0-100!');
@@ -38,11 +48,12 @@ const MeetingEvaluationModal = ({ meeting, isOpen, onClose, onSuccess }) => {
                 return;
             }
 
-            // Update meeting with score and feedback
+            // Update meeting with score, feedback, and approveCandidate flag
             const updateRes = await updateMeeting(meeting.id, {
                 score: parseFloat(score),
                 feedback: feedback.trim(),
-                notes: notes.trim() || null
+                notes: notes.trim() || null,
+                approveCandidate: approveCandidate // Pass flag to backend
             });
 
             if (updateRes && updateRes.EC === 0) {
@@ -55,7 +66,7 @@ const MeetingEvaluationModal = ({ meeting, isOpen, onClose, onSuccess }) => {
                     );
 
                     if (approveRes && approveRes.EC === 0) {
-                        toast.success('Đánh giá và duyệt ứng viên thành công!');
+                        toast.success('Đánh giá và duyệt ứng viên thành công! Email đã được gửi đến ứng viên.');
                     } else {
                         toast.warning('Đánh giá thành công nhưng không thể duyệt ứng viên!');
                     }
@@ -90,7 +101,12 @@ const MeetingEvaluationModal = ({ meeting, isOpen, onClose, onSuccess }) => {
                 <div className="modal-header">
                     <h3>
                         <i className="fas fa-star"></i>
-                        Đánh giá phỏng vấn
+                        {isLocked ? 'Xem đánh giá phỏng vấn' : 'Đánh giá phỏng vấn'}
+                        {isLocked && (
+                            <span className="locked-badge" style={{ marginLeft: '10px', fontSize: '14px', color: '#ff6b6b' }}>
+                                <i className="fas fa-lock"></i> Đã khóa
+                            </span>
+                        )}
                     </h3>
                     <button className="btn-close" onClick={handleClose} disabled={isSubmitting}>
                         <i className="fas fa-times"></i>
@@ -133,7 +149,7 @@ const MeetingEvaluationModal = ({ meeting, isOpen, onClose, onSuccess }) => {
                                 value={score}
                                 onChange={(e) => setScore(e.target.value)}
                                 placeholder="Nhập điểm từ 0-100"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || isLocked}
                             />
                             <span className="score-hint">/ 100</span>
                         </div>
@@ -149,7 +165,7 @@ const MeetingEvaluationModal = ({ meeting, isOpen, onClose, onSuccess }) => {
                             value={feedback}
                             onChange={(e) => setFeedback(e.target.value)}
                             placeholder="Nhập nhận xét về ứng viên..."
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || isLocked}
                         />
                     </div>
 
@@ -161,24 +177,39 @@ const MeetingEvaluationModal = ({ meeting, isOpen, onClose, onSuccess }) => {
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             placeholder="Ghi chú thêm (tùy chọn)..."
-                            disabled={isSubmitting}
+                            disabled={isSubmitting || isLocked}
                         />
                     </div>
 
-                    <div className="approve-section">
-                        <label className="checkbox-label">
-                            <input
-                                type="checkbox"
-                                checked={approveCandidate}
-                                onChange={(e) => setApproveCandidate(e.target.checked)}
-                                disabled={isSubmitting}
-                            />
-                            <span>Duyệt ứng viên vào vòng tiếp theo</span>
-                        </label>
-                        <p className="approve-hint">
-                            Khi chọn, ứng viên sẽ được chuyển sang vòng phỏng vấn tiếp theo
-                        </p>
-                    </div>
+                    {!isLocked && (
+                        <div className="approve-section">
+                            <label className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={approveCandidate}
+                                    onChange={(e) => setApproveCandidate(e.target.checked)}
+                                    disabled={isSubmitting}
+                                />
+                                <span>Duyệt ứng viên vào vòng tiếp theo</span>
+                            </label>
+                            <p className="approve-hint">
+                                Khi chọn, ứng viên sẽ được chuyển sang vòng phỏng vấn tiếp theo và email sẽ được gửi đến ứng viên
+                            </p>
+                        </div>
+                    )}
+
+                    {isLocked && (
+                        <div className="locked-message" style={{ 
+                            padding: '12px', 
+                            backgroundColor: '#fff3cd', 
+                            border: '1px solid #ffc107', 
+                            borderRadius: '4px',
+                            marginTop: '16px'
+                        }}>
+                            <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
+                            <span>Đánh giá đã bị khóa. Không thể chỉnh sửa sau khi đã đánh giá hoặc đã duyệt ứng viên.</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="modal-footer">
@@ -189,21 +220,23 @@ const MeetingEvaluationModal = ({ meeting, isOpen, onClose, onSuccess }) => {
                     >
                         Hủy
                     </button>
-                    <button
-                        className="btn-submit"
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <i className="fas fa-spinner fa-spin"></i> Đang xử lý...
-                            </>
-                        ) : (
-                            <>
-                                <i className="fas fa-check"></i> Lưu đánh giá
-                            </>
-                        )}
-                    </button>
+                    {!isLocked && (
+                        <button
+                            className="btn-submit"
+                            onClick={handleSubmit}
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <i className="fas fa-spinner fa-spin"></i> Đang xử lý...
+                                </>
+                            ) : (
+                                <>
+                                    <i className="fas fa-check"></i> Lưu đánh giá
+                                </>
+                            )}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

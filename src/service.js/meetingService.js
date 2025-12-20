@@ -97,6 +97,19 @@ const updateMeeting = async (meetingId, data) => {
     }
 };
 
+const updateInvitationStatus = async (meetingId, userId, action, data = {}) => {
+    try {
+        const res = await axiosInstance.put(
+            `/hr/meetings/${meetingId}/invitation-status?userId=${userId}`,
+            { action, ...data }
+        );
+        return res.data;
+    } catch (error) {
+        console.error('Error updating invitation status:', error);
+        throw error;
+    }
+};
+
 const cancelMeeting = async (meetingId, userId) => {
     try {
         const res = await axiosInstance.delete(`/hr/meetings/${meetingId}?userId=${userId}`);
@@ -139,6 +152,7 @@ export {
     createMeeting,
     updateMeetingStatus,
     updateMeeting,
+    updateInvitationStatus,
     cancelMeeting,
     getCandidatesByJobPosting,
     getLatestMeetingByJobPosting

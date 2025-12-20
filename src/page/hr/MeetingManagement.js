@@ -4,6 +4,7 @@ import {
     getMeetingsForHr, 
     createMeeting, 
     updateMeetingStatus,
+    updateInvitationStatus,
     cancelMeeting,
     getCandidatesByJobPosting,
     getLatestMeetingByJobPosting
@@ -33,6 +34,9 @@ const MeetingManagement = ({ userId }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [selectedMeetingForEvaluation, setSelectedMeetingForEvaluation] = useState(null);
     const [showEvaluationModal, setShowEvaluationModal] = useState(false);
+    const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+    const [selectedMeetingForReschedule, setSelectedMeetingForReschedule] = useState(null);
+    const [rescheduleFormData, setRescheduleFormData] = useState({ scheduledAt: '' });
 
     // Generate binary code strings (stable across renders)
     const generateBinaryCode = (length) => {
@@ -284,6 +288,98 @@ const MeetingManagement = ({ userId }) => {
         );
     };
 
+    const getInvitationStatusBadge = (invitationStatus) => {
+        const statusMap = {
+            SENT: { text: 'Đã gửi', class: 'invitation-status-sent', icon: 'fa-paper-plane' },
+            CONFIRMED: { text: 'Đã xác nhận', class: 'invitation-status-confirmed', icon: 'fa-check-circle' },
+            RESCHEDULE_REQUESTED: { text: 'Yêu cầu đổi lịch', class: 'invitation-status-reschedule', icon: 'fa-calendar-alt' },
+            CANCELLED: { text: 'Đã hủy', class: 'invitation-status-cancelled', icon: 'fa-times-circle' },
+            COMPLETED: { text: 'Đã hoàn thành', class: 'invitation-status-completed', icon: 'fa-check-double' }
+        };
+        const statusInfo = statusMap[invitationStatus] || { text: invitationStatus, class: 'invitation-status-default', icon: 'fa-question' };
+        return (
+            <span className={`invitation-status-badge ${statusInfo.class}`}>
+                <i className={`fas ${statusInfo.icon}`}></i>
+                {statusInfo.text}
+            </span>
+        );
+    };
+
+    const handleApproveReschedule = async (meeting) => {
+        setSelectedMeetingForReschedule(meeting);
+        // Pre-fill with current scheduled time
+        const currentDate = meeting.scheduledAt ? new Date(meeting.scheduledAt) : new Date();
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+        const day = String(currentDate.getDate()).padStart(2, '0');
+        const hours = String(currentDate.getHours()).padStart(2, '0');
+        const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+        const dateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+        setRescheduleFormData({ scheduledAt: dateTimeString });
+        setShowRescheduleModal(true);
+    };
+
+    const handleSubmitReschedule = async (e) => {
+        e.preventDefault();
+        if (!rescheduleFormData.scheduledAt) {
+            toast.error('Vui lòng chọn thời gian mới!');
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const action = selectedMeetingForReschedule.invitation_status === 'RESCHEDULE_REQUESTED' 
+                ? 'APPROVE_RESCHEDULE' 
+                : 'RESCHEDULE';
+            const res = await updateInvitationStatus(
+                selectedMeetingForReschedule.id,
+                userId,
+                action,
+                { scheduledAt: rescheduleFormData.scheduledAt }
+            );
+            if (res && res.EC === 0) {
+                toast.success('Đã cập nhật lịch phỏng vấn thành công! Email đã được gửi cho ứng viên.');
+                setShowRescheduleModal(false);
+                setSelectedMeetingForReschedule(null);
+                fetchMeetings();
+            } else {
+                toast.error(res?.EM || 'Không thể cập nhật lịch phỏng vấn!');
+            }
+        } catch (error) {
+            console.error('Error updating invitation status:', error);
+            toast.error('Có lỗi xảy ra khi cập nhật lịch phỏng vấn!');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleRejectReschedule = async (meeting) => {
+        if (!window.confirm('Bạn có chắc chắn muốn từ chối yêu cầu đổi lịch? Meeting sẽ bị hủy.')) {
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            const res = await updateInvitationStatus(
+                meeting.id,
+                userId,
+                'REJECT_RESCHEDULE',
+                { updateApplicationStatus: true }
+            );
+            if (res && res.EC === 0) {
+                toast.success('Đã từ chối yêu cầu đổi lịch và hủy meeting!');
+                fetchMeetings();
+            } else {
+                toast.error(res?.EM || 'Không thể từ chối yêu cầu đổi lịch!');
+            }
+        } catch (error) {
+            console.error('Error rejecting reschedule:', error);
+            toast.error('Có lỗi xảy ra khi từ chối yêu cầu đổi lịch!');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -440,7 +536,10 @@ const MeetingManagement = ({ userId }) => {
                                         {meeting.JobApplication?.JobPosting?.Company?.Tencongty}
                                     </p>
                                 </div>
-                                {getStatusBadge(meeting.status)}
+                                <div className="meeting-statuses">
+                                    {getStatusBadge(meeting.status)}
+                                    {getInvitationStatusBadge(meeting.invitation_status)}
+                                </div>
                             </div>
                             <div className="meeting-body">
                                 <div className="meeting-info">
@@ -471,6 +570,12 @@ const MeetingManagement = ({ userId }) => {
                                         </div>
                                     )}
                                 </div>
+                                {meeting.candidate_reschedule_reason && (
+                                    <div className="meeting-reschedule-reason">
+                                        <strong><i className="fas fa-info-circle"></i> Lý do đổi lịch:</strong> 
+                                        <p>{meeting.candidate_reschedule_reason}</p>
+                                    </div>
+                                )}
                                 {meeting.notes && (
                                     <div className="meeting-notes">
                                         <strong>Ghi chú:</strong> {meeting.notes}
@@ -478,7 +583,27 @@ const MeetingManagement = ({ userId }) => {
                                 )}
                             </div>
                             <div className="meeting-actions">
-                                {(meeting.status === 'pending' || meeting.status === 'running') && (
+                                {/* Actions based on invitation_status */}
+                                {meeting.invitation_status === 'RESCHEDULE_REQUESTED' && (
+                                    <>
+                                        <button 
+                                            className="btn-approve-reschedule"
+                                            onClick={() => handleApproveReschedule(meeting)}
+                                        >
+                                            <i className="fas fa-check"></i>
+                                            Duyệt đổi lịch
+                                        </button>
+                                        <button 
+                                            className="btn-reject-reschedule"
+                                            onClick={() => handleRejectReschedule(meeting)}
+                                            disabled={isSubmitting}
+                                        >
+                                            <i className="fas fa-times"></i>
+                                            Từ chối đổi lịch
+                                        </button>
+                                    </>
+                                )}
+                                {meeting.invitation_status === 'CONFIRMED' && (meeting.status === 'pending' || meeting.status === 'running') && (
                                     <button 
                                         className="btn-join"
                                         onClick={() => handleJoinMeeting(meeting.roomName)}
@@ -487,7 +612,37 @@ const MeetingManagement = ({ userId }) => {
                                         Tham gia Meeting
                                     </button>
                                 )}
-                                {meeting.status === 'pending' && (
+                                {meeting.invitation_status === 'SENT' && meeting.status === 'pending' && (
+                                    <>
+                                        <button 
+                                            className="btn-join"
+                                            onClick={() => handleJoinMeeting(meeting.roomName)}
+                                        >
+                                            <i className="fas fa-video"></i>
+                                            Tham gia Meeting
+                                        </button>
+                                        <button 
+                                            className="btn-reschedule"
+                                            onClick={() => handleApproveReschedule(meeting)}
+                                        >
+                                            <i className="fas fa-calendar-alt"></i>
+                                            Đổi lịch
+                                        </button>
+                                    </>
+                                )}
+                                {(meeting.status === 'pending' || meeting.status === 'running') && 
+                                 meeting.invitation_status !== 'RESCHEDULE_REQUESTED' && 
+                                 meeting.invitation_status !== 'CONFIRMED' && 
+                                 meeting.invitation_status !== 'SENT' && (
+                                    <button 
+                                        className="btn-join"
+                                        onClick={() => handleJoinMeeting(meeting.roomName)}
+                                    >
+                                        <i className="fas fa-video"></i>
+                                        Tham gia Meeting
+                                    </button>
+                                )}
+                                {meeting.status === 'pending' && meeting.invitation_status !== 'RESCHEDULE_REQUESTED' && (
                                     <button 
                                         className="btn-cancel"
                                         onClick={() => handleCancelMeeting(meeting.id)}
@@ -503,6 +658,19 @@ const MeetingManagement = ({ userId }) => {
                                                 <div className="evaluation-info">
                                                     <i className="fas fa-star"></i>
                                                     <span>Điểm: {meeting.score}/100</span>
+                                                    {meeting.evaluation_locked && (
+                                                        <span className="locked-indicator" style={{ 
+                                                            marginLeft: '8px', 
+                                                            fontSize: '12px', 
+                                                            color: '#ff6b6b',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px'
+                                                        }}>
+                                                            <i className="fas fa-lock"></i>
+                                                            Đã khóa
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 <button 
                                                     className="btn-view-evaluation"
@@ -512,7 +680,7 @@ const MeetingManagement = ({ userId }) => {
                                                     }}
                                                 >
                                                     <i className="fas fa-eye"></i>
-                                                    Xem đánh giá
+                                                    {meeting.evaluation_locked ? 'Xem đánh giá' : 'Chỉnh sửa đánh giá'}
                                                 </button>
                                             </div>
                                         ) : (
@@ -673,6 +841,70 @@ const MeetingManagement = ({ userId }) => {
                         fetchMeetings();
                     }}
                 />
+            )}
+
+            {/* Reschedule Modal */}
+            {showRescheduleModal && selectedMeetingForReschedule && (
+                <div className="modal-overlay" onClick={() => setShowRescheduleModal(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>
+                                {selectedMeetingForReschedule.invitation_status === 'RESCHEDULE_REQUESTED' 
+                                    ? 'Duyệt yêu cầu đổi lịch' 
+                                    : 'Đổi lịch phỏng vấn'}
+                            </h2>
+                            <button className="btn-close" onClick={() => setShowRescheduleModal(false)}>
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <form onSubmit={handleSubmitReschedule} className="modal-body">
+                            {selectedMeetingForReschedule.candidate_reschedule_reason && (
+                                <div className="reschedule-reason-display">
+                                    <strong>Lý do ứng viên yêu cầu đổi lịch:</strong>
+                                    <p>{selectedMeetingForReschedule.candidate_reschedule_reason}</p>
+                                </div>
+                            )}
+                            <div className="form-group">
+                                <label>
+                                    Thời gian phỏng vấn mới <span className="required">*</span>
+                                </label>
+                                <input
+                                    type="datetime-local"
+                                    value={rescheduleFormData.scheduledAt}
+                                    onChange={(e) => setRescheduleFormData({ scheduledAt: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div className="modal-footer">
+                                <button 
+                                    type="button" 
+                                    className="btn-cancel" 
+                                    onClick={() => {
+                                        setShowRescheduleModal(false);
+                                        setSelectedMeetingForReschedule(null);
+                                    }}
+                                >
+                                    Hủy
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    className="btn-submit"
+                                    disabled={isSubmitting}
+                                >
+                                    {isSubmitting ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i> Đang xử lý...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <i className="fas fa-check"></i> Xác nhận
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -20,6 +20,8 @@ import TestResult from './page/candidate/TestResult';
 import HrDashboard from './page/hr/HrDashboard';
 import MeetingRoom from './page/meeting/MeetingRoom';
 import JitsiRoom from './components/JitsiRoom';
+import InterviewConfirm from './page/interview/InterviewConfirm';
+import InterviewReject from './page/interview/InterviewReject';
 
 function App() {
   return (
@@ -45,6 +47,10 @@ function App() {
           
           {/* Meeting Routes */}
           <Route path="/meeting/:roomName" element={<JitsiRoom />} />
+          
+          {/* Interview Response Routes (Public - No Auth Required) */}
+          <Route path="/interview/confirm" element={<InterviewConfirm />} />
+          <Route path="/interview/reject" element={<InterviewReject />} />
           
           {/* Other Routes */}
           <Route path="/admin" element={<div>Admin Dashboard</div>} />

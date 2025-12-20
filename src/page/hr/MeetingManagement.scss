@@ -562,6 +562,80 @@
                     }
                 }
 
+                .btn-approve-reschedule {
+                    flex: 1;
+                    padding: 10px 20px;
+                    background: linear-gradient(135deg, #4caf50, #2e7d32);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    font-size: 14px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        opacity: 0.9;
+                        transform: translateY(-2px);
+                    }
+
+                    &:disabled {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                    }
+                }
+
+                .btn-reject-reschedule {
+                    flex: 1;
+                    padding: 10px 20px;
+                    background: linear-gradient(135deg, #f44336, #c62828);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    font-size: 14px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        opacity: 0.9;
+                        transform: translateY(-2px);
+                    }
+
+                    &:disabled {
+                        opacity: 0.6;
+                        cursor: not-allowed;
+                    }
+                }
+
+                .btn-reschedule {
+                    padding: 10px 20px;
+                    background: linear-gradient(135deg, #ff9800, #f57c00);
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    font-size: 14px;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    transition: all 0.3s ease;
+
+                    &:hover {
+                        opacity: 0.9;
+                        transform: translateY(-2px);
+                    }
+                }
+
                 .meeting-completed {
                     flex: 1;
                     padding: 10px;
@@ -679,6 +753,77 @@
         }
     }
 
+    .meeting-statuses {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-end;
+    }
+
+    .invitation-status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        &.invitation-status-sent {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        &.invitation-status-confirmed {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+
+        &.invitation-status-reschedule {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+
+        &.invitation-status-cancelled {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+
+        &.invitation-status-completed {
+            background: #c5e1a5;
+            color: #558b2f;
+        }
+
+        &.invitation-status-default {
+            background: #e0e0e0;
+            color: #424242;
+        }
+    }
+
+    .meeting-reschedule-reason {
+        margin-top: 12px;
+        padding: 12px;
+        background: #fff9c4;
+        border-left: 4px solid #f57f17;
+        border-radius: 8px;
+
+        strong {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #f57f17;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        p {
+            margin: 0;
+            color: #856404;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+    }
+
     // Modal styles
     .modal-overlay {
         position: fixed;
@@ -742,6 +887,29 @@
                 padding: 30px;
                 overflow-y: auto;
                 flex: 1;
+
+                .reschedule-reason-display {
+                    margin-bottom: 24px;
+                    padding: 16px;
+                    background: #fff9c4;
+                    border-left: 4px solid #f57f17;
+                    border-radius: 8px;
+
+                    strong {
+                        display: block;
+                        color: #f57f17;
+                        margin-bottom: 8px;
+                        font-size: 14px;
+                        font-weight: 600;
+                    }
+
+                    p {
+                        margin: 0;
+                        color: #856404;
+                        font-size: 13px;
+                        line-height: 1.6;
+                    }
+                }
 
                 .form-group {
                     margin-bottom: 20px;
