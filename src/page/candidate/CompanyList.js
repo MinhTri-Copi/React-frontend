@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
+import ScrollToTop from '../../components/ScrollToTop/ScrollToTop';
 import ReactPaginate from 'react-paginate';
 import { toast } from 'react-toastify';
 import { getListCompany, searchCompany } from '../../service.js/companyService';
@@ -41,7 +42,8 @@ const CompanyList = () => {
             let res = await getListCompany(page, 10);
             
             if (res && res.data && res.data.EC === 0) {
-                setCompanies(res.data.DT.companies);
+                const sortedCompanies = sortCompaniesByScore(res.data.DT.companies);
+                setCompanies(sortedCompanies);
                 setTotalPages(res.data.DT.totalPages);
             } else {
                 toast.error(res.data.EM);
@@ -65,7 +67,8 @@ const CompanyList = () => {
             let res = await searchCompany(searchKeyword, 1, 10);
             
             if (res && res.data && res.data.EC === 0) {
-                setCompanies(res.data.DT.companies);
+                const sortedCompanies = sortCompaniesByScore(res.data.DT.companies);
+                setCompanies(sortedCompanies);
                 setTotalPages(res.data.DT.totalPages);
                 setCurrentPage(1);
             } else {
@@ -94,7 +97,8 @@ const CompanyList = () => {
             let res = await searchCompany(searchKeyword, page, 10);
             
             if (res && res.data && res.data.EC === 0) {
-                setCompanies(res.data.DT.companies);
+                const sortedCompanies = sortCompaniesByScore(res.data.DT.companies);
+                setCompanies(sortedCompanies);
                 setTotalPages(res.data.DT.totalPages);
             }
         } catch (error) {
@@ -120,6 +124,22 @@ const CompanyList = () => {
     const getRandomRecommendation = (id) => {
         const percentages = [96, 97, 98, 99, 100];
         return percentages[id % percentages.length];
+    };
+
+    // Calculate total score (rating + recommendation) for sorting
+    const getTotalScore = (company) => {
+        const rating = getRandomRating(company.id);
+        const recommendation = getRandomRecommendation(company.id);
+        return rating + recommendation;
+    };
+
+    // Sort companies by total score (highest first)
+    const sortCompaniesByScore = (companiesList) => {
+        return [...companiesList].sort((a, b) => {
+            const scoreA = getTotalScore(a);
+            const scoreB = getTotalScore(b);
+            return scoreB - scoreA; // Sort descending (highest first)
+        });
     };
 
     return (
@@ -163,7 +183,7 @@ const CompanyList = () => {
                     <div className="header-content">
                         <h1 className="page-title" data-aos="fade-down" data-aos-delay="0">Các công ty IT hàng đầu</h1>
                         <p className="page-subtitle" data-aos="fade-down" data-aos-delay="100">
-                            Khám phá những công ty công nghệ tốt nhất để làm việc
+                            Khám phá những công ty công nghệ tốt nhất hiện nay
                         </p>
 
                         <div className="search-bar" data-aos="fade-up" data-aos-delay="200">
@@ -330,6 +350,7 @@ const CompanyList = () => {
             </div>
             
             <Footer />
+            <ScrollToTop />
         </div>
     );
 };
