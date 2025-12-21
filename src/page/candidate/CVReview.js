@@ -228,63 +228,126 @@ const CVReview = () => {
         }
     };
 
-    // Render CV with colored boxes around issues
+    // Render CV as HTML/CSS (like PDF) with highlighted issues
     const renderCVWithBoxes = (text, issues) => {
-        if (!text || !issues || issues.length === 0) {
-            return <div className="cv-text-plain">{text}</div>;
+        if (!text) {
+            return <div className="cv-document">CV text không có</div>;
         }
 
-        // Split text into lines for better box rendering
-        const lines = text.split('\n');
+        // Normalize text for matching
+        const normalizeText = (str) => {
+            return str.replace(/\s+/g, ' ').trim().toLowerCase();
+        };
+
+        // Create issue map
         const issueMap = new Map();
-        
         issues.forEach((issue, index) => {
-            if (issue.original_text) {
-                issueMap.set(issue.original_text, {
+            if (issue.original_text && issue.original_text.trim()) {
+                const originalText = issue.original_text.trim();
+                const normalizedText = normalizeText(originalText);
+                issueMap.set(normalizedText, {
                     ...issue,
-                    index
+                    index,
+                    originalText: originalText,
+                    normalizedText: normalizedText
                 });
             }
         });
 
-        return (
-            <div className="cv-text-with-boxes">
-                {lines.map((line, lineIndex) => {
-                    // Check if this line contains any issue text
-                    let hasIssue = false;
-                    let issueInfo = null;
-                    
-                    for (const [originalText, issue] of issueMap.entries()) {
-                        if (line.includes(originalText)) {
-                            hasIssue = true;
-                            issueInfo = issue;
-                            break;
-                        }
-                    }
+        // Find issue positions in text
+        const issuePositions = [];
+        const normalizedCV = normalizeText(text);
+        
+        issueMap.forEach((issueInfo) => {
+            const searchText = issueInfo.normalizedText;
+            let foundIndex = normalizedCV.indexOf(searchText);
+            
+            if (foundIndex !== -1) {
+                // Map back to original position (approximate)
+                let originalIndex = 0;
+                let normalizedIndex = 0;
+                
+                // Simple mapping: count characters
+                const ratio = text.length / normalizedCV.length;
+                originalIndex = Math.floor(foundIndex * ratio);
+                
+                issuePositions.push({
+                    start: originalIndex,
+                    end: Math.min(text.length, originalIndex + issueInfo.originalText.length),
+                    issue: issueInfo
+                });
+            }
+        });
 
-                    if (hasIssue && issueInfo) {
-                        const severityColor = getSeverityColor(issueInfo.severity);
-                        return (
-                            <div 
-                                key={lineIndex} 
-                                className="cv-line-boxed"
-                                style={{
-                                    borderLeft: `4px solid ${severityColor}`,
-                                    backgroundColor: `${severityColor}15`,
-                                    padding: '8px',
-                                    margin: '4px 0',
-                                    borderRadius: '4px'
-                                }}
+        // Sort and filter overlaps
+        issuePositions.sort((a, b) => a.start - b.start);
+        const filteredPositions = [];
+        let lastEnd = 0;
+        
+        issuePositions.forEach(pos => {
+            if (pos.start >= lastEnd) {
+                filteredPositions.push(pos);
+                lastEnd = pos.end;
+            }
+        });
+
+        // Build parts with highlights
+        const parts = [];
+        let lastIndex = 0;
+
+        filteredPositions.forEach((pos) => {
+            if (pos.start > lastIndex) {
+                parts.push({
+                    text: text.substring(lastIndex, pos.start),
+                    isIssue: false
+                });
+            }
+            parts.push({
+                text: text.substring(pos.start, pos.end),
+                isIssue: true,
+                issue: pos.issue
+            });
+            lastIndex = pos.end;
+        });
+
+        if (lastIndex < text.length) {
+            parts.push({
+                text: text.substring(lastIndex),
+                isIssue: false
+            });
+        }
+
+        // Render as HTML document (like PDF)
+        return (
+            <div className="cv-document">
+                {parts.map((part, partIndex) => {
+                    if (part.isIssue && part.issue) {
+                        const severityColor = getSeverityColor(part.issue.severity);
+                        const severityClass = `cv-highlight-${part.issue.severity}`;
+                        
+                        // Split by lines to preserve formatting
+                        const lines = part.text.split('\n');
+                        return lines.map((line, lineIdx) => (
+                            <span
+                                key={`issue-${partIndex}-${lineIdx}`}
+                                className={`cv-highlight ${severityClass}`}
+                                data-severity={part.issue.severity}
+                                data-section={part.issue.section}
+                                title={`${getSectionLabel(part.issue.section)} - ${getSeverityLabel(part.issue.severity)}: ${part.issue.suggestion}`}
                             >
                                 {line}
-                            </div>
-                        );
+                                {lineIdx < lines.length - 1 && <br />}
+                            </span>
+                        ));
                     } else {
-                        return (
-                            <div key={lineIndex} className="cv-line-normal">
+                        // Regular text - preserve line breaks
+                        const lines = part.text.split('\n');
+                        return lines.map((line, lineIdx) => (
+                            <React.Fragment key={`text-${partIndex}-${lineIdx}`}>
                                 {line}
-                            </div>
-                        );
+                                {lineIdx < lines.length - 1 && <br />}
+                            </React.Fragment>
+                        ));
                     }
                 })}
             </div>
@@ -307,6 +370,22 @@ const CVReview = () => {
             case 'low': return 'Nhẹ';
             default: return severity;
         }
+    };
+
+    const getSectionLabel = (section) => {
+        const sectionMap = {
+            'summary': 'Tóm tắt',
+            'experience': 'Kinh nghiệm',
+            'skills': 'Kỹ năng',
+            'education': 'Học vấn',
+            'format': 'Định dạng',
+            'job_matching': 'Phù hợp JD',
+            'projects': 'Dự án',
+            'certifications': 'Chứng chỉ',
+            'languages': 'Ngôn ngữ',
+            'achievements': 'Thành tích'
+        };
+        return sectionMap[section] || section;
     };
 
     // Calculate match rate (job_matching score from rubric)
@@ -552,7 +631,7 @@ const CVReview = () => {
                                                     borderLeft: `4px solid ${getSeverityColor(issue.severity)}`
                                                 }}>
                                                     <div className="issue-header">
-                                                        <span className="issue-section">{issue.section}</span>
+                                                        <span className="issue-section">{getSectionLabel(issue.section)}</span>
                                                         <span className="issue-severity" style={{
                                                             backgroundColor: getSeverityColor(issue.severity),
                                                             color: '#fff'
