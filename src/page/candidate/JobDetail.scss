@@ -232,6 +232,42 @@
                                     line-height: 1.8;
                                     color: #555;
                                     white-space: pre-wrap;
+                                    margin-bottom: 1rem;
+                                }
+
+                                .jd-actions {
+                                    display: flex;
+                                    gap: 0.75rem;
+                                    margin-top: 1rem;
+                                    padding-top: 1rem;
+                                    border-top: 1px solid #e0e0e0;
+
+                                    .btn-copy-jd,
+                                    .btn-save-jd {
+                                        padding: 0.5rem 1rem;
+                                        border: 2px solid #008060;
+                                        background: white;
+                                        color: #008060;
+                                        border-radius: 6px;
+                                        font-size: 0.9rem;
+                                        font-weight: 600;
+                                        cursor: pointer;
+                                        transition: all 0.3s ease;
+                                        display: flex;
+                                        align-items: center;
+                                        gap: 0.5rem;
+
+                                        &:hover {
+                                            background: #008060;
+                                            color: white;
+                                            transform: translateY(-2px);
+                                            box-shadow: 0 2px 8px rgba(0, 128, 96, 0.3);
+                                        }
+
+                                        i {
+                                            font-size: 0.9rem;
+                                        }
+                                    }
                                 }
 
                                 .requirement-item {

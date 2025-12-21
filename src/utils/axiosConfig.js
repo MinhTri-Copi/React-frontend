@@ -5,7 +5,7 @@ const BASE_URL = 'http://localhost:8082/api';
 // Create axios instance
 const axiosInstance = axios.create({
     baseURL: BASE_URL,
-    timeout: 10000,
+    timeout: 600000, // 10 minutes timeout (for CV review which can take 5-10 minutes)
     headers: {
         'Content-Type': 'application/json'
     }
@@ -14,6 +14,11 @@ const axiosInstance = axios.create({
 // Request interceptor - Add JWT token to headers
 axiosInstance.interceptors.request.use(
     (config) => {
+        // Increase timeout for CV review endpoint (can take 5-10 minutes)
+        if (config.url && config.url.includes('/candidate/review-cv')) {
+            config.timeout = 600000; // 10 minutes
+        }
+        
         // Get token from localStorage or sessionStorage
         const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
         if (storedUser) {

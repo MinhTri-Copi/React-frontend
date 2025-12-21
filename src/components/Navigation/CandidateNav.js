@@ -135,6 +135,16 @@ const CandidateNav = () => {
                                         <i className="fas fa-clipboard-check"></i>
                                         <span>Xem bài test</span>
                                     </NavLink>
+                                    <NavLink 
+                                        to="/candidate/cv-review" 
+                                        className={({ isActive }) => isActive ? "dropdown-item active" : "dropdown-item"}
+                                        onClick={() => {
+                                            setShowOptionsDropdown(false);
+                                        }}
+                                    >
+                                        <i className="fas fa-magic"></i>
+                                        <span>Hỗ trợ CV</span>
+                                    </NavLink>
                                 </div>
                             )}
                         </div>

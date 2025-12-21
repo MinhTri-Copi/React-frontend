@@ -320,6 +320,43 @@ const JobDetail = () => {
                                         <p className="job-description">
                                             {job.Mota || 'Không có mô tả'}
                                         </p>
+                                        <div className="jd-actions">
+                                            <button
+                                                className="btn-copy-jd"
+                                                onClick={() => {
+                                                    const jdText = `${job.Tieude || 'Job Description'}\n\n${job.Mota || ''}`;
+                                                    navigator.clipboard.writeText(jdText).then(() => {
+                                                        toast.success('Đã copy JD vào clipboard!');
+                                                    }).catch(() => {
+                                                        toast.error('Không thể copy. Vui lòng copy thủ công.');
+                                                    });
+                                                }}
+                                                title="Copy JD để dùng trong AI Review CV"
+                                            >
+                                                <i className="fas fa-copy"></i>
+                                                Copy JD
+                                            </button>
+                                            <button
+                                                className="btn-save-jd"
+                                                onClick={() => {
+                                                    const jdText = `${job.Tieude || 'Job Description'}\n\n${job.Mota || ''}`;
+                                                    const blob = new Blob([jdText], { type: 'text/plain' });
+                                                    const url = URL.createObjectURL(blob);
+                                                    const a = document.createElement('a');
+                                                    a.href = url;
+                                                    a.download = `JD_${job.Tieude?.replace(/[^a-z0-9]/gi, '_') || 'job'}.txt`;
+                                                    document.body.appendChild(a);
+                                                    a.click();
+                                                    document.body.removeChild(a);
+                                                    URL.revokeObjectURL(url);
+                                                    toast.success('Đã lưu JD thành file!');
+                                                }}
+                                                title="Lưu JD thành file .txt"
+                                            >
+                                                <i className="fas fa-download"></i>
+                                                Lưu file JD
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 

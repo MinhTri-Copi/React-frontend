@@ -17,6 +17,7 @@ import MyApplications from './page/candidate/MyApplications';
 import MyTests from './page/candidate/MyTests';
 import TestTaking from './page/candidate/TestTaking';
 import TestResult from './page/candidate/TestResult';
+import CVReview from './page/candidate/CVReview';
 import HrDashboard from './page/hr/HrDashboard';
 import MeetingRoom from './page/meeting/MeetingRoom';
 import JitsiRoom from './components/JitsiRoom';
@@ -38,6 +39,7 @@ function App() {
           <Route path="/candidate/jobs/:id" element={<JobDetail />} />
           <Route path="/candidate/companies" element={<CompanyList />} />
           <Route path="/candidate/my-records" element={<MyRecords />} />
+          <Route path="/candidate/cv-review" element={<CVReview />} />
           <Route path="/candidate/my-applications" element={<MyApplications />} />
           <Route path="/candidate/my-tests" element={<MyTests />} />
           <Route path="/candidate/tests/:submissionId" element={<TestTaking />} />
