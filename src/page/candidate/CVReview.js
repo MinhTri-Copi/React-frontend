@@ -2,24 +2,24 @@ import React, { useState, useEffect, useRef } from 'react';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
 import { toast } from 'react-toastify';
-import { uploadCV, getCVStatus, getRecordById } from '../../service.js/recordService';
+import { getMyRecords, getRecordById } from '../../service.js/recordService';
 import { reviewCV } from '../../service.js/cvReviewService';
 import './CVReview.scss';
 
 const CVReview = () => {
     const [user, setUser] = useState(null);
-    const [cvFile, setCvFile] = useState(null);
-    const [cvFilePreview, setCvFilePreview] = useState(null);
+    const [records, setRecords] = useState([]);
+    const [selectedRecordId, setSelectedRecordId] = useState(null);
+    const [selectedRecord, setSelectedRecord] = useState(null);
     const [jdFileNames, setJdFileNames] = useState([null]); // Tên file JD để hiển thị (chỉ .txt)
     const [jdTexts, setJdTexts] = useState(['']); // JD texts (from file or manual input)
     const [jdErrors, setJdErrors] = useState([null]); // Lỗi validation cho mỗi JD
-    const [isUploadingCV, setIsUploadingCV] = useState(false);
-    const [isExtractingJD, setIsExtractingJD] = useState(false);
+    const [isLoadingRecords, setIsLoadingRecords] = useState(false);
+    const [isLoadingCV, setIsLoadingCV] = useState(false);
     const [isReviewing, setIsReviewing] = useState(false);
     const [reviewResult, setReviewResult] = useState(null);
     const [cvText, setCvText] = useState('');
     const [recordId, setRecordId] = useState(null);
-    const cvFileInputRef = useRef(null);
     const jdFileInputRefs = useRef([]);
 
     useEffect(() => {
@@ -27,94 +27,80 @@ const CVReview = () => {
         if (storedUser) {
             const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
+            fetchRecords(parsedUser.id);
         }
     }, []);
 
-    // Không cần useEffect extractJDTexts nữa vì đọc trực tiếp khi chọn file
+    const fetchRecords = async (userId) => {
+        setIsLoadingRecords(true);
+        try {
+            const res = await getMyRecords(userId);
+            if (res && res.data && res.data.EC === 0) {
+                setRecords(res.data.DT || []);
+            } else {
+                toast.error(res.data?.EM || 'Không thể tải danh sách CV!');
+            }
+        } catch (error) {
+            console.error('Error fetching records:', error);
+            toast.error('Có lỗi khi tải danh sách CV!');
+        } finally {
+            setIsLoadingRecords(false);
+        }
+    };
 
-    const handleCVFileChange = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // Validate file type
-        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-        if (!allowedTypes.includes(file.type)) {
-            toast.error('Chỉ chấp nhận file PDF, DOC, DOCX!');
+    const handleCVSelect = async (event) => {
+        const recordId = event.target.value;
+        if (!recordId || recordId === '') {
+            setSelectedRecordId(null);
+            setSelectedRecord(null);
+            setCvText('');
+            setRecordId(null);
+            setReviewResult(null);
             return;
         }
 
-        // Validate file size (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            toast.error('File không được vượt quá 5MB!');
-            return;
-        }
-
-        setCvFile(file);
-        setCvFilePreview(URL.createObjectURL(file));
+        setSelectedRecordId(recordId);
+        setIsLoadingCV(true);
         setReviewResult(null);
         setCvText('');
         setRecordId(null);
 
-        // Upload CV
-        await uploadCVFile(file);
-    };
-
-    const uploadCVFile = async (file) => {
-        if (!user) {
-            toast.error('Vui lòng đăng nhập!');
-            return;
-        }
-
-        setIsUploadingCV(true);
         try {
-            const res = await uploadCV(file, user.id);
+            const record = records.find(r => r.id === parseInt(recordId));
+            if (!record) {
+                toast.error('Không tìm thấy CV!');
+                return;
+            }
+
+            setSelectedRecord(record);
+
+            // Check if CV is ready
+            if (record.extractionStatus !== 'READY') {
+                toast.warning('CV này chưa được xử lý xong. Vui lòng chọn CV khác hoặc đợi xử lý.');
+                setIsLoadingCV(false);
+                return;
+            }
+
+            // Get CV text from record
+            const res = await getRecordById(recordId, user.id);
             if (res && res.data && res.data.EC === 0) {
-                toast.success('Upload CV thành công! Đang xử lý...');
-                setRecordId(res.data.DT.recordId);
-                
-                // Poll for extraction status
-                pollCVExtractionStatus(res.data.DT.recordId);
+                const recordData = res.data.DT;
+                if (recordData.cvText) {
+                    setCvText(recordData.cvText);
+                    setRecordId(recordId);
+                    toast.success('Đã chọn CV thành công!');
+                } else {
+                    toast.warning('CV này chưa có nội dung text. Vui lòng chọn CV khác.');
+                }
             } else {
-                toast.error(res.data.EM || 'Upload CV thất bại!');
+                toast.error(res.data?.EM || 'Không thể lấy thông tin CV!');
             }
         } catch (error) {
-            console.error('Error uploading CV:', error);
-            toast.error('Có lỗi khi upload CV!');
+            console.error('Error loading CV:', error);
+            toast.error('Có lỗi khi tải CV!');
         } finally {
-            setIsUploadingCV(false);
+            setIsLoadingCV(false);
         }
-    };
-
-    const pollCVExtractionStatus = async (recordId) => {
-        const maxAttempts = 30; // 30 attempts = 90 seconds
-        let attempts = 0;
-
-        const interval = setInterval(async () => {
-            attempts++;
-            try {
-                const res = await getCVStatus();
-                if (res && res.data && res.data.EC === 0) {
-                    const status = res.data.DT;
-                    if (status.status === 'READY') {
-                        // Get CV text from record
-                        const recordRes = await getRecordById(recordId, user.id);
-                        if (recordRes && recordRes.data && recordRes.data.EC === 0 && recordRes.data.DT.cvText) {
-                            setCvText(recordRes.data.DT.cvText);
-                            clearInterval(interval);
-                            toast.success('CV đã được xử lý thành công!');
-                        }
-                    } else if (status.status === 'FAILED') {
-                        clearInterval(interval);
-                        toast.error('Xử lý CV thất bại!');
-                    } else if (attempts >= maxAttempts) {
-                        clearInterval(interval);
-                        toast.warning('Xử lý CV đang mất nhiều thời gian. Vui lòng thử lại sau.');
-                    }
-                }
-            } catch (error) {
-                console.error('Error checking CV status:', error);
-            }
-        }, 3000); // Check every 3 seconds
     };
 
     const handleJDFileChange = (index, event) => {
@@ -234,8 +220,8 @@ const CVReview = () => {
 
     const handleReview = async () => {
         // Validate
-        if (!cvFile || !cvText || cvText.trim().length === 0) {
-            toast.error('Vui lòng upload CV và đợi xử lý xong!');
+        if (!selectedRecordId || !cvText || cvText.trim().length === 0) {
+            toast.error('Vui lòng chọn CV và đợi tải xong!');
             return;
         }
 
@@ -246,7 +232,7 @@ const CVReview = () => {
         }
 
         if (!recordId) {
-            toast.error('CV chưa được xử lý xong. Vui lòng đợi!');
+            toast.error('CV chưa được tải xong. Vui lòng đợi!');
             return;
         }
 
@@ -713,48 +699,63 @@ const CVReview = () => {
                 <div className="cv-review-content">
                     {/* Left: Upload Section */}
                     <div className="review-input-section">
-                        {/* CV Upload */}
+                        {/* CV Select */}
                         <div className="input-card">
                             <h3>
                                 <i className="fas fa-file-pdf"></i>
-                                Upload CV (1 chỗ duy nhất)
+                                Chọn CV từ danh sách
                             </h3>
                             <div className="file-upload-area">
-                                <input
-                                    ref={cvFileInputRef}
-                                    type="file"
-                                    accept=".pdf,.doc,.docx"
-                                    onChange={handleCVFileChange}
-                                    style={{ display: 'none' }}
-                                />
-                                <button
-                                    onClick={() => cvFileInputRef.current?.click()}
-                                    className="btn-upload"
-                                    disabled={isUploadingCV}
-                                >
-                                    {isUploadingCV ? (
-                                        <>
-                                            <i className="fas fa-spinner fa-spin"></i>
-                                            Đang upload...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="fas fa-cloud-upload-alt"></i>
-                                            {cvFile ? cvFile.name : 'Chọn file CV'}
-                                        </>
-                                    )}
-                                </button>
-                                {cvFilePreview && (
-                                    <div className="file-preview">
-                                        <i className="fas fa-file-pdf"></i>
-                                        <span>{cvFile.name}</span>
+                                {isLoadingRecords ? (
+                                    <div className="loading-state">
+                                        <i className="fas fa-spinner fa-spin"></i>
+                                        Đang tải danh sách CV...
                                     </div>
-                                )}
-                                {cvText && (
-                                    <div className="cv-status success">
-                                        <i className="fas fa-check-circle"></i>
-                                        CV đã được xử lý
+                                ) : records.length === 0 ? (
+                                    <div className="cv-status warning">
+                                        <i className="fas fa-exclamation-circle"></i>
+                                        Bạn chưa có CV nào. Vui lòng upload CV trong phần "Hồ sơ của tôi" trước.
                                     </div>
+                                ) : (
+                                    <>
+                                        <select
+                                            value={selectedRecordId || ''}
+                                            onChange={handleCVSelect}
+                                            className="form-select cv-select"
+                                            disabled={isLoadingCV}
+                                        >
+                                            <option value="">-- Chọn CV --</option>
+                                            {records.map((record) => (
+                                                <option key={record.id} value={record.id}>
+                                                    {record.Tieude}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        {isLoadingCV && (
+                                            <div className="cv-status loading">
+                                                <i className="fas fa-spinner fa-spin"></i>
+                                                Đang tải CV...
+                                            </div>
+                                        )}
+                                        {selectedRecord && (
+                                            <div className="file-preview">
+                                                <i className="fas fa-file-pdf"></i>
+                                                <span>{selectedRecord.Tieude}</span>
+                                            </div>
+                                        )}
+                                        {cvText && (
+                                            <div className="cv-status success">
+                                                <i className="fas fa-check-circle"></i>
+                                                CV đã sẵn sàng
+                                            </div>
+                                        )}
+                                        {selectedRecord && selectedRecord.extractionStatus !== 'READY' && (
+                                            <div className="cv-status warning">
+                                                <i className="fas fa-exclamation-triangle"></i>
+                                                CV này chưa được xử lý xong (Status: {selectedRecord.extractionStatus})
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -830,7 +831,7 @@ const CVReview = () => {
                         {/* Review Button */}
                         <button
                             onClick={handleReview}
-                            disabled={!cvText || jdTexts.filter(t => t && t.trim()).length === 0 || isReviewing || isUploadingCV}
+                            disabled={!cvText || jdTexts.filter(t => t && t.trim()).length === 0 || isReviewing || isLoadingCV}
                             className="btn-review"
                         >
                             {isReviewing ? (
