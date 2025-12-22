@@ -10,8 +10,9 @@ const CVReview = () => {
     const [user, setUser] = useState(null);
     const [cvFile, setCvFile] = useState(null);
     const [cvFilePreview, setCvFilePreview] = useState(null);
-    const [jdFiles, setJdFiles] = useState([null]); // Tối đa 5 JD files
+    const [jdFileNames, setJdFileNames] = useState([null]); // Tên file JD để hiển thị (chỉ .txt)
     const [jdTexts, setJdTexts] = useState(['']); // JD texts (from file or manual input)
+    const [jdErrors, setJdErrors] = useState([null]); // Lỗi validation cho mỗi JD
     const [isUploadingCV, setIsUploadingCV] = useState(false);
     const [isExtractingJD, setIsExtractingJD] = useState(false);
     const [isReviewing, setIsReviewing] = useState(false);
@@ -29,10 +30,7 @@ const CVReview = () => {
         }
     }, []);
 
-    // Extract text from JD files (only for .txt files)
-    useEffect(() => {
-        extractJDTexts();
-    }, [jdFiles]);
+    // Không cần useEffect extractJDTexts nữa vì đọc trực tiếp khi chọn file
 
     const handleCVFileChange = async (event) => {
         const file = event.target.files[0];
@@ -121,25 +119,100 @@ const CVReview = () => {
 
     const handleJDFileChange = (index, event) => {
         const file = event.target.files[0];
-        if (!file) return;
-
-        // Validate file type
-        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-        if (!allowedTypes.includes(file.type)) {
-            toast.error('Chỉ chấp nhận file PDF, DOC, DOCX, TXT!');
+        if (!file) {
+            // Reset error nếu không có file
+            const newErrors = [...jdErrors];
+            newErrors[index] = null;
+            setJdErrors(newErrors);
             return;
         }
 
-        // Update JD files array
-        const newJdFiles = [...jdFiles];
-        newJdFiles[index] = file;
-        setJdFiles(newJdFiles);
+        // Validate file extension - chỉ chấp nhận .txt
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.txt')) {
+            const errorMsg = 'Chỉ chấp nhận file .txt! Vui lòng chọn file đúng định dạng.';
+            toast.error(errorMsg);
+            
+            // Cập nhật lỗi UI
+            const newErrors = [...jdErrors];
+            newErrors[index] = errorMsg;
+            setJdErrors(newErrors);
+            
+            // Reset input
+            if (jdFileInputRefs.current[index]) {
+                jdFileInputRefs.current[index].value = '';
+            }
+            return;
+        }
+
+        // Validate file type (kiểm tra thêm MIME type)
+        if (file.type && file.type !== 'text/plain' && file.type !== '') {
+            const errorMsg = 'File không đúng định dạng .txt!';
+            toast.error(errorMsg);
+            
+            const newErrors = [...jdErrors];
+            newErrors[index] = errorMsg;
+            setJdErrors(newErrors);
+            
+            if (jdFileInputRefs.current[index]) {
+                jdFileInputRefs.current[index].value = '';
+            }
+            return;
+        }
+
+        // Clear error nếu file hợp lệ
+        const newErrors = [...jdErrors];
+        newErrors[index] = null;
+        setJdErrors(newErrors);
+
+        // Sử dụng FileReader để đọc nội dung file .txt
+        const reader = new FileReader();
+        
+        reader.onload = (e) => {
+            try {
+                const text = e.target.result;
+                
+                // Cập nhật tên file và nội dung text
+                const newFileNames = [...jdFileNames];
+                newFileNames[index] = file.name;
+                setJdFileNames(newFileNames);
+                
+                const newJdTexts = [...jdTexts];
+                newJdTexts[index] = text;
+                setJdTexts(newJdTexts);
+                
+                toast.success(`Đã đọc file JD ${index + 1}: ${file.name}`);
+            } catch (error) {
+                console.error('Error reading file:', error);
+                toast.error('Có lỗi khi đọc file!');
+                
+                const newErrors = [...jdErrors];
+                newErrors[index] = 'Có lỗi khi đọc file!';
+                setJdErrors(newErrors);
+            }
+        };
+        
+        reader.onerror = () => {
+            toast.error('Có lỗi khi đọc file!');
+            
+            const newErrors = [...jdErrors];
+            newErrors[index] = 'Có lỗi khi đọc file!';
+            setJdErrors(newErrors);
+            
+            if (jdFileInputRefs.current[index]) {
+                jdFileInputRefs.current[index].value = '';
+            }
+        };
+        
+        // Đọc file dưới dạng text
+        reader.readAsText(file, 'UTF-8');
     };
 
     const handleAddJD = () => {
-        if (jdFiles.length < 5) {
-            setJdFiles([...jdFiles, null]);
+        if (jdFileNames.length < 5) {
+            setJdFileNames([...jdFileNames, null]);
             setJdTexts([...jdTexts, '']);
+            setJdErrors([...jdErrors, null]);
             jdFileInputRefs.current.push(React.createRef());
         } else {
             toast.warning('Tối đa 5 JD được phép!');
@@ -147,48 +220,17 @@ const CVReview = () => {
     };
 
     const handleRemoveJD = (index) => {
-        if (jdFiles.length > 1) {
-            const newJdFiles = jdFiles.filter((_, i) => i !== index);
+        if (jdFileNames.length > 1) {
+            const newJdFileNames = jdFileNames.filter((_, i) => i !== index);
             const newJdTexts = jdTexts.filter((_, i) => i !== index);
-            setJdFiles(newJdFiles);
+            const newJdErrors = jdErrors.filter((_, i) => i !== index);
+            setJdFileNames(newJdFileNames);
             setJdTexts(newJdTexts);
+            setJdErrors(newJdErrors);
         }
     };
 
-    const extractJDTexts = async () => {
-        setIsExtractingJD(true);
-        const extractedTexts = [...jdTexts]; // Keep existing texts
-
-        for (let i = 0; i < jdFiles.length; i++) {
-            const file = jdFiles[i];
-            if (!file) {
-                // Keep existing text if no file
-                if (!extractedTexts[i]) extractedTexts[i] = '';
-                continue;
-            }
-
-            try {
-                // For text files, read directly
-                if (file.type === 'text/plain' || file.name.endsWith('.txt')) {
-                    const text = await file.text();
-                    extractedTexts[i] = text;
-                } else {
-                    // For PDF/DOCX, keep existing text or empty
-                    // User can paste text manually
-                    if (!extractedTexts[i]) {
-                        extractedTexts[i] = '';
-                        toast.info(`JD ${i + 1}: File ${file.type.includes('pdf') ? 'PDF' : 'DOCX'} - Vui lòng copy text từ file và paste vào ô bên dưới, hoặc dùng file .txt`);
-                    }
-                }
-            } catch (error) {
-                console.error(`Error extracting JD ${i + 1}:`, error);
-                if (!extractedTexts[i]) extractedTexts[i] = '';
-            }
-        }
-
-        setJdTexts(extractedTexts);
-        setIsExtractingJD(false);
-    };
+    // Không cần hàm extractJDTexts nữa vì đã đọc trực tiếp trong handleJDFileChange
 
     const handleReview = async () => {
         // Validate
@@ -723,13 +765,13 @@ const CVReview = () => {
                                 <i className="fas fa-briefcase"></i>
                                 Upload JD (Job Description) - Tối đa 5 chỗ
                             </h3>
-                            {jdFiles.map((file, index) => (
+                            {jdFileNames.map((fileName, index) => (
                                 <div key={index} className="jd-upload-group">
                                     <label>JD {index + 1}</label>
                                     <input
                                         ref={el => jdFileInputRefs.current[index] = el}
                                         type="file"
-                                        accept=".pdf,.doc,.docx,.txt"
+                                        accept=".txt"
                                         onChange={(e) => handleJDFileChange(index, e)}
                                         style={{ display: 'none' }}
                                     />
@@ -738,12 +780,18 @@ const CVReview = () => {
                                         className="btn-upload-small"
                                     >
                                         <i className="fas fa-cloud-upload-alt"></i>
-                                        {file ? file.name : 'Chọn file JD'}
+                                        {fileName ? fileName : 'Chọn file JD (.txt)'}
                                     </button>
-                                    {file && file.type === 'text/plain' && jdTexts[index] && (
+                                    {jdErrors[index] && (
+                                        <div className="jd-error">
+                                            <i className="fas fa-exclamation-circle"></i>
+                                            {jdErrors[index]}
+                                        </div>
+                                    )}
+                                    {fileName && jdTexts[index] && !jdErrors[index] && (
                                         <div className="jd-status success">
                                             <i className="fas fa-check-circle"></i>
-                                            Đã extract text
+                                            Đã đọc file thành công
                                         </div>
                                     )}
                                     <textarea
@@ -753,11 +801,11 @@ const CVReview = () => {
                                             newJdTexts[index] = e.target.value;
                                             setJdTexts(newJdTexts);
                                         }}
-                                        placeholder={file && !file.name.endsWith('.txt') ? 'Paste text từ file PDF/DOCX vào đây...' : 'Hoặc nhập/paste JD text trực tiếp...'}
+                                        placeholder="Hoặc nhập/paste JD text trực tiếp..."
                                         rows="4"
                                         className="form-textarea"
                                     />
-                                    {jdFiles.length > 1 && (
+                                    {jdFileNames.length > 1 && (
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveJD(index)}
@@ -768,7 +816,7 @@ const CVReview = () => {
                                     )}
                                 </div>
                             ))}
-                            {jdFiles.length < 5 && (
+                            {jdFileNames.length < 5 && (
                                 <button
                                     type="button"
                                     onClick={handleAddJD}
@@ -777,18 +825,12 @@ const CVReview = () => {
                                     <i className="fas fa-plus"></i> Thêm JD
                                 </button>
                             )}
-                            {isExtractingJD && (
-                                <div className="extracting-status">
-                                    <i className="fas fa-spinner fa-spin"></i>
-                                    Đang extract text từ JD...
-                                </div>
-                            )}
                         </div>
 
                         {/* Review Button */}
                         <button
                             onClick={handleReview}
-                            disabled={!cvText || jdTexts.filter(t => t && t.trim()).length === 0 || isReviewing || isUploadingCV || isExtractingJD}
+                            disabled={!cvText || jdTexts.filter(t => t && t.trim()).length === 0 || isReviewing || isUploadingCV}
                             className="btn-review"
                         >
                             {isReviewing ? (
