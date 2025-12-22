@@ -7,7 +7,8 @@ import {
     updateInvitationStatus,
     cancelMeeting,
     getCandidatesByJobPosting,
-    getLatestMeetingByJobPosting
+    getLatestMeetingByJobPosting,
+    getRecording
 } from '../../service.js/meetingService';
 import { getActiveJobPostings } from '../../service.js/hrService';
 import { getInterviewRounds } from '../../service.js/interviewRoundService';
@@ -37,6 +38,7 @@ const MeetingManagement = ({ userId }) => {
     const [showRescheduleModal, setShowRescheduleModal] = useState(false);
     const [selectedMeetingForReschedule, setSelectedMeetingForReschedule] = useState(null);
     const [rescheduleFormData, setRescheduleFormData] = useState({ scheduledAt: '' });
+    const [showRecordingModal, setShowRecordingModal] = useState(false);
 
     // Generate binary code strings (stable across renders)
     const generateBinaryCode = (length) => {
@@ -463,6 +465,37 @@ const MeetingManagement = ({ userId }) => {
                         <p>Quản lý các cuộc phỏng vấn trực tuyến</p>
                     </div>
                     <div className="header-right cp-header-right">
+                        <button 
+                            className="btn-view-recording-header" 
+                            onClick={() => setShowRecordingModal(true)}
+                            style={{
+                                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                color: 'white',
+                                border: '2px solid rgba(255, 255, 255, 0.3)',
+                                padding: '10px 20px',
+                                borderRadius: '8px',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                fontSize: '14px',
+                                fontWeight: '500',
+                                transition: 'all 0.3s',
+                                marginRight: '12px',
+                                backdropFilter: 'blur(10px)'
+                            }}
+                            onMouseOver={(e) => {
+                                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                                e.target.style.borderColor = 'rgba(255, 255, 255, 0.5)';
+                            }}
+                            onMouseOut={(e) => {
+                                e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                                e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+                            }}
+                        >
+                            <i className="fas fa-video"></i>
+                            Xem lại Recording
+                        </button>
                         <button className="btn-create-meeting" onClick={handleCreateMeeting}>
                             <i className="fas fa-plus"></i>
                             Tạo Meeting
@@ -649,6 +682,33 @@ const MeetingManagement = ({ userId }) => {
                                     >
                                         <i className="fas fa-times"></i>
                                         Hủy Meeting
+                                    </button>
+                                )}
+                                {/* Show recording button if meeting is done and has recording */}
+                                {meeting.status === 'done' && meeting.recordingUrl && (
+                                    <button 
+                                        className="btn-view-recording"
+                                        onClick={() => window.open(meeting.recordingUrl, '_blank')}
+                                        style={{
+                                            backgroundColor: '#3498db',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '8px 16px',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            transition: 'background-color 0.3s',
+                                            marginRight: '8px'
+                                        }}
+                                        onMouseOver={(e) => e.target.style.backgroundColor = '#2980b9'}
+                                        onMouseOut={(e) => e.target.style.backgroundColor = '#3498db'}
+                                    >
+                                        <i className="fas fa-video"></i>
+                                        Xem lại Recording
                                     </button>
                                 )}
                                 {meeting.status === 'done' && (
@@ -841,6 +901,149 @@ const MeetingManagement = ({ userId }) => {
                         fetchMeetings();
                     }}
                 />
+            )}
+
+            {/* Recording Modal */}
+            {showRecordingModal && (
+                <div className="modal-overlay" onClick={() => setShowRecordingModal(false)}>
+                    <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '800px', maxHeight: '80vh', overflow: 'auto' }}>
+                        <div className="modal-header">
+                            <h2>
+                                <i className="fas fa-video"></i>
+                                Xem lại Recording
+                            </h2>
+                            <button className="btn-close" onClick={() => setShowRecordingModal(false)}>
+                                <i className="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            {(() => {
+                                const meetingsWithRecording = meetings.filter(m => 
+                                    m.status === 'done' && m.recordingUrl
+                                );
+                                
+                                if (meetingsWithRecording.length === 0) {
+                                    return (
+                                        <div style={{ 
+                                            textAlign: 'center', 
+                                            padding: '40px 20px',
+                                            color: '#7f8c8d'
+                                        }}>
+                                            <i className="fas fa-video-slash" style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.5 }}></i>
+                                            <p style={{ fontSize: '16px' }}>Chưa có recording nào</p>
+                                            <p style={{ fontSize: '14px', marginTop: '8px' }}>
+                                                Recording sẽ xuất hiện sau khi meeting kết thúc và có recording URL
+                                            </p>
+                                        </div>
+                                    );
+                                }
+                                
+                                return (
+                                    <div className="recording-list">
+                                        <p style={{ marginBottom: '16px', color: '#7f8c8d' }}>
+                                            Có {meetingsWithRecording.length} meeting có recording:
+                                        </p>
+                                        {meetingsWithRecording.map(meeting => (
+                                            <div 
+                                                key={meeting.id} 
+                                                className="recording-item"
+                                                style={{
+                                                    padding: '16px',
+                                                    border: '1px solid #e0e0e0',
+                                                    borderRadius: '8px',
+                                                    marginBottom: '12px',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    alignItems: 'center',
+                                                    transition: 'all 0.3s'
+                                                }}
+                                                onMouseEnter={(e) => {
+                                                    e.currentTarget.style.backgroundColor = '#f8f9fa';
+                                                    e.currentTarget.style.borderColor = '#3498db';
+                                                }}
+                                                onMouseLeave={(e) => {
+                                                    e.currentTarget.style.backgroundColor = 'white';
+                                                    e.currentTarget.style.borderColor = '#e0e0e0';
+                                                }}
+                                            >
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ 
+                                                        fontWeight: '600', 
+                                                        marginBottom: '8px',
+                                                        color: '#2c3e50'
+                                                    }}>
+                                                        {meeting.JobPosting?.Tieude || 'N/A'}
+                                                    </div>
+                                                    <div style={{ fontSize: '14px', color: '#7f8c8d', marginBottom: '4px' }}>
+                                                        <i className="fas fa-user"></i> {meeting.Candidate?.Hoten || 'N/A'}
+                                                    </div>
+                                                    <div style={{ fontSize: '14px', color: '#7f8c8d' }}>
+                                                        <i className="fas fa-calendar-alt"></i> {formatDate(meeting.scheduledAt)}
+                                                    </div>
+                                                    {meeting.recordingStatus && (
+                                                        <div style={{ 
+                                                            fontSize: '12px', 
+                                                            marginTop: '8px',
+                                                            display: 'inline-block',
+                                                            padding: '4px 8px',
+                                                            borderRadius: '4px',
+                                                            backgroundColor: meeting.recordingStatus === 'ready' ? '#d4edda' : '#fff3cd',
+                                                            color: meeting.recordingStatus === 'ready' ? '#155724' : '#856404'
+                                                        }}>
+                                                            {meeting.recordingStatus === 'ready' ? '✓ Sẵn sàng' : 
+                                                             meeting.recordingStatus === 'processing' ? '⏳ Đang xử lý' :
+                                                             meeting.recordingStatus === 'recording' ? '🔴 Đang ghi' : meeting.recordingStatus}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    onClick={() => {
+                                                        window.open(meeting.recordingUrl, '_blank');
+                                                    }}
+                                                    style={{
+                                                        backgroundColor: '#3498db',
+                                                        color: 'white',
+                                                        border: 'none',
+                                                        padding: '10px 20px',
+                                                        borderRadius: '6px',
+                                                        cursor: 'pointer',
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '8px',
+                                                        fontSize: '14px',
+                                                        fontWeight: '500',
+                                                        transition: 'background-color 0.3s'
+                                                    }}
+                                                    onMouseOver={(e) => e.target.style.backgroundColor = '#2980b9'}
+                                                    onMouseOut={(e) => e.target.style.backgroundColor = '#3498db'}
+                                                >
+                                                    <i className="fas fa-play"></i>
+                                                    Xem Recording
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                );
+                            })()}
+                        </div>
+                        <div className="modal-footer">
+                            <button 
+                                className="btn-close" 
+                                onClick={() => setShowRecordingModal(false)}
+                                style={{
+                                    backgroundColor: '#6c757d',
+                                    color: 'white',
+                                    border: 'none',
+                                    padding: '10px 20px',
+                                    borderRadius: '6px',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Đóng
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Reschedule Modal */}

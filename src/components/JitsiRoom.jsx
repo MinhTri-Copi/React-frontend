@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import { toast } from 'react-toastify';
-import { getMeetingByRoomName, updateMeetingStatus } from '../service.js/meetingService';
+import { getMeetingByRoomName, updateMeetingStatus, uploadRecording } from '../service.js/meetingService';
 import './JitsiRoom.scss';
 
 const JitsiRoom = () => {
@@ -17,17 +17,27 @@ const JitsiRoom = () => {
     const mediaRecorderRef = useRef(null);
     const recordedChunksRef = useRef([]);
     const recordingStreamRef = useRef(null);
+    const currentMeetingIdRef = useRef(null); // Store meeting ID for upload
+    const [isRecording, setIsRecording] = useState(false); // Track recording state
 
     useEffect(() => {
+        console.log('🔵 ========== JITSIROOM COMPONENT MOUNTED ==========');
+        console.log('   - Room Name:', roomName);
+        
         // Get user from storage
         const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
+        console.log('   - Stored user found:', !!storedUser);
+        
         if (storedUser) {
             try {
                 const parsedUser = JSON.parse(storedUser);
-                console.log('JitsiRoom - Parsed user:', parsedUser);
+                console.log('🔵 JitsiRoom - Parsed user:', parsedUser);
+                console.log('   - User ID:', parsedUser?.id);
+                console.log('   - User Role ID:', parsedUser?.roleId);
+                console.log('   - Is HR (roleId === 2):', parsedUser?.roleId === 2);
                 
                 if (!parsedUser || !parsedUser.id) {
-                    console.error('User data invalid:', parsedUser);
+                    console.error('❌ User data invalid:', parsedUser);
                     toast.error('Thông tin người dùng không hợp lệ!');
                     navigate('/login');
                     return;
@@ -35,17 +45,20 @@ const JitsiRoom = () => {
                 
                 setUser(parsedUser);
                 setIsHR(parsedUser.roleId === 2);
+                console.log('🔵 State updated - isHR:', parsedUser.roleId === 2);
                 
                 // Fetch meeting data to verify access
                 if (roomName) {
+                    console.log('🔵 Fetching meeting data...');
                     fetchMeeting(parsedUser.id, parsedUser);
                 }
             } catch (error) {
-                console.error('Error parsing user data:', error);
+                console.error('❌ Error parsing user data:', error);
                 toast.error('Lỗi đọc thông tin người dùng!');
                 navigate('/login');
             }
         } else {
+            console.error('❌ No stored user found');
             toast.error('Vui lòng đăng nhập để tham gia phỏng vấn!');
             navigate('/login');
         }
@@ -54,14 +67,24 @@ const JitsiRoom = () => {
     const fetchMeeting = async (userId, userData) => {
         try {
             setLoading(true);
-            console.log('Fetching meeting - roomName:', roomName, 'userId:', userId);
+            console.log('🔵 ========== FETCHING MEETING ==========');
+            console.log('   - Room Name:', roomName);
+            console.log('   - User ID:', userId);
+            console.log('   - User Role ID:', userData?.roleId);
             
             const res = await getMeetingByRoomName(roomName, userId);
-            console.log('Meeting response:', res);
+            console.log('🔵 Meeting API Response:', res);
+            console.log('   - Response EC:', res?.EC);
+            console.log('   - Response EM:', res?.EM);
+            console.log('   - Response DT:', res?.DT);
             
             if (res && res.EC === 0) {
                 // Meeting found and user has access
-                console.log('✅ Meeting access granted');
+                console.log('✅ ========== MEETING ACCESS GRANTED ==========');
+                currentMeetingIdRef.current = res.DT?.id || null; // Store meeting ID for recording upload
+                console.log('   - Meeting ID stored:', currentMeetingIdRef.current);
+                console.log('   - Meeting Status:', res.DT?.status);
+                console.log('   - Meeting Data:', res.DT);
                 setMeetingConfig({
                     roomName: roomName,
                     domain: 'meet.jit.si',
@@ -151,7 +174,22 @@ const JitsiRoom = () => {
      */
     const startRecording = async () => {
         try {
-            console.log('🎥 Bắt đầu recording...');
+            console.log('🎥 ========== STARTING RECORDING ==========');
+            console.log('   - Room Name:', roomName);
+            console.log('   - Is HR:', isHR);
+            console.log('   - Meeting ID:', currentMeetingIdRef.current);
+            console.log('   - User:', user?.Hoten || user?.id);
+            console.log('   - User ID:', user?.id);
+            console.log('   - User Role ID:', user?.roleId);
+            
+            if (!isHR) {
+                console.warn('⚠️ startRecording called but user is not HR!');
+                return;
+            }
+            
+            if (!currentMeetingIdRef.current) {
+                console.warn('⚠️ startRecording called but no meeting ID!');
+            }
             
             // Request screen + audio permission
             const stream = await navigator.mediaDevices.getDisplayMedia({
@@ -196,20 +234,93 @@ const JitsiRoom = () => {
                 }
             };
             
-            // Handle stop
-            mediaRecorder.onstop = () => {
-                console.log('🛑 Recording stopped, preparing download...');
+            // Handle stop - automatically upload to server
+            mediaRecorder.onstop = async () => {
+                console.log('🛑 ========== RECORDING STOPPED ==========');
+                console.log('📊 Recording Info:');
+                console.log('   - Room Name:', roomName);
+                console.log('   - Is HR:', isHR);
+                console.log('   - Meeting ID:', currentMeetingIdRef.current);
+                console.log('   - User ID:', user?.id);
+                console.log('   - Chunks count:', recordedChunksRef.current.length);
                 
                 // Create blob from chunks
                 const blob = new Blob(recordedChunksRef.current, {
                     type: 'video/webm'
                 });
+                const blobSize = blob.size;
+                console.log('   - Blob size:', blobSize, 'bytes (', (blobSize / 1024 / 1024).toFixed(2), 'MB)');
                 
                 // Generate filename with timestamp
                 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                 const filename = `meeting-${roomName}-${timestamp}.webm`;
+                console.log('   - Filename:', filename);
                 
-                // Create download link
+                // If HR and meeting ID exists, upload to server automatically
+                if (isHR && currentMeetingIdRef.current && user) {
+                    try {
+                        console.log('📤 ========== UPLOADING TO SERVER ==========');
+                        console.log('   - Meeting ID:', currentMeetingIdRef.current);
+                        console.log('   - File size:', blobSize, 'bytes');
+                        toast.info('📤 Đang upload recording lên server...');
+                        
+                        // Create File object from blob
+                        const recordingFile = new File([blob], filename, { type: 'video/webm' });
+                        console.log('   - File object created:', recordingFile.name, recordingFile.size, 'bytes');
+                        
+                        // Upload to server
+                        const uploadStartTime = Date.now();
+                        const uploadRes = await uploadRecording(currentMeetingIdRef.current, recordingFile);
+                        const uploadTime = Date.now() - uploadStartTime;
+                        
+                        console.log('📤 Upload Response:', uploadRes);
+                        console.log('   - Upload time:', uploadTime, 'ms');
+                        
+                        if (uploadRes && uploadRes.EC === 0) {
+                            console.log('✅ ========== UPLOAD SUCCESS ==========');
+                            console.log('   - Recording URL:', uploadRes.DT?.recordingUrl);
+                            console.log('   - File path:', uploadRes.DT?.filePath);
+                            toast.success('✅ Recording đã được lưu tự động!');
+                        } else {
+                            console.error('❌ ========== UPLOAD FAILED ==========');
+                            console.error('   - Error code:', uploadRes?.EC);
+                            console.error('   - Error message:', uploadRes?.EM);
+                            console.error('   - Response:', uploadRes);
+                            toast.warning('⚠️ Không thể upload recording tự động. Đã tải về máy.');
+                            // Fallback: download to local
+                            downloadRecording(blob, filename);
+                        }
+                    } catch (error) {
+                        console.error('❌ ========== UPLOAD ERROR ==========');
+                        console.error('   - Error:', error);
+                        console.error('   - Error message:', error.message);
+                        console.error('   - Error stack:', error.stack);
+                        if (error.response) {
+                            console.error('   - Response status:', error.response.status);
+                            console.error('   - Response data:', error.response.data);
+                        }
+                        toast.warning('⚠️ Lỗi khi upload recording. Đã tải về máy.');
+                        // Fallback: download to local
+                        downloadRecording(blob, filename);
+                    }
+                } else {
+                    // Not HR or no meeting ID - just download
+                    console.log('📥 ========== DOWNLOADING TO LOCAL ==========');
+                    console.log('   - Reason: Not HR or no meeting ID');
+                    console.log('   - Is HR:', isHR);
+                    console.log('   - Meeting ID:', currentMeetingIdRef.current);
+                    downloadRecording(blob, filename);
+                    toast.success('✅ Đã tải video recording xuống!');
+                }
+                
+                // Cleanup
+                setIsRecording(false);
+                recordedChunksRef.current = [];
+                console.log('🛑 ========== RECORDING CLEANUP DONE ==========');
+            };
+            
+            // Helper function to download recording
+            const downloadRecording = (blob, filename) => {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -217,13 +328,7 @@ const JitsiRoom = () => {
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                
-                // Cleanup
                 URL.revokeObjectURL(url);
-                recordedChunksRef.current = [];
-                
-                toast.success('✅ Đã tải video recording xuống!');
-                console.log('✅ Video downloaded:', filename);
             };
             
             // Handle errors
@@ -234,7 +339,11 @@ const JitsiRoom = () => {
             
             // Start recording
             mediaRecorder.start(1000); // Collect data every 1 second
-            console.log('✅ Recording started');
+            setIsRecording(true); // Update state
+            console.log('✅ ========== RECORDING STARTED ==========');
+            console.log('   - MediaRecorder state:', mediaRecorder.state);
+            console.log('   - MIME type:', options.mimeType);
+            console.log('   - Stream tracks:', stream.getTracks().length);
             toast.info('🎥 Đang ghi lại cuộc họp...');
             
             // Handle stream end (user stops sharing)
@@ -259,26 +368,49 @@ const JitsiRoom = () => {
      * Stop recording and download video
      */
     const stopRecording = () => {
+        console.log('🛑 ========== STOP RECORDING CALLED ==========');
+        console.log('   - MediaRecorder exists:', !!mediaRecorderRef.current);
+        if (mediaRecorderRef.current) {
+            console.log('   - MediaRecorder state:', mediaRecorderRef.current.state);
+        }
+        
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
             console.log('🛑 Stopping recording...');
             mediaRecorderRef.current.stop();
             
             // Stop all tracks
             if (recordingStreamRef.current) {
-                recordingStreamRef.current.getTracks().forEach(track => track.stop());
+                const tracks = recordingStreamRef.current.getTracks();
+                console.log('   - Stopping', tracks.length, 'tracks');
+                tracks.forEach(track => {
+                    console.log('   - Stopping track:', track.kind, track.label);
+                    track.stop();
+                });
                 recordingStreamRef.current = null;
             }
             
             mediaRecorderRef.current = null;
+            setIsRecording(false);
+            console.log('✅ Recording stopped and cleaned up');
+        } else {
+            console.log('⚠️ No active recording to stop');
         }
     };
 
     const handleLeaveMeeting = async () => {
-        console.log('handleLeaveMeeting called - isHR:', isHR);
+        console.log('🔴 ========== HANDLE LEAVE MEETING ==========');
+        console.log('   - isHR:', isHR);
+        console.log('   - user:', user?.Hoten || user?.id);
+        console.log('   - meeting ID:', currentMeetingIdRef.current);
+        console.log('   - roomName:', roomName);
+        console.log('   - isRecording state:', isRecording);
         
         // Stop recording if HR is leaving
         if (isHR) {
+            console.log('🔴 HR is leaving - stopping recording...');
             stopRecording();
+        } else {
+            console.log('🔴 Not HR - skipping recording stop');
         }
         
         // Update meeting status to "done" if HR leaves
@@ -309,54 +441,133 @@ const JitsiRoom = () => {
     };
 
     const handleApiReady = (api) => {
-        console.log('✅ Jitsi API ready');
+        console.log('🟢 ========== JITSI API READY ==========');
+        console.log('   - API object:', !!api);
+        console.log('   - Current isHR state:', isHR);
+        console.log('   - Current user:', user?.Hoten || user?.id);
+        console.log('   - Current meeting ID:', currentMeetingIdRef.current);
+        console.log('   - Room Name:', roomName);
         
         // Update meeting status to "running" when meeting starts
         const updateStatusToRunning = async () => {
+            console.log('🟢 updateStatusToRunning called');
+            console.log('   - isHR:', isHR);
+            console.log('   - user:', !!user);
+            console.log('   - roomName:', roomName);
+            
             if (isHR && user && roomName) {
                 try {
+                    console.log('🟢 Fetching meeting to update status...');
                     const meetingRes = await getMeetingByRoomName(roomName, user.id);
+                    console.log('🟢 Meeting fetch result:', meetingRes);
+                    
                     if (meetingRes && meetingRes.EC === 0 && meetingRes.DT) {
                         const meeting = meetingRes.DT;
+                        console.log('   - Meeting status:', meeting.status);
                         // Only update if meeting is still pending
                         if (meeting.status === 'pending') {
                             await updateMeetingStatus(meeting.id, user.id, 'running', 'hr');
                             console.log('✅ Meeting status updated to running');
+                        } else {
+                            console.log('⚠️ Meeting status is not pending, skipping update');
                         }
                     }
                 } catch (error) {
-                    console.error('Error updating meeting status to running:', error);
+                    console.error('❌ Error updating meeting status to running:', error);
                 }
+            } else {
+                console.log('⚠️ Cannot update status - missing conditions');
+                console.log('   - isHR:', isHR);
+                console.log('   - user:', !!user);
+                console.log('   - roomName:', !!roomName);
             }
         };
         
         // If HR, grant moderator status, update status, and start recording
+        console.log('🟢 Checking if HR... isHR =', isHR);
         if (isHR) {
-            api.addEventListener('videoConferenceJoined', () => {
-                console.log('✅ HR joined - Setting as moderator');
+            console.log('🟢 ========== HR DETECTED - SETTING UP RECORDING ==========');
+            
+            // Function to start recording (reusable)
+            const triggerRecording = () => {
+                console.log('⏰ ========== TRIGGERING RECORDING ==========');
+                console.log('   - Current isHR:', isHR);
+                console.log('   - Current user:', user?.Hoten || user?.id);
+                console.log('   - Current meeting ID:', currentMeetingIdRef.current);
+                
                 // Update status to running
                 updateStatusToRunning();
                 
                 // Start recording automatically for HR
+                console.log('⏰ Scheduling auto-start recording in 2 seconds...');
                 setTimeout(() => {
+                    console.log('⏰ ========== AUTO-START RECORDING TRIGGERED ==========');
+                    console.log('   - Calling startRecording()...');
                     startRecording();
-                }, 1000); // Delay 1s to ensure meeting is fully loaded
-                
-                setTimeout(() => {
-                    try {
-                        const myUserID = api._myUserID || api.getMyUserId();
-                        if (myUserID) {
-                            console.log('Granting moderator to user:', myUserID);
-                            api.executeCommand('grantModerator', myUserID);
-                        } else {
-                            console.log('Trying alternative method to grant moderator');
-                            api.executeCommand('grantModerator');
-                        }
-                    } catch (error) {
-                        console.error('Error granting moderator:', error);
-                    }
-                }, 500);
+                }, 2000); // Delay 2s to ensure meeting is fully loaded
+            };
+            
+            // Try multiple events to catch when user joins
+            console.log('🟢 Adding multiple event listeners...');
+            
+            // Event 1: videoConferenceJoined (standard Jitsi event)
+            api.addEventListener('videoConferenceJoined', () => {
+                console.log('🟢 ========== EVENT: videoConferenceJoined ==========');
+                triggerRecording();
             });
+            
+            // Event 2: participantJoined (when any participant joins)
+            api.addEventListener('participantJoined', (participant) => {
+                console.log('🟢 ========== EVENT: participantJoined ==========');
+                console.log('   - Participant:', participant);
+                // Only trigger if it's the current user
+                const myUserID = api._myUserID || api.getMyUserId();
+                if (participant?.id === myUserID || participant?.participantId === myUserID) {
+                    console.log('   - This is the current user, triggering recording...');
+                    triggerRecording();
+                }
+            });
+            
+            // Event 3: readyToClose (when meeting is ready)
+            api.addEventListener('readyToClose', () => {
+                console.log('🟢 ========== EVENT: readyToClose ==========');
+                // Don't trigger recording here, just log
+            });
+            
+            // Fallback: Try to trigger recording after a delay if no event fires
+            console.log('🟢 Setting up fallback timer (5 seconds)...');
+            setTimeout(() => {
+                console.log('🟢 ========== FALLBACK TIMER TRIGGERED ==========');
+                console.log('   - Checking if recording already started...');
+                if (!isRecording) {
+                    console.log('   - Recording not started yet, triggering now...');
+                    triggerRecording();
+                } else {
+                    console.log('   - Recording already started, skipping');
+                }
+            }, 5000);
+            
+            // Grant moderator
+            setTimeout(() => {
+                try {
+                    const myUserID = api._myUserID || api.getMyUserId();
+                    if (myUserID) {
+                        console.log('🟢 Granting moderator to user:', myUserID);
+                        api.executeCommand('grantModerator', myUserID);
+                    } else {
+                        console.log('🟢 Trying alternative method to grant moderator');
+                        api.executeCommand('grantModerator');
+                    }
+                } catch (error) {
+                    console.error('❌ Error granting moderator:', error);
+                }
+            }, 1000);
+            
+            console.log('🟢 All event listeners added successfully');
+        } else {
+            console.log('⚠️ ========== NOT HR - SKIPPING RECORDING SETUP ==========');
+            console.log('   - isHR:', isHR);
+            console.log('   - User roleId:', user?.roleId);
         }
     };
     

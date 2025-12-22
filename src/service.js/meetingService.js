@@ -144,6 +144,69 @@ const getLatestMeetingByJobPosting = async (userId, jobPostingId) => {
     }
 };
 
+const startRecording = async (meetingId, userId) => {
+    try {
+        const res = await axiosInstance.post(`/hr/meetings/${meetingId}/recording/start?userId=${userId}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error starting recording:', error);
+        throw error;
+    }
+};
+
+const stopRecording = async (meetingId, userId, recordingUrl = null) => {
+    try {
+        const res = await axiosInstance.post(`/hr/meetings/${meetingId}/recording/stop?userId=${userId}`, {
+            recordingUrl
+        });
+        return res.data;
+    } catch (error) {
+        console.error('Error stopping recording:', error);
+        throw error;
+    }
+};
+
+const updateRecordingUrl = async (meetingId, recordingUrl) => {
+    try {
+        const res = await axiosInstance.put(`/meetings/${meetingId}/recording`, {
+            recordingUrl
+        });
+        return res.data;
+    } catch (error) {
+        console.error('Error updating recording URL:', error);
+        throw error;
+    }
+};
+
+const getRecording = async (meetingId, userId) => {
+    try {
+        const res = await axiosInstance.get(`/hr/meetings/${meetingId}/recording?userId=${userId}`);
+        return res.data;
+    } catch (error) {
+        console.error('Error getting recording:', error);
+        throw error;
+    }
+};
+
+const uploadRecording = async (meetingId, recordingFile) => {
+    try {
+        const formData = new FormData();
+        formData.append('recording', recordingFile);
+        formData.append('meetingId', meetingId);
+
+        const res = await axiosInstance.post(`/hr/meetings/${meetingId}/recording/upload`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            },
+            timeout: 300000 // 5 minutes timeout for large video files
+        });
+        return res.data;
+    } catch (error) {
+        console.error('Error uploading recording:', error);
+        throw error;
+    }
+};
+
 export {
     getMeetingsForHr,
     getMeetingsForCandidate,
@@ -155,6 +218,11 @@ export {
     updateInvitationStatus,
     cancelMeeting,
     getCandidatesByJobPosting,
-    getLatestMeetingByJobPosting
+    getLatestMeetingByJobPosting,
+    startRecording,
+    stopRecording,
+    updateRecordingUrl,
+    getRecording,
+    uploadRecording
 };
 
