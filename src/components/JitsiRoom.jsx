@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { JitsiMeeting } from '@jitsi/react-sdk';
 import { toast } from 'react-toastify';
@@ -12,6 +12,11 @@ const JitsiRoom = () => {
     const [user, setUser] = useState(null);
     const [isHR, setIsHR] = useState(false);
     const [meetingConfig, setMeetingConfig] = useState(null);
+    
+    // Recording refs
+    const mediaRecorderRef = useRef(null);
+    const recordedChunksRef = useRef([]);
+    const recordingStreamRef = useRef(null);
 
     useEffect(() => {
         // Get user from storage
@@ -141,8 +146,140 @@ const JitsiRoom = () => {
         }
     };
 
+    /**
+     * Start recording screen + audio (chỉ cho HR)
+     */
+    const startRecording = async () => {
+        try {
+            console.log('🎥 Bắt đầu recording...');
+            
+            // Request screen + audio permission
+            const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                    displaySurface: 'browser', // Record browser tab/window
+                    cursor: 'always'
+                },
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    sampleRate: 44100
+                }
+            });
+            
+            recordingStreamRef.current = stream;
+            
+            // Create MediaRecorder
+            const options = {
+                mimeType: 'video/webm;codecs=vp9,opus',
+                videoBitsPerSecond: 2500000 // 2.5 Mbps
+            };
+            
+            // Fallback to webm if vp9 not supported
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                options.mimeType = 'video/webm;codecs=vp8,opus';
+            }
+            
+            // Final fallback
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                options.mimeType = 'video/webm';
+            }
+            
+            const mediaRecorder = new MediaRecorder(stream, options);
+            mediaRecorderRef.current = mediaRecorder;
+            recordedChunksRef.current = [];
+            
+            // Handle data available
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data && event.data.size > 0) {
+                    recordedChunksRef.current.push(event.data);
+                    console.log('📹 Chunk recorded:', event.data.size, 'bytes');
+                }
+            };
+            
+            // Handle stop
+            mediaRecorder.onstop = () => {
+                console.log('🛑 Recording stopped, preparing download...');
+                
+                // Create blob from chunks
+                const blob = new Blob(recordedChunksRef.current, {
+                    type: 'video/webm'
+                });
+                
+                // Generate filename with timestamp
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                const filename = `meeting-${roomName}-${timestamp}.webm`;
+                
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                
+                // Cleanup
+                URL.revokeObjectURL(url);
+                recordedChunksRef.current = [];
+                
+                toast.success('✅ Đã tải video recording xuống!');
+                console.log('✅ Video downloaded:', filename);
+            };
+            
+            // Handle errors
+            mediaRecorder.onerror = (event) => {
+                console.error('❌ Recording error:', event.error);
+                toast.error('Lỗi khi recording: ' + event.error.message);
+            };
+            
+            // Start recording
+            mediaRecorder.start(1000); // Collect data every 1 second
+            console.log('✅ Recording started');
+            toast.info('🎥 Đang ghi lại cuộc họp...');
+            
+            // Handle stream end (user stops sharing)
+            stream.getVideoTracks()[0].onended = () => {
+                console.log('⚠️ User stopped sharing screen');
+                stopRecording();
+            };
+            
+        } catch (error) {
+            console.error('❌ Error starting recording:', error);
+            if (error.name === 'NotAllowedError') {
+                toast.error('Bạn cần cho phép chia sẻ màn hình để recording!');
+            } else if (error.name === 'NotFoundError') {
+                toast.error('Không tìm thấy thiết bị để recording!');
+            } else {
+                toast.error('Không thể bắt đầu recording: ' + error.message);
+            }
+        }
+    };
+    
+    /**
+     * Stop recording and download video
+     */
+    const stopRecording = () => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+            console.log('🛑 Stopping recording...');
+            mediaRecorderRef.current.stop();
+            
+            // Stop all tracks
+            if (recordingStreamRef.current) {
+                recordingStreamRef.current.getTracks().forEach(track => track.stop());
+                recordingStreamRef.current = null;
+            }
+            
+            mediaRecorderRef.current = null;
+        }
+    };
+
     const handleLeaveMeeting = async () => {
         console.log('handleLeaveMeeting called - isHR:', isHR);
+        
+        // Stop recording if HR is leaving
+        if (isHR) {
+            stopRecording();
+        }
         
         // Update meeting status to "done" if HR leaves
         if (isHR && user && roomName) {
@@ -193,12 +330,17 @@ const JitsiRoom = () => {
             }
         };
         
-        // If HR, grant moderator status and update status
+        // If HR, grant moderator status, update status, and start recording
         if (isHR) {
             api.addEventListener('videoConferenceJoined', () => {
                 console.log('✅ HR joined - Setting as moderator');
                 // Update status to running
                 updateStatusToRunning();
+                
+                // Start recording automatically for HR
+                setTimeout(() => {
+                    startRecording();
+                }, 1000); // Delay 1s to ensure meeting is fully loaded
                 
                 setTimeout(() => {
                     try {
@@ -217,6 +359,13 @@ const JitsiRoom = () => {
             });
         }
     };
+    
+    // Cleanup recording on unmount
+    useEffect(() => {
+        return () => {
+            stopRecording();
+        };
+    }, []);
 
     if (loading || !meetingConfig) {
         return (
