@@ -234,9 +234,103 @@ const CVReview = () => {
             return <div className="cv-document">CV text không có</div>;
         }
 
-        // Normalize text for matching
+        // Normalize text for matching (remove punctuation, extra spaces)
         const normalizeText = (str) => {
-            return str.replace(/\s+/g, ' ').trim().toLowerCase();
+            return str
+                .replace(/[.,;:!?\-_()\[\]{}"'`]/g, ' ') // Remove punctuation
+                .replace(/\s+/g, ' ') // Multiple spaces to single
+                .trim()
+                .toLowerCase();
+        };
+
+        // Find text position in original text (fuzzy matching)
+        const findTextPosition = (searchText, fullText) => {
+            if (!searchText || !fullText) return null;
+            
+            const normalizedSearch = normalizeText(searchText);
+            const normalizedFull = normalizeText(fullText);
+            
+            // Try exact match first
+            let foundIndex = normalizedFull.indexOf(normalizedSearch);
+            if (foundIndex !== -1) {
+                // Map back to original position
+                return mapNormalizedToOriginal(foundIndex, normalizedSearch.length, fullText, normalizedFull);
+            }
+            
+            // Try partial match (at least 60% of words match)
+            const searchWords = normalizedSearch.split(' ').filter(w => w.length > 2);
+            if (searchWords.length === 0) return null;
+            
+            // Find position where most words match
+            let bestMatch = null;
+            let bestScore = 0;
+            const minMatchLength = Math.max(10, normalizedSearch.length * 0.5); // At least 50% of search length
+            
+            for (let i = 0; i <= normalizedFull.length - minMatchLength; i++) {
+                // Try different substring lengths
+                for (let len = minMatchLength; len <= Math.min(normalizedSearch.length * 1.5, normalizedFull.length - i); len++) {
+                    const substring = normalizedFull.substring(i, i + len);
+                    const subWords = substring.split(' ').filter(w => w.length > 2);
+                    
+                    let matchCount = 0;
+                    searchWords.forEach(word => {
+                        if (subWords.some(sw => sw.includes(word) || word.includes(sw))) {
+                            matchCount++;
+                        }
+                    });
+                    
+                    const score = matchCount / searchWords.length;
+                    if (score > bestScore && score >= 0.6) {
+                        bestScore = score;
+                        bestMatch = mapNormalizedToOriginal(i, len, fullText, normalizedFull);
+                        break; // Found good match, stop searching this position
+                    }
+                }
+            }
+            
+            return bestMatch;
+        };
+
+        // Map normalized position back to original text
+        const mapNormalizedToOriginal = (normalizedStart, normalizedLength, originalText, normalizedText) => {
+            // Build character map: original index -> normalized index
+            let originalIndex = 0;
+            let normalizedIndex = 0;
+            const charMap = [];
+            
+            for (let i = 0; i < originalText.length; i++) {
+                const char = originalText[i].toLowerCase();
+                if (/[a-z0-9àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/.test(char)) {
+                    charMap.push({ original: i, normalized: normalizedIndex });
+                    normalizedIndex++;
+                } else {
+                    charMap.push({ original: i, normalized: -1 }); // Skip in normalized
+                }
+            }
+            
+            // Find start position
+            let start = 0;
+            for (let i = 0; i < charMap.length; i++) {
+                if (charMap[i].normalized === normalizedStart) {
+                    start = charMap[i].original;
+                    break;
+                } else if (charMap[i].normalized > normalizedStart) {
+                    start = i > 0 ? charMap[i - 1].original : 0;
+                    break;
+                }
+            }
+            
+            // Find end position
+            let end = originalText.length;
+            const normalizedEnd = normalizedStart + normalizedLength;
+            for (let i = 0; i < charMap.length; i++) {
+                if (charMap[i].normalized >= normalizedEnd) {
+                    end = charMap[i].original;
+                    break;
+                }
+            }
+            
+            return { start, end };
         };
 
         // Create issue map
@@ -244,101 +338,215 @@ const CVReview = () => {
         issues.forEach((issue, index) => {
             if (issue.original_text && issue.original_text.trim()) {
                 const originalText = issue.original_text.trim();
-                const normalizedText = normalizeText(originalText);
-                issueMap.set(normalizedText, {
+                issueMap.set(index, {
                     ...issue,
                     index,
-                    originalText: originalText,
-                    normalizedText: normalizedText
+                    originalText: originalText
                 });
             }
         });
 
         // Find issue positions in text
         const issuePositions = [];
-        const normalizedCV = normalizeText(text);
         
         issueMap.forEach((issueInfo) => {
-            const searchText = issueInfo.normalizedText;
-            let foundIndex = normalizedCV.indexOf(searchText);
-            
-            if (foundIndex !== -1) {
-                // Map back to original position (approximate)
-                let originalIndex = 0;
-                let normalizedIndex = 0;
-                
-                // Simple mapping: count characters
-                const ratio = text.length / normalizedCV.length;
-                originalIndex = Math.floor(foundIndex * ratio);
-                
+            const position = findTextPosition(issueInfo.originalText, text);
+            if (position) {
                 issuePositions.push({
-                    start: originalIndex,
-                    end: Math.min(text.length, originalIndex + issueInfo.originalText.length),
+                    start: position.start,
+                    end: position.end,
                     issue: issueInfo
                 });
+                console.log(`✅ Found issue ${issueInfo.index + 1} (${getSectionLabel(issueInfo.section)}): "${issueInfo.originalText.substring(0, 50)}..." at position ${position.start}-${position.end}`);
+            } else {
+                console.warn(`⚠️ Could not find issue ${issueInfo.index + 1} (${getSectionLabel(issueInfo.section)}): "${issueInfo.originalText.substring(0, 50)}..." in CV`);
+                
+                // Fallback 1: Try to find key words (longer words first)
+                const words = issueInfo.originalText.split(/\s+/).filter(w => w.length > 3);
+                words.sort((a, b) => b.length - a.length); // Sort by length descending
+                
+                let found = false;
+                for (const word of words.slice(0, 5)) { // Try top 5 longest words
+                    const wordLower = word.toLowerCase().replace(/[.,;:!?\-_()\[\]{}"'`]/g, '');
+                    const textLower = text.toLowerCase();
+                    const wordPos = textLower.indexOf(wordLower);
+                    
+                    if (wordPos !== -1) {
+                        // Find the full word in original text (case-insensitive)
+                        const regex = new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+                        const match = text.substring(Math.max(0, wordPos - 50), Math.min(text.length, wordPos + word.length + 50)).match(regex);
+                        
+                        if (match) {
+                            const actualPos = textLower.indexOf(wordLower, Math.max(0, wordPos - 50));
+                            issuePositions.push({
+                                start: actualPos,
+                                end: Math.min(text.length, actualPos + word.length),
+                                issue: issueInfo
+                            });
+                            console.log(`⚠️ Found keyword match for issue ${issueInfo.index + 1} using "${word}" at position ${actualPos}`);
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                
+                // Fallback 2: If still not found, highlight the entire line containing any keyword
+                if (!found && words.length > 0) {
+                    const lines = text.split('\n');
+                    for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+                        const line = lines[lineIdx];
+                        const lineLower = line.toLowerCase();
+                        
+                        // Check if line contains any keyword
+                        for (const word of words.slice(0, 3)) {
+                            const wordLower = word.toLowerCase().replace(/[.,;:!?\-_()\[\]{}"'`]/g, '');
+                            if (lineLower.includes(wordLower)) {
+                                // Calculate line position in full text
+                                let lineStart = 0;
+                                for (let i = 0; i < lineIdx; i++) {
+                                    lineStart += lines[i].length + 1; // +1 for newline
+                                }
+                                
+                                issuePositions.push({
+                                    start: lineStart,
+                                    end: lineStart + line.length,
+                                    issue: issueInfo
+                                });
+                                console.log(`⚠️ Found line match for issue ${issueInfo.index + 1} at line ${lineIdx + 1} containing "${word}"`);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (found) break;
+                    }
+                }
             }
         });
 
-        // Sort and filter overlaps
+        // Sort by start position
         issuePositions.sort((a, b) => a.start - b.start);
-        const filteredPositions = [];
-        let lastEnd = 0;
         
-        issuePositions.forEach(pos => {
-            if (pos.start >= lastEnd) {
-                filteredPositions.push(pos);
-                lastEnd = pos.end;
+        // Build parts with highlights - allow overlapping issues
+        // Strategy: Create segments for each character position, track which issues apply
+        const allPositions = issuePositions.map(pos => ({
+            ...pos,
+            id: `issue-${pos.issue.index}`
+        }));
+        
+        // Create a map of character positions to issues
+        const charToIssues = new Map();
+        allPositions.forEach(pos => {
+            for (let i = pos.start; i < pos.end; i++) {
+                if (!charToIssues.has(i)) {
+                    charToIssues.set(i, []);
+                }
+                charToIssues.get(i).push(pos);
             }
         });
-
-        // Build parts with highlights
+        
+        // Build parts: group consecutive characters with same issue set
         const parts = [];
-        let lastIndex = 0;
-
-        filteredPositions.forEach((pos) => {
-            if (pos.start > lastIndex) {
-                parts.push({
-                    text: text.substring(lastIndex, pos.start),
-                    isIssue: false
-                });
+        let currentStart = 0;
+        let currentIssues = [];
+        
+        for (let i = 0; i <= text.length; i++) {
+            const issuesAtPos = charToIssues.get(i) || [];
+            const issueIds = issuesAtPos.map(p => p.id).sort();
+            const currentIssueIds = currentIssues.map(p => p.id).sort();
+            
+            // If issue set changed, create a part
+            if (i === text.length || JSON.stringify(issueIds) !== JSON.stringify(currentIssueIds)) {
+                if (i > currentStart) {
+                    parts.push({
+                        text: text.substring(currentStart, i),
+                        isIssue: currentIssues.length > 0,
+                        issues: currentIssues.length > 0 ? [...currentIssues] : null
+                    });
+                }
+                currentStart = i;
+                currentIssues = issuesAtPos;
             }
-            parts.push({
-                text: text.substring(pos.start, pos.end),
-                isIssue: true,
-                issue: pos.issue
-            });
-            lastIndex = pos.end;
-        });
-
-        if (lastIndex < text.length) {
-            parts.push({
-                text: text.substring(lastIndex),
-                isIssue: false
-            });
         }
 
         // Render as HTML document (like PDF)
         return (
             <div className="cv-document">
                 {parts.map((part, partIndex) => {
-                    if (part.isIssue && part.issue) {
-                        const severityColor = getSeverityColor(part.issue.severity);
-                        const severityClass = `cv-highlight-${part.issue.severity}`;
-                        
-                        // Split by lines to preserve formatting
+                    if (part.isIssue && part.issues && part.issues.length > 0) {
+                        // Multiple issues can overlap - use layered highlights
                         const lines = part.text.split('\n');
-                        return lines.map((line, lineIdx) => (
-                            <span
-                                key={`issue-${partIndex}-${lineIdx}`}
-                                className={`cv-highlight ${severityClass}`}
-                                data-severity={part.issue.severity}
-                                data-section={part.issue.section}
-                                title={`${getSectionLabel(part.issue.section)} - ${getSeverityLabel(part.issue.severity)}: ${part.issue.suggestion}`}
-                            >
-                                {line}
-                                {lineIdx < lines.length - 1 && <br />}
-                            </span>
-                        ));
+                        return lines.map((line, lineIdx) => {
+                            // If multiple issues, stack them with different border colors
+                            if (part.issues.length === 1) {
+                                // Single issue - simple highlight
+                                const issue = part.issues[0];
+                                const issueColor = getIssueColor(issue.issue.index);
+                                return (
+                                    <span
+                                        key={`issue-${partIndex}-${lineIdx}`}
+                                        className="cv-highlight"
+                                        data-issue-id={`issue-${issue.issue.index}`}
+                                        data-section={issue.issue.section}
+                                        style={{
+                                            backgroundColor: `${issueColor}20`,
+                                            borderLeft: `4px solid ${issueColor}`,
+                                            borderRight: `4px solid ${issueColor}`,
+                                            paddingLeft: '6px',
+                                            paddingRight: '6px',
+                                        }}
+                                        title={`${getSectionLabel(issue.issue.section)}: ${issue.issue.suggestion}`}
+                                    >
+                                        {line}
+                                        {lineIdx < lines.length - 1 && <br />}
+                                    </span>
+                                );
+                            } else {
+                                // Multiple overlapping issues - use multiple borders
+                                const issueColors = part.issues.map(p => getIssueColor(p.issue.index));
+                                const title = part.issues.map(p => 
+                                    `${getSectionLabel(p.issue.section)}: ${p.issue.suggestion}`
+                                ).join(' | ');
+                                
+                                // Use multiple border colors (left border for each issue)
+                                const borderStyle = issueColors.map((color, idx) => 
+                                    `${4 + idx * 2}px solid ${color}`
+                                ).join(', ');
+                                
+                                return (
+                                    <span
+                                        key={`issue-${partIndex}-${lineIdx}`}
+                                        className="cv-highlight cv-highlight-overlap"
+                                        style={{
+                                            backgroundColor: `${issueColors[0]}20`,
+                                            borderLeft: `4px solid ${issueColors[0]}`,
+                                            borderRight: `4px solid ${issueColors[issueColors.length - 1]}`,
+                                            paddingLeft: '6px',
+                                            paddingRight: '6px',
+                                            position: 'relative',
+                                        }}
+                                        title={title}
+                                    >
+                                        {/* Additional border layers for overlapping issues */}
+                                        {issueColors.slice(1).map((color, idx) => (
+                                            <span
+                                                key={`overlap-${idx}`}
+                                                style={{
+                                                    position: 'absolute',
+                                                    left: `${-4 - (idx + 1) * 2}px`,
+                                                    top: 0,
+                                                    bottom: 0,
+                                                    width: '2px',
+                                                    backgroundColor: color,
+                                                    pointerEvents: 'none',
+                                                }}
+                                            />
+                                        ))}
+                                        {line}
+                                        {lineIdx < lines.length - 1 && <br />}
+                                    </span>
+                                );
+                            }
+                        });
                     } else {
                         // Regular text - preserve line breaks
                         const lines = part.text.split('\n');
@@ -354,13 +562,27 @@ const CVReview = () => {
         );
     };
 
-    const getSeverityColor = (severity) => {
-        switch (severity) {
-            case 'high': return '#ff4444';
-            case 'medium': return '#ffaa00';
-            case 'low': return '#44aaff';
-            default: return '#999';
-        }
+    // Generate unique color for each issue (based on index)
+    const getIssueColor = (index) => {
+        // Array of distinct colors (bright, visible colors)
+        const colors = [
+            '#ff4444', // Red
+            '#ffaa00', // Orange
+            '#44aaff', // Blue
+            '#ff6b9d', // Pink
+            '#9b59b6', // Purple
+            '#1abc9c', // Turquoise
+            '#e74c3c', // Dark Red
+            '#f39c12', // Dark Orange
+            '#3498db', // Dark Blue
+            '#e67e22', // Carrot
+            '#16a085', // Green
+            '#c0392b', // Dark Red 2
+            '#d35400', // Orange 2
+            '#2980b9', // Blue 2
+            '#8e44ad', // Purple 2
+        ];
+        return colors[index % colors.length];
     };
 
     const getSeverityLabel = (severity) => {
@@ -388,28 +610,50 @@ const CVReview = () => {
         return sectionMap[section] || section;
     };
 
-    // Calculate match rate (job_matching score from rubric)
+    // Calculate match rate - sử dụng score từ backend (đã tính từ criteria_scores)
+    // Backend đã tính % từ các tiêu chí với trọng số, nên chỉ cần dùng score đó
     const calculateMatchRate = () => {
-        if (!reviewResult || !reviewResult.issues) return 0;
+        if (!reviewResult) return 0;
         
-        // Get job_matching issues
-        const jobMatchingIssues = reviewResult.issues.filter(issue => issue.section === 'job_matching');
-        
-        // Calculate based on score and issues
-        // If score >= 80 and no high severity job_matching issues, match rate is high
-        if (reviewResult.score >= 80 && !jobMatchingIssues.some(i => i.severity === 'high')) {
-            return Math.min(100, reviewResult.score + 10);
+        // Backend đã tính score từ criteria_scores * weights
+        // Score này chính là % phù hợp ước lượng
+        return Math.max(0, Math.min(100, Math.round(reviewResult.score || 0)));
+    };
+
+    // Calculate potential improvement (ước lượng có thể cải thiện lên bao nhiêu)
+    const calculatePotentialImprovement = () => {
+        if (!reviewResult || !reviewResult.issues || reviewResult.issues.length === 0) {
+            return null; // Không có issues → không cần cải thiện
         }
         
-        // Otherwise, use score as base, adjusted by job_matching issues
-        let matchRate = reviewResult.score;
-        jobMatchingIssues.forEach(issue => {
-            if (issue.severity === 'high') matchRate -= 15;
-            else if (issue.severity === 'medium') matchRate -= 10;
-            else if (issue.severity === 'low') matchRate -= 5;
+        const currentScore = calculateMatchRate();
+        
+        // Ước lượng: nếu sửa hết issues, có thể tăng thêm 10-20 điểm
+        // Tùy vào số lượng và severity của issues
+        let potentialIncrease = 0;
+        
+        reviewResult.issues.forEach(issue => {
+            if (issue.severity === 'high') {
+                potentialIncrease += 8; // High severity → sửa xong tăng ~8 điểm
+            } else if (issue.severity === 'medium') {
+                potentialIncrease += 5; // Medium severity → sửa xong tăng ~5 điểm
+            } else if (issue.severity === 'low') {
+                potentialIncrease += 2; // Low severity → sửa xong tăng ~2 điểm
+            } else {
+                potentialIncrease += 3; // No severity → sửa xong tăng ~3 điểm
+            }
         });
         
-        return Math.max(0, Math.min(100, matchRate));
+        // Giới hạn tăng tối đa 25 điểm (không thể từ 50% lên 100% chỉ bằng sửa issues)
+        potentialIncrease = Math.min(25, potentialIncrease);
+        
+        const potentialScore = Math.min(100, currentScore + potentialIncrease);
+        
+        return {
+            current: currentScore,
+            potential: potentialScore,
+            increase: potentialIncrease
+        };
     };
 
     const matchRate = calculateMatchRate();
@@ -576,7 +820,7 @@ const CVReview = () => {
                                 {/* Score */}
                                 <div className="score-section">
                                     <div className="score-circle" style={{
-                                        background: `conic-gradient(${getSeverityColor('low')} ${reviewResult.score * 3.6}deg, #eee 0deg)`
+                                        background: `conic-gradient(#3498db ${reviewResult.score * 3.6}deg, #eee 0deg)`
                                     }}>
                                         <div className="score-inner">
                                             <span className="score-value">{reviewResult.score}</span>
@@ -599,7 +843,7 @@ const CVReview = () => {
                                 <div className="match-rate-section">
                                     <h4>
                                         <i className="fas fa-percentage"></i>
-                                        Tỷ lệ CV phù hợp với JD
+                                        Mức độ phù hợp ước lượng
                                     </h4>
                                     <div className="match-rate-display">
                                         <div className="match-rate-circle" style={{
@@ -610,11 +854,30 @@ const CVReview = () => {
                                                 <span className="match-rate-label">%</span>
                                             </div>
                                         </div>
-                                        <p className="match-rate-note">
-                                            {matchRate >= 80 ? 'CV rất phù hợp với JD' : 
-                                             matchRate >= 60 ? 'CV khá phù hợp với JD' : 
-                                             'CV cần cải thiện để phù hợp hơn với JD'}
-                                        </p>
+                                        <div className="match-rate-info">
+                                            <p className="match-rate-interpretation">
+                                                <strong>{reviewResult.matchRateInterpretation || 
+                                                    (matchRate >= 85 ? 'Rất phù hợp / Short-list' :
+                                                     matchRate >= 70 ? 'Phù hợp tốt' :
+                                                     matchRate >= 60 ? 'Có thể phỏng vấn' :
+                                                     'Cần chỉnh sửa CV')}</strong>
+                                            </p>
+                                            <p className="match-rate-note">
+                                                (Ước lượng dựa trên JD và CV hiện tại)
+                                            </p>
+                                            {(() => {
+                                                const improvement = calculatePotentialImprovement();
+                                                if (improvement && improvement.increase > 0) {
+                                                    return (
+                                                        <p className="match-rate-improvement">
+                                                            <i className="fas fa-arrow-up"></i>
+                                                            Có thể cải thiện lên <strong>{improvement.potential}%</strong> nếu chỉnh sửa theo gợi ý
+                                                        </p>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -626,29 +889,32 @@ const CVReview = () => {
                                             Các vấn đề cần sửa ({reviewResult.issues.length})
                                         </h4>
                                         <div className="issues-list">
-                                            {reviewResult.issues.map((issue, index) => (
-                                                <div key={index} className="issue-item" style={{
-                                                    borderLeft: `4px solid ${getSeverityColor(issue.severity)}`
-                                                }}>
-                                                    <div className="issue-header">
-                                                        <span className="issue-section">{getSectionLabel(issue.section)}</span>
-                                                        <span className="issue-severity" style={{
-                                                            backgroundColor: getSeverityColor(issue.severity),
-                                                            color: '#fff'
-                                                        }}>
-                                                            {getSeverityLabel(issue.severity)}
-                                                        </span>
+                                            {reviewResult.issues.map((issue, index) => {
+                                                const issueColor = getIssueColor(index);
+                                                return (
+                                                    <div key={index} className="issue-item" style={{
+                                                        borderLeft: `4px solid ${issueColor}`
+                                                    }}>
+                                                        <div className="issue-header">
+                                                            <span className="issue-section">{getSectionLabel(issue.section)}</span>
+                                                            <span className="issue-number" style={{
+                                                                backgroundColor: issueColor,
+                                                                color: '#fff'
+                                                            }}>
+                                                                Vấn đề {index + 1}
+                                                            </span>
+                                                        </div>
+                                                        <div className="issue-content">
+                                                            <p className="issue-text">
+                                                                <strong>Vấn đề:</strong> {issue.original_text}
+                                                            </p>
+                                                            <p className="issue-suggestion">
+                                                                <strong>Gợi ý:</strong> {issue.suggestion}
+                                                            </p>
+                                                        </div>
                                                     </div>
-                                                    <div className="issue-content">
-                                                        <p className="issue-text">
-                                                            <strong>Vấn đề:</strong> {issue.original_text}
-                                                        </p>
-                                                        <p className="issue-suggestion">
-                                                            <strong>Gợi ý:</strong> {issue.suggestion}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
