@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
+import ScrollToTop from '../../components/ScrollToTop/ScrollToTop';
 import { getMyApplications, startTest } from '../../service.js/jobApplicationService';
 import { 
     getDocumentsByApplication, 
@@ -383,6 +384,7 @@ const MyApplications = () => {
             )}
             
             <Footer />
+            <ScrollToTop />
         </div>
     );
 };

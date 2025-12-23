@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { registerUser } from '../../service.js/loginRegister';
+import ReflectiveCard from '../../components/ReflectiveCard/ReflectiveCard';
 import './Register.scss';
 
 const Register = () => {
@@ -121,110 +122,135 @@ const Register = () => {
 
     return (
         <div className="register-background">
-            <div className="register-container">
-                <div className="register-content row">
-                    <div className="col-12 text-register">Đăng Ký Tài Khoản</div>
+            <div className="register-card-wrapper">
+                <ReflectiveCard
+                    overlayColor="rgba(0, 43, 51, 0.3)"
+                    blurStrength={10}
+                    glassDistortion={15}
+                    metalness={0.8}
+                    roughness={0.5}
+                    displacementStrength={25}
+                    noiseScale={1.5}
+                    specularConstant={2.0}
+                    grayscale={0.5}
+                    color="#ffffff"
+                >
+                    <div className="register-content">
+                        <div className="card-header">
+                            <div className="security-badge">
+                                <i className="fas fa-lock security-icon"></i>
+                                <span>CREATE ACCOUNT</span>
+                            </div>
+                            <i className="fas fa-circle-notch status-icon"></i>
+                        </div>
 
-                    <div className="col-12 form-group register-input">
-                        <label>
-                            Họ và tên: <span className="required">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            className={objCheckValidInput.isValidHoten ? 'form-control' : 'form-control is-invalid'}
-                            placeholder="Nhập họ và tên của bạn"
-                            value={hoten}
-                            onChange={(event) => setHoten(event.target.value)}
-                            onKeyDown={handleKeyDown}
-                        />
-                    </div>
+                        <div className="card-body">
+                            <div className="col-12 text-register">Đăng Ký Tài Khoản</div>
 
-                    <div className="col-12 form-group register-input">
-                        <label>
-                            Email: <span className="required">*</span>
-                        </label>
-                        <input
-                            type="text"
-                            className={objCheckValidInput.isValidEmail ? 'form-control' : 'form-control is-invalid'}
-                            placeholder="Nhập email của bạn"
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
-                            onKeyDown={handleKeyDown}
-                        />
-                    </div>
+                            <div className="col-12 form-group register-input">
+                                <label>
+                                    Họ và tên: <span className="required">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className={objCheckValidInput.isValidHoten ? 'form-control' : 'form-control is-invalid'}
+                                    placeholder="Nhập họ và tên của bạn"
+                                    value={hoten}
+                                    onChange={(event) => setHoten(event.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                />
+                            </div>
 
-                    <div className="col-12 form-group register-input">
-                        <label>
-                            Mật khẩu: <span className="required">*</span>
-                        </label>
-                        <div className="custom-input-password">
-                            <input
-                                type={isShowPassword ? 'text' : 'password'}
-                                className={objCheckValidInput.isValidPassword ? 'form-control' : 'form-control is-invalid'}
-                                placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
-                                value={password}
-                                onChange={(event) => setPassword(event.target.value)}
-                                onKeyDown={handleKeyDown}
-                            />
-                            <span onClick={() => setIsShowPassword(!isShowPassword)}>
-                                <i className={isShowPassword ? 'fas fa-eye' : 'fas fa-eye-slash'}></i>
-                            </span>
+                            <div className="col-12 form-group register-input">
+                                <label>
+                                    Email: <span className="required">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className={objCheckValidInput.isValidEmail ? 'form-control' : 'form-control is-invalid'}
+                                    placeholder="Nhập email của bạn"
+                                    value={email}
+                                    onChange={(event) => setEmail(event.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                />
+                            </div>
+
+                            <div className="col-12 form-group register-input">
+                                <label>
+                                    Mật khẩu: <span className="required">*</span>
+                                </label>
+                                <div className="custom-input-password">
+                                    <input
+                                        type={isShowPassword ? 'text' : 'password'}
+                                        className={objCheckValidInput.isValidPassword ? 'form-control' : 'form-control is-invalid'}
+                                        placeholder="Nhập mật khẩu (ít nhất 6 ký tự)"
+                                        value={password}
+                                        onChange={(event) => setPassword(event.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                    />
+                                    <span onClick={() => setIsShowPassword(!isShowPassword)}>
+                                        <i className={isShowPassword ? 'fas fa-eye' : 'fas fa-eye-slash'}></i>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="col-12 form-group register-input">
+                                <label>
+                                    Xác nhận mật khẩu: <span className="required">*</span>
+                                </label>
+                                <div className="custom-input-password">
+                                    <input
+                                        type={isShowConfirmPassword ? 'text' : 'password'}
+                                        className={objCheckValidInput.isValidConfirmPassword ? 'form-control' : 'form-control is-invalid'}
+                                        placeholder="Nhập lại mật khẩu"
+                                        value={confirmPassword}
+                                        onChange={(event) => setConfirmPassword(event.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                    />
+                                    <span onClick={() => setIsShowConfirmPassword(!isShowConfirmPassword)}>
+                                        <i className={isShowConfirmPassword ? 'fas fa-eye' : 'fas fa-eye-slash'}></i>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="col-12">
+                                <button
+                                    className={isLoading ? 'btn-register disabled' : 'btn-register'}
+                                    onClick={() => handleRegister()}
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <i className="fas fa-spinner fa-spin"></i> Đang xử lý...
+                                        </>
+                                    ) : (
+                                        'Đăng Ký'
+                                    )}
+                                </button>
+                            </div>
+
+                            <div className="col-12">
+                                <div className="text-other-register">
+                                    <span>Hoặc đăng ký bằng</span>
+                                </div>
+                            </div>
+
+                            <div className="col-12 social-register">
+                                <i className="fab fa-google google"></i>
+                                <i className="fab fa-facebook-f facebook"></i>
+                            </div>
+
+                            <div className="col-12 text-center">
+                                <span className="login-text">
+                                    Đã có tài khoản?
+                                    <span className="login-link" onClick={() => navigate('/login')}>
+                                        {' '}Đăng nhập ngay
+                                    </span>
+                                </span>
+                            </div>
                         </div>
                     </div>
-
-                    <div className="col-12 form-group register-input">
-                        <label>
-                            Xác nhận mật khẩu: <span className="required">*</span>
-                        </label>
-                        <div className="custom-input-password">
-                            <input
-                                type={isShowConfirmPassword ? 'text' : 'password'}
-                                className={objCheckValidInput.isValidConfirmPassword ? 'form-control' : 'form-control is-invalid'}
-                                placeholder="Nhập lại mật khẩu"
-                                value={confirmPassword}
-                                onChange={(event) => setConfirmPassword(event.target.value)}
-                                onKeyDown={handleKeyDown}
-                            />
-                            <span onClick={() => setIsShowConfirmPassword(!isShowConfirmPassword)}>
-                                <i className={isShowConfirmPassword ? 'fas fa-eye' : 'fas fa-eye-slash'}></i>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="col-12">
-                        <button
-                            className={isLoading ? 'btn-register disabled' : 'btn-register'}
-                            onClick={() => handleRegister()}
-                            disabled={isLoading}
-                        >
-                            {isLoading ? (
-                                <>
-                                    <i className="fas fa-spinner fa-spin"></i> Đang xử lý...
-                                </>
-                            ) : (
-                                'Đăng Ký'
-                            )}
-                        </button>
-                    </div>
-
-                    <div className="col-12 text-center mt-3">
-                        <span className="text-other-register">Hoặc đăng ký bằng</span>
-                    </div>
-
-                    <div className="col-12 social-register">
-                        <i className="fab fa-google google"></i>
-                        <i className="fab fa-facebook-f facebook"></i>
-                    </div>
-
-                    <div className="col-12 text-center">
-                        <span className="login-text">
-                            Đã có tài khoản?
-                            <span className="login-link" onClick={() => navigate('/login')}>
-                                {' '}Đăng nhập ngay
-                            </span>
-                        </span>
-                    </div>
-                </div>
+                </ReflectiveCard>
             </div>
         </div>
     );

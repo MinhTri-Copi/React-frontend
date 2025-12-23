@@ -6,6 +6,7 @@ import { getMyRecords } from '../../service.js/recordService';
 import { applyJob as applyJobService, checkApplied as checkAppliedService } from '../../service.js/jobApplicationService';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
+import ScrollToTop from '../../components/ScrollToTop/ScrollToTop';
 import './JobDetail.scss';
 
 const JobDetail = () => {
@@ -291,14 +292,6 @@ const JobDetail = () => {
                                         </div>
                                     )}
                                 </div>
-                                <button 
-                                    className={`btn-apply-large ${!canApply ? 'disabled' : ''}`} 
-                                    onClick={handleOpenApplyModal}
-                                    disabled={!canApply}
-                                >
-                                    <i className="fas fa-paper-plane"></i>
-                                    {hasApplied ? 'Đã ứng tuyển' : 'Ứng tuyển ngay'}
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -695,6 +688,7 @@ const JobDetail = () => {
             )}
             
             <Footer />
+            <ScrollToTop />
         </div>
     );
 };

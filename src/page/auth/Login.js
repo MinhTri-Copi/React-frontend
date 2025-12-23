@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { loginUser } from '../../service.js/loginRegister';
+import ReflectiveCard from '../../components/ReflectiveCard/ReflectiveCard';
 import './Login.scss';
 
 const Login = () => {
@@ -114,79 +115,104 @@ const Login = () => {
                 
                 {/* Right side - Login Form */}
                 <div className="login-form-section">
-                    <div className="login-container">
-                        <div className="login-content row">
-                            <div className="col-12 text-login">Đăng Nhập</div>
-                    
-                    <div className="col-12 form-group login-input">
-                        <label>Email:</label>
-                        <input
-                            type="text"
-                            className="form-control"
-                            placeholder="Nhập email của bạn"
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
-                            onKeyDown={handleKeyDown}
-                        />
-                    </div>
-                    
-                    <div className="col-12 form-group login-input">
-                        <label>Mật khẩu:</label>
-                        <div className="custom-input-password">
-                            <input
-                                type={isShowPassword ? 'text' : 'password'}
-                                className="form-control"
-                                placeholder="Nhập mật khẩu"
-                                value={password}
-                                onChange={(event) => setPassword(event.target.value)}
-                                onKeyDown={handleKeyDown}
-                            />
-                            <span
-                                onClick={() => setIsShowPassword(!isShowPassword)}
-                            >
-                                <i className={isShowPassword ? 'fas fa-eye' : 'fas fa-eye-slash'}></i>
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div className="col-12">
-                        <button
-                            className={isLoading ? 'btn-login disabled' : 'btn-login'}
-                            onClick={() => handleLogin()}
-                            disabled={isLoading}
+                    <div className="login-card-wrapper">
+                        <ReflectiveCard
+                            overlayColor="rgba(0, 43, 51, 0.3)"
+                            blurStrength={10}
+                            glassDistortion={15}
+                            metalness={0.8}
+                            roughness={0.5}
+                            displacementStrength={25}
+                            noiseScale={1.5}
+                            specularConstant={2.0}
+                            grayscale={0.5}
+                            color="#ffffff"
                         >
-                            {isLoading ? (
-                                <>
-                                    <i className="fas fa-spinner fa-spin"></i> Đang xử lý...
-                                </>
-                            ) : (
-                                'Đăng Nhập'
-                            )}
-                        </button>
-                    </div>
-                    
-                    <div className="col-12">
-                        <span className="forgot-password">Quên mật khẩu?</span>
-                    </div>
-                    
-                    <div className="col-12 text-center mt-3">
-                        <span className="text-other-login">Hoặc đăng nhập bằng</span>
-                    </div>
-                    
-                    <div className="col-12 social-login">
-                        <i className="fab fa-google google"></i>
-                        <i className="fab fa-facebook-f facebook"></i>
-                    </div>
-                    
-                    <div className="col-12 text-center">
-                        <span className="register-text">
-                            Chưa có tài khoản? 
-                            <span className="register-link" onClick={() => navigate('/register')}>
-                                {' '}Đăng ký ngay
-                            </span>
-                        </span>
-                    </div>
-                        </div>
+                            <div className="login-content">
+                                <div className="card-header">
+                                    <div className="security-badge">
+                                        <i className="fas fa-lock security-icon"></i>
+                                        <span>SECURE ACCESS</span>
+                                    </div>
+                                    <i className="fas fa-circle-notch status-icon"></i>
+                                </div>
+
+                                <div className="card-body">
+                                    <div className="col-12 text-login">Đăng Nhập</div>
+                            
+                                    <div className="col-12 form-group login-input">
+                                        <label>Email:</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            placeholder="Nhập email của bạn"
+                                            value={email}
+                                            onChange={(event) => setEmail(event.target.value)}
+                                            onKeyDown={handleKeyDown}
+                                        />
+                                    </div>
+                                    
+                                    <div className="col-12 form-group login-input">
+                                        <label>Mật khẩu:</label>
+                                        <div className="custom-input-password">
+                                            <input
+                                                type={isShowPassword ? 'text' : 'password'}
+                                                className="form-control"
+                                                placeholder="Nhập mật khẩu"
+                                                value={password}
+                                                onChange={(event) => setPassword(event.target.value)}
+                                                onKeyDown={handleKeyDown}
+                                            />
+                                            <span
+                                                onClick={() => setIsShowPassword(!isShowPassword)}
+                                            >
+                                                <i className={isShowPassword ? 'fas fa-eye' : 'fas fa-eye-slash'}></i>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="col-12">
+                                        <button
+                                            className={isLoading ? 'btn-login disabled' : 'btn-login'}
+                                            onClick={() => handleLogin()}
+                                            disabled={isLoading}
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <i className="fas fa-spinner fa-spin"></i> Đang xử lý...
+                                                </>
+                                            ) : (
+                                                'Đăng Nhập'
+                                            )}
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="col-12">
+                                        <span className="forgot-password">Quên mật khẩu?</span>
+                                    </div>
+                                    
+                                    <div className="col-12">
+                                        <div className="text-other-login">
+                                            <span>Hoặc đăng nhập bằng</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="col-12 social-login">
+                                        <i className="fab fa-google google"></i>
+                                        <i className="fab fa-facebook-f facebook"></i>
+                                    </div>
+                                    
+                                    <div className="col-12 text-center">
+                                        <span className="register-text">
+                                            Chưa có tài khoản? 
+                                            <span className="register-link" onClick={() => navigate('/register')}>
+                                                {' '}Đăng ký ngay
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </ReflectiveCard>
                     </div>
                 </div>
             </div>

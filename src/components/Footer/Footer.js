@@ -11,8 +11,7 @@ const Footer = () => {
                     <div className="footer-section">
                         <h3 className="footer-title">Về chúng tôi</h3>
                         <p className="footer-description">
-                            JobPortal - Nền tảng tìm kiếm việc làm IT hàng đầu Việt Nam. 
-                            Kết nối ứng viên với các cơ hội việc làm tốt nhất.
+                            JobPortal - Nền tảng kết nối ứng viên với các cơ hội việc làm tốt nhất
                         </p>
                         <div className="social-links">
                             <a href="#" className="social-link" aria-label="Facebook">

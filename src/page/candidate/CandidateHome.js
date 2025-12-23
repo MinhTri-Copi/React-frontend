@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
+import ScrollToTop from '../../components/ScrollToTop/ScrollToTop';
 import ReactPaginate from 'react-paginate';
 import { toast } from 'react-toastify';
 import { getListJobPosting, getFilterOptions } from '../../service.js/jobPostingService';
@@ -314,7 +315,7 @@ const CandidateHome = () => {
                     <div className="container">
                         <div className="section-header" data-aos="fade-down">
                             <h2>Việc làm nổi bật</h2>
-                            <p>Cập nhật mới nhất • {jobs.length > 0 && `${jobs.length}+ việc làm`}</p>
+                            <p>• Cập nhật mới nhất {jobs.length > 0 && `${jobs.length}+ việc làm`} •</p>
                         </div>
 
                         {isLoading ? (
@@ -568,6 +569,7 @@ const CandidateHome = () => {
             </div>
             
             <Footer />
+            <ScrollToTop />
         </div>
     );
 };

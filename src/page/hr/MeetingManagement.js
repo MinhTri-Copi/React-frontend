@@ -455,14 +455,16 @@ const MeetingManagement = ({ userId }) => {
 
                 {/* Content */}
                 <div className="cp-header-content">
-                    <div className="header-left cp-header-left">
-                        <h1>
+                    <div className="cp-header-left">
+                        <div className="company-logo">
                             <i className="fas fa-video"></i>
-                            Quản lý Meeting
-                        </h1>
-                        <p>Quản lý các cuộc phỏng vấn trực tuyến</p>
+                        </div>
+                        <div className="company-title">
+                            <h1>Quản lý Meeting</h1>
+                            <p className="company-industry">Quản lý các cuộc phỏng vấn trực tuyến</p>
+                        </div>
                     </div>
-                    <div className="header-right cp-header-right">
+                    <div className="cp-header-right">
                         <button className="btn-create-meeting" onClick={handleCreateMeeting}>
                             <i className="fas fa-plus"></i>
                             Tạo Meeting

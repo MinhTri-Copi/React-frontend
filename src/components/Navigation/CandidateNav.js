@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import TextType from '../TextType/TextType';
 import './CandidateNav.scss';
 
 const CandidateNav = () => {
     const [user, setUser] = useState(null);
     const [showDropdown, setShowDropdown] = useState(false);
     const [showOptionsDropdown, setShowOptionsDropdown] = useState(false);
+    const [isTextPaused, setIsTextPaused] = useState(false);
     const navigate = useNavigate();
     const optionsDropdownRef = useRef(null);
     const userDropdownRef = useRef(null);
@@ -48,13 +50,25 @@ const CandidateNav = () => {
 
     return (
         <nav className="candidate-navbar">
-            <div className="container-fluid">
+            <div 
+                className="container-fluid"
+                onMouseEnter={() => setIsTextPaused(true)}
+                onMouseLeave={() => setIsTextPaused(false)}
+            >
                 <div className="navbar-content">
                     {/* Logo */}
                     <div className="navbar-brand">
                         <NavLink to="/candidate" className="brand-link">
                             <i className="fas fa-briefcase"></i>
-                            <span>JobPortal</span>
+                            <TextType 
+                                text={["JobPortal"]}
+                                typingSpeed={75}
+                                pauseDuration={1500}
+                                showCursor={true}
+                                cursorCharacter="|"
+                                as="span"
+                                isPaused={isTextPaused}
+                            />
                         </NavLink>
                     </div>
 

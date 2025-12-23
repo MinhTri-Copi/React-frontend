@@ -333,12 +333,12 @@ const JobManagement = ({ userId }) => {
                             <p className="company-industry">Tạo, theo dõi và tối ưu tin tuyển dụng của bạn</p>
                         </div>
                     </div>
-                    <div className="cp-header-right">
+                    {/* <div className="cp-header-right">
                         <button className="btn-primary" onClick={handleCreate}>
                             <i className="fas fa-plus"></i>
                             Tạo tin mới
                         </button>
-                    </div>
+                    </div> */}
                 </div>
             </div>
 

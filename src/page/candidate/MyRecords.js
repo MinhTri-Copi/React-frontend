@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
+import ScrollToTop from '../../components/ScrollToTop/ScrollToTop';
 import { toast } from 'react-toastify';
 import { 
     getMyRecords, 
@@ -429,6 +430,7 @@ const MyRecords = () => {
             )}
             
             <Footer />
+            <ScrollToTop />
         </div>
     );
 };

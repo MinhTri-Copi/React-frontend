@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
+import ScrollToTop from '../../components/ScrollToTop/ScrollToTop';
 import ReactPaginate from 'react-paginate';
 import { toast } from 'react-toastify';
 import { getListJobPosting, getFilterOptions } from '../../service.js/jobPostingService';
@@ -44,7 +45,7 @@ const JobList = () => {
     const [selectedMajors, setSelectedMajors] = useState([]);
     
     // Sort option
-    const [sortOption, setSortOption] = useState('newest');
+    const [sortOption, setSortOption] = useState('all');
 
     // CV Matching
     const [isFindingMatchingJobs, setIsFindingMatchingJobs] = useState(false);
@@ -102,7 +103,7 @@ const JobList = () => {
         }
     };
 
-    const fetchJobs = useCallback(async (page, currentFilters = filters) => {
+    const fetchJobs = useCallback(async (page, currentFilters = filters, currentSortOption = sortOption) => {
         setIsLoading(true);
         try {
             // Build filter object
@@ -128,17 +129,68 @@ const JobList = () => {
             
             if (res && res.data && res.data.EC === 0) {
                 let jobList = res.data.DT.jobs;
+                const now = new Date();
+                const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                const minSalary = 10000000; // 10 triệu
                 
-                // Sort jobs
-                if (sortOption === 'newest') {
+                // Filter and sort jobs based on sort option
+                if (currentSortOption === 'all') {
+                    // Tất cả: không filter, chỉ sort theo mới nhất
                     jobList.sort((a, b) => new Date(b.Ngaydang) - new Date(a.Ngaydang));
-                } else if (sortOption === 'salary') {
-                    jobList.sort((a, b) => (b.Luongtoida || 0) - (a.Luongtoida || 0));
+                } else if (currentSortOption === 'newest') {
+                    // Tin mới nhất: chỉ hiển thị tin cập nhật trong vòng dưới 1 tuần trước
+                    jobList = jobList.filter(job => {
+                        if (!job.Ngaydang) return false;
+                        const jobDate = new Date(job.Ngaydang);
+                        return jobDate >= oneWeekAgo;
+                    });
+                    // Sort theo mới nhất
+                    jobList.sort((a, b) => new Date(b.Ngaydang) - new Date(a.Ngaydang));
+                } else if (currentSortOption === 'urgent') {
+                    // Cần tuyển gấp: chỉ hiển thị jobs còn dưới 1 tuần để ứng tuyển
+                    jobList = jobList.filter(job => {
+                        if (!job.Ngayhethan) return false;
+                        const deadline = new Date(job.Ngayhethan);
+                        const daysRemaining = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+                        return daysRemaining > 0 && daysRemaining <= 7;
+                    });
+                    // Sort theo deadline gần nhất
+                    jobList.sort((a, b) => {
+                        const aDeadline = new Date(a.Ngayhethan);
+                        const bDeadline = new Date(b.Ngayhethan);
+                        return aDeadline - bDeadline;
+                    });
+                } else if (currentSortOption === 'salary') {
+                    // Lương cao nhất: chỉ hiển thị jobs có lương > 10 triệu
+                    jobList = jobList.filter(job => {
+                        const maxSalary = job.Luongtoida || 0;
+                        const minSalaryJob = job.Luongtoithieu || 0;
+                        // Lấy mức lương cao hơn (nếu có cả min và max thì lấy max, nếu chỉ có min thì lấy min)
+                        const salary = maxSalary > 0 ? maxSalary : minSalaryJob;
+                        return salary >= minSalary;
+                    });
+                    // Sort theo lương cao nhất
+                    jobList.sort((a, b) => {
+                        const aMaxSalary = a.Luongtoida || a.Luongtoithieu || 0;
+                        const bMaxSalary = b.Luongtoida || b.Luongtoithieu || 0;
+                        return bMaxSalary - aMaxSalary;
+                    });
                 }
                 
-                setJobs(jobList);
-                setTotalPages(res.data.DT.totalPages);
-                setTotalRows(res.data.DT.totalRows);
+                // Update total rows and pages
+                // Nếu là "Tất cả", dùng giá trị từ server
+                // Nếu là filter option khác, tính lại dựa trên filtered results
+                if (currentSortOption === 'all') {
+                    setJobs(jobList);
+                    setTotalPages(res.data.DT.totalPages);
+                    setTotalRows(res.data.DT.totalRows);
+                } else {
+                    const filteredTotalRows = jobList.length;
+                    const filteredTotalPages = Math.ceil(filteredTotalRows / 12);
+                    setJobs(jobList);
+                    setTotalPages(filteredTotalPages);
+                    setTotalRows(filteredTotalRows);
+                }
                 setCurrentPage(page);
             } else {
                 toast.error(res.data.EM);
@@ -385,8 +437,8 @@ const JobList = () => {
                 {/* Search & Filter Section */}
                 <div className="filter-section">
                     <div className="container">
-                        {/* Main Search Box */}
-                        <div className="search-box">
+                        {/* Main Search Row */}
+                        <div className="search-row">
                             <div className="search-input-group">
                                 <i className="fas fa-search"></i>
                                 <input
@@ -398,51 +450,65 @@ const JobList = () => {
                                 />
                             </div>
                             
-                            <div className="find-matching-wrapper">
-                                <button 
-                                    className="btn-find-matching"
-                                    onClick={handleFindMatchingJobs}
-                                    disabled={isFindingMatchingJobs || cvStatus?.status === 'PROCESSING' || cvStatus?.status === 'PENDING' || !cvStatus?.hasCV}
-                                    title={
-                                        !cvStatus?.hasCV 
-                                            ? "Vui lòng upload CV trước" 
-                                            : cvStatus?.status === 'PROCESSING' || cvStatus?.status === 'PENDING'
-                                            ? "CV đang được xử lý..."
-                                            : "Tìm công việc phù hợp với CV của bạn"
-                                    }
-                                >
-                                    {isFindingMatchingJobs ? (
-                                        <>
-                                            <i className="fas fa-spinner fa-spin"></i>
-                                            Đang tìm...
-                                        </>
-                                    ) : cvStatus?.status === 'PROCESSING' || cvStatus?.status === 'PENDING' ? (
-                                        <>
-                                            <i className="fas fa-hourglass-half fa-spin"></i>
-                                            CV đang xử lý...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <i className="fas fa-magic"></i>
-                                            Tìm việc phù hợp
-                                        </>
+                            <div className="search-actions">
+                                <div className="find-matching-wrapper">
+                                    <button 
+                                        className="btn-find-matching"
+                                        onClick={handleFindMatchingJobs}
+                                        disabled={isFindingMatchingJobs || cvStatus?.status === 'PROCESSING' || cvStatus?.status === 'PENDING' || !cvStatus?.hasCV}
+                                        title={
+                                            !cvStatus?.hasCV 
+                                                ? "Vui lòng upload CV trước" 
+                                                : cvStatus?.status === 'PROCESSING' || cvStatus?.status === 'PENDING'
+                                                ? "CV đang được xử lý..."
+                                                : "Tìm công việc phù hợp với CV của bạn"
+                                        }
+                                    >
+                                        {isFindingMatchingJobs ? (
+                                            <>
+                                                <i className="fas fa-spinner fa-spin"></i>
+                                                Đang tìm...
+                                            </>
+                                        ) : cvStatus?.status === 'PROCESSING' || cvStatus?.status === 'PENDING' ? (
+                                            <>
+                                                <i className="fas fa-hourglass-half fa-spin"></i>
+                                                CV đang xử lý...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="fas fa-magic"></i>
+                                                Tìm việc phù hợp
+                                            </>
+                                        )}
+                                    </button>
+                                    {cvStatus?.status === 'PROCESSING' && (
+                                        <div className="cv-status-indicator">
+                                            <i className="fas fa-info-circle"></i>
+                                            <span>CV đang được xử lý, vui lòng đợi...</span>
+                                        </div>
                                     )}
-                                </button>
-                                {cvStatus?.status === 'PROCESSING' && (
-                                    <div className="cv-status-indicator">
-                                        <i className="fas fa-info-circle"></i>
-                                        <span>CV đang được xử lý, vui lòng đợi...</span>
-                                    </div>
-                                )}
-                                {cvStatus?.status === 'FAILED' && (
-                                    <div className="cv-status-indicator error">
-                                        <i className="fas fa-exclamation-triangle"></i>
-                                        <span>CV xử lý thất bại. Vui lòng upload lại.</span>
-                                    </div>
-                                )}
-                            </div>
+                                    {cvStatus?.status === 'FAILED' && (
+                                        <div className="cv-status-indicator error">
+                                            <i className="fas fa-exclamation-triangle"></i>
+                                            <span>CV xử lý thất bại. Vui lòng upload lại.</span>
+                                        </div>
+                                    )}
+                                </div>
 
-                            <div className="filter-dropdowns">
+                                <button className="btn-search" onClick={handleSearch}>
+                                    <i className="fas fa-search"></i>
+                                    Tìm kiếm
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Filter Dropdowns Row */}
+                        <div className="filter-row">
+                            <div className="filter-group">
+                                <label className="filter-label">
+                                    <i className="fas fa-map-marker-alt"></i>
+                                    Địa điểm
+                                </label>
                                 <select 
                                     className="filter-select"
                                     value={filters.location}
@@ -453,7 +519,13 @@ const JobList = () => {
                                         <option key={index} value={loc}>{loc}</option>
                                     ))}
                                 </select>
+                            </div>
 
+                            <div className="filter-group">
+                                <label className="filter-label">
+                                    <i className="fas fa-user-tie"></i>
+                                    Cấp bậc
+                                </label>
                                 <select 
                                     className="filter-select"
                                     value={filters.experience}
@@ -464,7 +536,13 @@ const JobList = () => {
                                         <option key={index} value={exp.value}>{exp.label}</option>
                                     ))}
                                 </select>
+                            </div>
 
+                            <div className="filter-group">
+                                <label className="filter-label">
+                                    <i className="fas fa-dollar-sign"></i>
+                                    Mức lương
+                                </label>
                                 <select 
                                     className="filter-select"
                                     value={filters.salaryRange}
@@ -477,10 +555,22 @@ const JobList = () => {
                                 </select>
                             </div>
 
-                            <button className="btn-search" onClick={handleSearch}>
-                                <i className="fas fa-search"></i>
-                                Tìm kiếm
-                            </button>
+                            <div className="filter-group">
+                                <label className="filter-label">
+                                    <i className="fas fa-briefcase"></i>
+                                    Hình thức
+                                </label>
+                                <select 
+                                    className="filter-select"
+                                    value={filters.formatId}
+                                    onChange={(e) => handleFilterChange('formatId', e.target.value)}
+                                >
+                                    <option value="">Tất cả hình thức</option>
+                                    {filterOptions.formats.map((format) => (
+                                        <option key={format.id} value={format.id}>{format.TenHinhThuc}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
 
                         {/* Major Tags */}
@@ -504,34 +594,6 @@ const JobList = () => {
                                 </button>
                             )}
                         </div>
-
-                        {/* Results count */}
-                        <div className="results-info">
-                            {isShowingMatchingJobs ? (
-                                <>
-                                    <p>
-                                        <i className="fas fa-star" style={{ color: '#008060', marginRight: '8px' }}></i>
-                                        Tìm thấy <strong>{totalRows}</strong> công việc phù hợp với CV của bạn.
-                                    </p>
-                                    <button className="btn-clear-filters" onClick={handleBackToNormalJobs}>
-                                        <i className="fas fa-arrow-left"></i>
-                                        Xem tất cả việc làm
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <p>
-                                        Tìm thấy <strong>{totalRows}</strong> việc làm phù hợp với yêu cầu của bạn.
-                                    </p>
-                                    {hasActiveFilters && (
-                                        <button className="btn-clear-filters" onClick={handleClearFilters}>
-                                            <i className="fas fa-times"></i>
-                                            Xóa bộ lọc
-                                        </button>
-                                    )}
-                                </>
-                            )}
-                        </div>
                     </div>
                 </div>
 
@@ -540,12 +602,29 @@ const JobList = () => {
                     <div className="container">
                         <div className="sort-options">
                             <span className="sort-label">Ưu tiên hiển thị:</span>
+                            <label className={`sort-option ${sortOption === 'all' ? 'active' : ''}`}>
+                                <input 
+                                    type="radio" 
+                                    name="sort" 
+                                    checked={sortOption === 'all'}
+                                    onChange={() => {
+                                        setSortOption('all');
+                                        fetchJobs(1, filters, 'all');
+                                    }}
+                                />
+                                <i className="far fa-circle"></i>
+                                <i className="fas fa-check-circle"></i>
+                                Tất cả
+                            </label>
                             <label className={`sort-option ${sortOption === 'newest' ? 'active' : ''}`}>
                                 <input 
                                     type="radio" 
                                     name="sort" 
                                     checked={sortOption === 'newest'}
-                                    onChange={() => setSortOption('newest')}
+                                    onChange={() => {
+                                        setSortOption('newest');
+                                        fetchJobs(1, filters, 'newest');
+                                    }}
                                 />
                                 <i className="far fa-circle"></i>
                                 <i className="fas fa-check-circle"></i>
@@ -556,7 +635,10 @@ const JobList = () => {
                                     type="radio" 
                                     name="sort" 
                                     checked={sortOption === 'urgent'}
-                                    onChange={() => setSortOption('urgent')}
+                                    onChange={() => {
+                                        setSortOption('urgent');
+                                        fetchJobs(1, filters, 'urgent');
+                                    }}
                                 />
                                 <i className="far fa-circle"></i>
                                 <i className="fas fa-check-circle"></i>
@@ -567,7 +649,10 @@ const JobList = () => {
                                     type="radio" 
                                     name="sort" 
                                     checked={sortOption === 'salary'}
-                                    onChange={() => setSortOption('salary')}
+                                    onChange={() => {
+                                        setSortOption('salary');
+                                        fetchJobs(1, filters, 'salary');
+                                    }}
                                 />
                                 <i className="far fa-circle"></i>
                                 <i className="fas fa-check-circle"></i>
@@ -583,6 +668,34 @@ const JobList = () => {
                         <div className="content-wrapper">
                             {/* Jobs List */}
                             <div className="jobs-column">
+                                {/* Results count */}
+                                <div className="results-info">
+                                    {isShowingMatchingJobs ? (
+                                        <>
+                                            <p>
+                                                <i className="fas fa-star" style={{ color: '#008060', marginRight: '8px' }}></i>
+                                                Tìm thấy <strong>{totalRows}</strong> công việc phù hợp với CV của bạn.
+                                            </p>
+                                            <button className="btn-clear-filters" onClick={handleBackToNormalJobs}>
+                                                <i className="fas fa-arrow-left"></i>
+                                                Xem tất cả việc làm
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <p>
+                                                Tìm thấy <strong>{totalRows}</strong> việc làm phù hợp với yêu cầu của bạn.
+                                            </p>
+                                            {hasActiveFilters && (
+                                                <button className="btn-clear-filters" onClick={handleClearFilters}>
+                                                    <i className="fas fa-times"></i>
+                                                    Xóa bộ lọc
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                </div>
+
                                 {isLoading ? (
                                     <div className="loading-container">
                                         <i className="fas fa-spinner fa-spin"></i>
@@ -723,7 +836,7 @@ const JobList = () => {
 
                             {/* Sidebar - Top Companies */}
                             <div className="sidebar-column">
-                                <div className="sidebar-card">
+                                <div className="sidebar-card sticky-top-companies">
                                     <h3 className="sidebar-title">Top công ty nổi bật</h3>
                                     <div className="company-list">
                                         {filterOptions.companies.slice(0, 5).map((company) => (
@@ -743,35 +856,6 @@ const JobList = () => {
                                         ))}
                                     </div>
                                 </div>
-
-                                {/* Format Filter */}
-                                <div className="sidebar-card">
-                                    <h3 className="sidebar-title">Hình thức làm việc</h3>
-                                    <div className="format-list">
-                                        {filterOptions.formats.map((format) => (
-                                            <label 
-                                                key={format.id} 
-                                                className={`format-item ${filters.formatId === format.id ? 'active' : ''}`}
-                                            >
-                                                <input 
-                                                    type="radio" 
-                                                    name="format"
-                                                    checked={filters.formatId === format.id}
-                                                    onChange={() => handleFilterChange('formatId', format.id)}
-                                                />
-                                                <span>{format.TenHinhThuc}</span>
-                                            </label>
-                                        ))}
-                                        {filters.formatId && (
-                                            <button 
-                                                className="btn-clear-format"
-                                                onClick={() => handleFilterChange('formatId', '')}
-                                            >
-                                                Xóa lọc
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -779,6 +863,7 @@ const JobList = () => {
             </div>
             
             <Footer />
+            <ScrollToTop />
         </div>
     );
 };

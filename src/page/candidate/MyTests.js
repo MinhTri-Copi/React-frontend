@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
+import ScrollToTop from '../../components/ScrollToTop/ScrollToTop';
 import { getMyTestSubmissions } from '../../service.js/testSubmissionService';
 import { startTest } from '../../service.js/jobApplicationService';
 import { toast } from 'react-toastify';
@@ -350,6 +351,7 @@ const MyTests = () => {
                 </div>
             </div>
             <Footer />
+            <ScrollToTop />
         </div>
     );
 };
