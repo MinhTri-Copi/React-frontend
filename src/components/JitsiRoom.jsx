@@ -18,6 +18,7 @@ const JitsiRoom = () => {
     const recordedChunksRef = useRef([]);
     const recordingStreamRef = useRef(null);
     const currentMeetingIdRef = useRef(null); // Store meeting ID for upload
+    const jitsiApiRef = useRef(null); // Store Jitsi API reference
     const [isRecording, setIsRecording] = useState(false); // Track recording state
 
     useEffect(() => {
@@ -170,7 +171,9 @@ const JitsiRoom = () => {
     };
 
     /**
-     * Start recording screen + audio (chỉ cho HR)
+     * Start recording từ Jitsi meeting
+     * Sử dụng getDisplayMedia để record tab (không phải toàn màn hình)
+     * User sẽ được yêu cầu chọn tab để share, và bật "Share tab audio"
      */
     const startRecording = async () => {
         try {
@@ -191,20 +194,37 @@ const JitsiRoom = () => {
                 console.warn('⚠️ startRecording called but no meeting ID!');
             }
             
-            // Request screen + audio permission
+            // Yêu cầu user share tab (không phải toàn màn hình)
+            // User sẽ chọn tab chứa Jitsi meeting và bật "Share tab audio"
+            console.log('🎥 Requesting display media (tab sharing)...');
+            toast.info('📹 Vui lòng chọn tab chứa Jitsi meeting và bật "Share tab audio" để recording!');
+            
             const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
-                    displaySurface: 'browser', // Record browser tab/window
+                    displaySurface: 'browser', // Chỉ share browser tab, không phải toàn màn hình
                     cursor: 'always'
                 },
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
-                    sampleRate: 44100
+                    sampleRate: 44100,
+                    // Quan trọng: bật capture audio từ tab
+                    suppressLocalAudioPlayback: false
                 }
             });
             
+            console.log('✅ Display media stream obtained');
+            console.log('   - Video tracks:', stream.getVideoTracks().length);
+            console.log('   - Audio tracks:', stream.getAudioTracks().length);
+            
+            // Kiểm tra xem có audio track không (user có bật "Share tab audio" không)
+            if (stream.getAudioTracks().length === 0) {
+                console.warn('⚠️ No audio track found! User may not have enabled "Share tab audio"');
+                toast.warning('⚠️ Không có audio! Vui lòng bật "Share tab audio" để record âm thanh.');
+            }
+            
             recordingStreamRef.current = stream;
+            console.log('✅ Recording stream stored');
             
             // Create MediaRecorder
             const options = {
@@ -447,6 +467,10 @@ const JitsiRoom = () => {
         console.log('   - Current user:', user?.Hoten || user?.id);
         console.log('   - Current meeting ID:', currentMeetingIdRef.current);
         console.log('   - Room Name:', roomName);
+        
+        // Store API reference for recording
+        jitsiApiRef.current = api;
+        console.log('   - Jitsi API stored in ref');
         
         // Update meeting status to "running" when meeting starts
         const updateStatusToRunning = async () => {

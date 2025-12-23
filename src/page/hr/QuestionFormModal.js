@@ -8,7 +8,8 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId, mode = 'c
         Cauhoi: '',
         Dapan: '',
         Loaicauhoi: 'tuluan',
-        Diem: 10
+        Diem: 10,
+        Options: null // {A: "text", B: "text", C: "text", D: "text"}
     }]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -18,14 +19,16 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId, mode = 'c
                 Cauhoi: initialData.Cauhoi || '',
                 Dapan: initialData.Dapan || '',
                 Loaicauhoi: initialData.Loaicauhoi || 'tuluan',
-                Diem: initialData.Diem || 10
+                Diem: initialData.Diem || 10,
+                Options: initialData.Options || null
             }]);
         } else if (show && mode === 'create') {
             setQuestions([{
                 Cauhoi: '',
                 Dapan: '',
                 Loaicauhoi: 'tuluan',
-                Diem: 10
+                Diem: 10,
+                Options: null
             }]);
         }
     }, [show, mode, initialData]);
@@ -37,8 +40,18 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId, mode = 'c
             Cauhoi: '',
             Dapan: '',
             Loaicauhoi: 'tuluan',
-            Diem: 10
+            Diem: 10,
+            Options: null
         }]);
+    };
+
+    const handleOptionChange = (index, letter, value) => {
+        const newQuestions = [...questions];
+        if (!newQuestions[index].Options) {
+            newQuestions[index].Options = { A: '', B: '', C: '', D: '' };
+        }
+        newQuestions[index].Options[letter] = value;
+        setQuestions(newQuestions);
     };
 
     const handleRemove = (index) => {
@@ -162,7 +175,15 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId, mode = 'c
                                         <label>Loại câu hỏi</label>
                                         <select
                                             value={question.Loaicauhoi}
-                                            onChange={(e) => handleChange(index, 'Loaicauhoi', e.target.value)}
+                                            onChange={(e) => {
+                                                handleChange(index, 'Loaicauhoi', e.target.value);
+                                                // Auto initialize options for multiple choice
+                                                if (e.target.value === 'tracnghiem' && !question.Options) {
+                                                    const newQuestions = [...questions];
+                                                    newQuestions[index].Options = { A: '', B: '', C: '', D: '' };
+                                                    setQuestions(newQuestions);
+                                                }
+                                            }}
                                         >
                                             <option value="tuluan">Tự luận</option>
                                             <option value="tracnghiem">Trắc nghiệm</option>
@@ -180,6 +201,30 @@ const QuestionFormModal = ({ show, onClose, onSuccess, testId, userId, mode = 'c
                                         />
                                     </div>
                                 </div>
+
+                                {/* Multiple choice options */}
+                                {question.Loaicauhoi === 'tracnghiem' && (
+                                    <div className="form-group">
+                                        <label>Các lựa chọn (A, B, C, D) <span className="required">*</span></label>
+                                        <div className="options-input-group">
+                                            {['A', 'B', 'C', 'D'].map(letter => (
+                                                <div key={letter} className="option-input-item">
+                                                    <label className="option-label">{letter}.</label>
+                                                    <input
+                                                        type="text"
+                                                        value={question.Options?.[letter] || ''}
+                                                        onChange={(e) => handleOptionChange(index, letter, e.target.value)}
+                                                        placeholder={`Nhập nội dung lựa chọn ${letter}...`}
+                                                        required={question.Loaicauhoi === 'tracnghiem'}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <small className="form-hint">
+                                            Đáp án chuẩn ở trên phải là một trong các chữ cái: A, B, C hoặc D
+                                        </small>
+                                    </div>
+                                )}
                             </div>
                         ))}
 

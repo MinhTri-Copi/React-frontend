@@ -630,13 +630,82 @@ const TestTaking = () => {
                                                         disabled={submission.Trangthai !== 'danglam'}
                                                     />
                                                 ) : (
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Nhập đáp án (ví dụ: A, B, C hoặc nội dung ngắn gọn)"
-                                                        value={answers[question.id] || ''}
-                                                        onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-                                                        disabled={submission.Trangthai !== 'danglam'}
-                                                    />
+                                                    // Multiple choice question
+                                                    (() => {
+                                                        // Parse Options nếu là string JSON (có thể bị double-encoded)
+                                                        let parsedOptions = null;
+                                                        if (question.Options) {
+                                                            if (typeof question.Options === 'string') {
+                                                                try {
+                                                                    // Parse lần đầu
+                                                                    let parsed = JSON.parse(question.Options);
+                                                                    
+                                                                    // Nếu kết quả vẫn là string (double-encoded), parse thêm lần nữa
+                                                                    if (typeof parsed === 'string') {
+                                                                        try {
+                                                                            parsed = JSON.parse(parsed);
+                                                                        } catch (e2) {
+                                                                            // Không phải double-encoded, giữ nguyên parsed từ lần 1
+                                                                        }
+                                                                    }
+                                                                    
+                                                                    // Chỉ chấp nhận plain object, không phải array hoặc null
+                                                                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                                                                        parsedOptions = parsed;
+                                                                    }
+                                                                } catch (e) {
+                                                                    console.warn('Failed to parse Options JSON:', e, 'Raw Options:', question.Options);
+                                                                    parsedOptions = null;
+                                                                }
+                                                            } else if (typeof question.Options === 'object' && !Array.isArray(question.Options) && question.Options !== null) {
+                                                                // Plain object, dùng trực tiếp
+                                                                parsedOptions = question.Options;
+                                                            }
+                                                        }
+
+                                                        // Debug log để kiểm tra
+                                                        if (question.Loaicauhoi === 'tracnghiem' && !parsedOptions) {
+                                                            console.warn('Question', question.id, 'is tracnghiem but no valid Options:', {
+                                                                raw: question.Options,
+                                                                type: typeof question.Options,
+                                                                isArray: Array.isArray(question.Options)
+                                                            });
+                                                        }
+
+                                                        // Chỉ render radio buttons nếu có parsedOptions hợp lệ (plain object với keys)
+                                                        const hasValidOptions = parsedOptions && 
+                                                            typeof parsedOptions === 'object' && 
+                                                            !Array.isArray(parsedOptions) &&
+                                                            Object.keys(parsedOptions).length > 0;
+
+                                                        return hasValidOptions ? (
+                                                            <div className="multiple-choice-options">
+                                                                {Object.entries(parsedOptions).map(([letter, text]) => (
+                                                                    <label key={letter} className="option-item">
+                                                                        <input
+                                                                            type="radio"
+                                                                            name={`question-${question.id}`}
+                                                                            value={letter}
+                                                                            checked={answers[question.id] === letter}
+                                                                            onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                                                                            disabled={submission.Trangthai !== 'danglam'}
+                                                                        />
+                                                                        <span className="option-letter">{letter}.</span>
+                                                                        <span className="option-text">{text}</span>
+                                                                    </label>
+                                                                ))}
+                                                            </div>
+                                                        ) : (
+                                                            // Fallback: text input if no options defined
+                                                            <input
+                                                                type="text"
+                                                                placeholder="Nhập đáp án (ví dụ: A, B, C hoặc nội dung ngắn gọn)"
+                                                                value={answers[question.id] || ''}
+                                                                onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+                                                                disabled={submission.Trangthai !== 'danglam'}
+                                                            />
+                                                        );
+                                                    })()
                                                 )}
                                             </div>
                                         </div>

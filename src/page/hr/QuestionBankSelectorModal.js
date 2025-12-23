@@ -109,6 +109,7 @@ const QuestionBankSelectorModal = ({ show, onClose, onSelect, userId }) => {
             Cauhoi: q.Cauhoi,
             Dapan: q.Dapan,
             Loaicauhoi: q.Loaicauhoi,
+            Options: q.Options || null, // QUAN TRỌNG: Copy Options để hiển thị radio buttons
             Diem: q.Diem || 10
         }));
 
@@ -132,7 +133,15 @@ const QuestionBankSelectorModal = ({ show, onClose, onSelect, userId }) => {
     if (!show) return null;
 
     const getQuestionTypeLabel = (type) => {
-        return type === 'tuluan' ? 'Tự luận' : 'Trắc nghiệm';
+        // Normalize type: remove any extra characters, take first valid value
+        if (!type) return 'Không xác định';
+        const normalized = String(type).toLowerCase().trim();
+        // If contains "tracnghiem", prioritize it (multiple choice)
+        if (normalized.includes('tracnghiem')) return 'Trắc nghiệm';
+        // If contains "tuluan", it's essay
+        if (normalized.includes('tuluan')) return 'Tự luận';
+        // Default fallback
+        return normalized === 'tuluan' ? 'Tự luận' : 'Trắc nghiệm';
     };
 
     const getDifficultyLabel = (diff) => {

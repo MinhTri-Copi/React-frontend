@@ -182,7 +182,15 @@ const QuestionBankDetailModal = ({ show, onClose, bank, onUpdate, userId }) => {
                                                             <span className="topic-badge">{item.Chude}</span>
                                                         )}
                                                         <span className="type-badge">
-                                                            {item.Loaicauhoi === 'tracnghiem' ? 'Trắc nghiệm' : 'Tự luận'}
+                                                            {(() => {
+                                                                const type = String(item.Loaicauhoi || '').toLowerCase().trim();
+                                                                // If contains "tracnghiem", prioritize it (multiple choice)
+                                                                if (type.includes('tracnghiem')) return 'Trắc nghiệm';
+                                                                // If contains "tuluan", it's essay
+                                                                if (type.includes('tuluan')) return 'Tự luận';
+                                                                // Default fallback
+                                                                return type === 'tracnghiem' ? 'Trắc nghiệm' : 'Tự luận';
+                                                            })()}
                                                         </span>
                                                         <span className="difficulty-badge">
                                                             {item.Dokho === 'de' ? 'Dễ' : 
@@ -301,6 +309,44 @@ const QuestionBankDetailModal = ({ show, onClose, bank, onUpdate, userId }) => {
                                                     <p className="question-text">
                                                         <strong>Câu hỏi:</strong> {item.Cauhoi}
                                                     </p>
+                                                    {/* Hiển thị options cho câu trắc nghiệm */}
+                                                    {item.Options && typeof item.Options === 'object' && Object.keys(item.Options).length > 0 && (
+                                                        <div className="options-list">
+                                                            <strong>Các lựa chọn:</strong>
+                                                            <ul className="options-ul">
+                                                                {Object.entries(item.Options).map(([letter, text]) => (
+                                                                    <li key={letter} className={`option-item ${item.Dapan === letter ? 'correct-answer' : ''}`}>
+                                                                        <strong>{letter}.</strong> {text}
+                                                                        {item.Dapan === letter && <span className="correct-badge">✓ Đáp án đúng</span>}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                    {/* Hiển thị options nếu là JSON string */}
+                                                    {item.Options && typeof item.Options === 'string' && (() => {
+                                                        try {
+                                                            const parsedOptions = JSON.parse(item.Options);
+                                                            if (parsedOptions && typeof parsedOptions === 'object' && Object.keys(parsedOptions).length > 0) {
+                                                                return (
+                                                                    <div className="options-list">
+                                                                        <strong>Các lựa chọn:</strong>
+                                                                        <ul className="options-ul">
+                                                                            {Object.entries(parsedOptions).map(([letter, text]) => (
+                                                                                <li key={letter} className={`option-item ${item.Dapan === letter ? 'correct-answer' : ''}`}>
+                                                                                    <strong>{letter}.</strong> {text}
+                                                                                    {item.Dapan === letter && <span className="correct-badge">✓ Đáp án đúng</span>}
+                                                                                </li>
+                                                                            ))}
+                                                                        </ul>
+                                                                    </div>
+                                                                );
+                                                            }
+                                                        } catch (e) {
+                                                            // Không phải JSON hợp lệ
+                                                        }
+                                                        return null;
+                                                    })()}
                                                     <p className="answer-text">
                                                         <strong>Đáp án:</strong> {item.Dapan}
                                                     </p>
