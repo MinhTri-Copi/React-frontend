@@ -1,9 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import CandidateNav from '../../components/Navigation/CandidateNav';
 import Footer from '../../components/Footer/Footer';
 import { toast } from 'react-toastify';
 import { getMyRecords, getRecordById } from '../../service.js/recordService';
 import { reviewCV } from '../../service.js/cvReviewService';
+import PDFViewer from '../../components/PDFViewer/PDFViewer';
+import PDFHighlight from '../../components/PDFHighlight/PDFHighlight';
+import usePDFTextSearch from '../../hooks/usePDFTextSearch';
 import './CVReview.scss';
 
 const CVReview = () => {
@@ -20,7 +23,11 @@ const CVReview = () => {
     const [reviewResult, setReviewResult] = useState(null);
     const [cvText, setCvText] = useState('');
     const [recordId, setRecordId] = useState(null);
+    const [pdfUrl, setPdfUrl] = useState(null);
+    const [activeIssueIndex, setActiveIssueIndex] = useState(null);
+    const [textLayerReady, setTextLayerReady] = useState(false);
     const jdFileInputRefs = useRef([]);
+    const textLayerTimeoutRef = useRef(null);
 
     useEffect(() => {
         const storedUser = sessionStorage.getItem('user') || localStorage.getItem('user');
@@ -29,6 +36,7 @@ const CVReview = () => {
             setUser(parsedUser);
             fetchRecords(parsedUser.id);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const fetchRecords = async (userId) => {
@@ -55,7 +63,9 @@ const CVReview = () => {
             setSelectedRecord(null);
             setCvText('');
             setRecordId(null);
+            setPdfUrl(null);
             setReviewResult(null);
+            setActiveIssueIndex(null);
             return;
         }
 
@@ -64,6 +74,9 @@ const CVReview = () => {
         setReviewResult(null);
         setCvText('');
         setRecordId(null);
+        setPdfUrl(null);
+        setActiveIssueIndex(null);
+        setTextLayerReady(false);
 
         try {
             const record = records.find(r => r.id === parseInt(recordId));
@@ -88,6 +101,28 @@ const CVReview = () => {
                 if (recordData.cvText) {
                     setCvText(recordData.cvText);
                     setRecordId(recordId);
+                    
+                    // Set PDF URL from File_url - Use recordData instead of record
+                    if (recordData.File_url) {
+                        // Normalize File_url: ensure it starts with /
+                        let fileUrl = recordData.File_url;
+                        if (!fileUrl.startsWith('/')) {
+                            fileUrl = '/' + fileUrl;
+                        }
+                        
+                        // Construct full URL: backend base URL + File_url
+                        const backendUrl = process.env.REACT_APP_API_URL || 'http://localhost:8082';
+                        const pdfUrlFull = `${backendUrl}${fileUrl}`;
+                        
+                        console.log('📄 Setting PDF URL:', pdfUrlFull);
+                        console.log('📄 Original File_url:', recordData.File_url);
+                        
+                        setPdfUrl(pdfUrlFull);
+                    } else {
+                        console.warn('⚠️ Record does not have File_url:', recordData);
+                        setPdfUrl(null);
+                    }
+                    
                     toast.success('Đã chọn CV thành công!');
                 } else {
                     toast.warning('CV này chưa có nội dung text. Vui lòng chọn CV khác.');
@@ -686,6 +721,85 @@ const CVReview = () => {
 
     const matchRate = calculateMatchRate();
 
+    // Use PDF text search hook
+    const highlights = usePDFTextSearch(
+        reviewResult?.issues || [],
+        textLayerReady
+    );
+
+    // Handle text layer ready
+    const handleTextLayerReady = useCallback((pageIndex) => {
+        // Clear any existing timeout
+        if (textLayerTimeoutRef.current) {
+            clearTimeout(textLayerTimeoutRef.current);
+        }
+        
+        // Mark as ready after all pages are loaded
+        textLayerTimeoutRef.current = setTimeout(() => {
+            setTextLayerReady(true);
+            textLayerTimeoutRef.current = null;
+        }, 1000);
+    }, []);
+
+    // Handle PDF load success
+    const handlePDFLoadSuccess = useCallback(() => {
+        // Clear any pending timeout
+        if (textLayerTimeoutRef.current) {
+            clearTimeout(textLayerTimeoutRef.current);
+            textLayerTimeoutRef.current = null;
+        }
+        // Reset text layer ready state when new PDF loads
+        setTextLayerReady(false);
+    }, []);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (textLayerTimeoutRef.current) {
+                clearTimeout(textLayerTimeoutRef.current);
+                textLayerTimeoutRef.current = null;
+            }
+        };
+    }, []);
+
+    // Handle issue click - scroll to highlight
+    const handleIssueClick = (issueIndex) => {
+        setActiveIssueIndex(issueIndex);
+        
+        // Find highlight for this issue
+        const highlight = highlights.find(h => h.issueIndex === issueIndex);
+        if (highlight) {
+            // Find page wrapper using data attribute and scroll to it
+            const pageWrapper = document.querySelector(`.pdf-page-wrapper[data-page-number="${highlight.pageNumber}"]`);
+            if (pageWrapper) {
+                pageWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // Also scroll the highlight into view after a short delay
+                setTimeout(() => {
+                    const highlightElement = pageWrapper.querySelector(`.pdf-highlight[data-issue-index="${issueIndex}"]`);
+                    if (highlightElement) {
+                        highlightElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 300);
+            }
+        }
+    };
+
+    // Handle highlight click - scroll to issue
+    const handleHighlightClick = (issueIndex) => {
+        setActiveIssueIndex(issueIndex);
+        
+        // Find issue card and scroll to it
+        const issueCard = document.querySelector(`.issue-item[data-issue-index="${issueIndex}"]`);
+        if (issueCard) {
+            issueCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Add active class temporarily
+            issueCard.classList.add('active');
+            setTimeout(() => {
+                issueCard.classList.remove('active');
+            }, 2000);
+        }
+    };
+
     return (
         <div className="cv-review-page">
             <CandidateNav />
@@ -934,10 +1048,19 @@ const CVReview = () => {
                                         <div className="issues-list">
                                             {reviewResult.issues.map((issue, index) => {
                                                 const issueColor = getIssueColor(index);
+                                                const isActive = activeIssueIndex === index;
                                                 return (
-                                                    <div key={index} className="issue-item" style={{
-                                                        borderLeft: `4px solid ${issueColor}`
-                                                    }}>
+                                                    <div
+                                                        key={index}
+                                                        className={`issue-item ${isActive ? 'active' : ''}`}
+                                                        data-issue-index={index}
+                                                        style={{
+                                                            borderLeft: `4px solid ${issueColor}`,
+                                                            cursor: 'pointer',
+                                                            transition: 'all 0.3s ease'
+                                                        }}
+                                                        onClick={() => handleIssueClick(index)}
+                                                    >
                                                         <div className="issue-header">
                                                             <span className="issue-section">{getSectionLabel(issue.section)}</span>
                                                             <span className="issue-number" style={{
@@ -949,7 +1072,7 @@ const CVReview = () => {
                                                         </div>
                                                         <div className="issue-content">
                                                             <p className="issue-text">
-                                                                <strong>Vấn đề:</strong> {issue.original_text}
+                                                                <strong>Vấn đề:</strong> {issue.exact_quote || issue.original_text || 'Vấn đề chung'}
                                                             </p>
                                                             <p className="issue-suggestion">
                                                                 <strong>Gợi ý:</strong> {issue.suggestion}
@@ -962,15 +1085,26 @@ const CVReview = () => {
                                     </div>
                                 )}
 
-                                {/* CV Preview with Boxes */}
-                                {cvText && (
-                                    <div className="cv-preview-section">
-                                        <h4>
-                                            <i className="fas fa-file-alt"></i>
-                                            CV Preview (với khoanh khung)
-                                        </h4>
-                                        <div className="cv-preview">
-                                            {renderCVWithBoxes(cvText, reviewResult.issues || [])}
+                                {/* Split View: PDF Viewer + Issues */}
+                                {reviewResult && pdfUrl && (
+                                    <div className="cv-preview-split-view">
+                                        <div className="split-view-left">
+                                            <h4>
+                                                <i className="fas fa-file-pdf"></i>
+                                                CV Preview (PDF)
+                                            </h4>
+                                            <div className="pdf-viewer-wrapper">
+                                                <PDFViewer
+                                                    fileUrl={pdfUrl}
+                                                    onTextLayerReady={handleTextLayerReady}
+                                                    onLoadSuccess={handlePDFLoadSuccess}
+                                                />
+                                                <PDFHighlight
+                                                    highlights={highlights}
+                                                    activeIssueIndex={activeIssueIndex}
+                                                    onHighlightClick={handleHighlightClick}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 )}

@@ -660,10 +660,19 @@
                             background: #f8f9fa;
                             border-radius: 8px;
                             padding: 1rem;
-                            transition: transform 0.2s;
+                            transition: all 0.3s ease;
+                            margin-bottom: 1rem;
 
                             &:hover {
                                 transform: translateX(4px);
+                                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                            }
+
+                            &.active {
+                                background: #e3f2fd;
+                                border-left-width: 6px !important;
+                                box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+                                animation: issuePulse 2s infinite;
                             }
 
                             .issue-header {
@@ -755,6 +764,41 @@
                         }
                     }
                 }
+
+                // Split View: PDF Viewer + Issues
+                .cv-preview-split-view {
+                    margin-top: 2rem;
+                    width: 100%;
+
+                    .split-view-left {
+                        width: 100%;
+
+                        h4 {
+                            font-size: 1.2rem;
+                            color: #2c3e50;
+                            margin-bottom: 1rem;
+                            display: flex;
+                            align-items: center;
+                            gap: 0.5rem;
+
+                            i {
+                                color: #e74c3c;
+                            }
+                        }
+
+                        .pdf-viewer-wrapper {
+                            position: relative;
+                            background: white;
+                            border-radius: 8px;
+                            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                            overflow-y: auto;
+                            overflow-x: hidden;
+                            min-height: 600px;
+                            max-height: 90vh;
+                            height: auto;
+                        }
+                    }
+                }
             }
 
             .empty-state {
@@ -773,6 +817,36 @@
                 p {
                     color: #7f8c8d;
                     font-size: 1.1rem;
+                }
+            }
+        }
+    }
+}
+
+@keyframes issuePulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 16px rgba(52, 152, 219, 0.5);
+    }
+}
+
+// Responsive: Stack vertical on mobile
+@media (max-width: 1024px) {
+    .cv-review-page {
+        .cv-review-container {
+            .cv-review-content {
+                .review-results-section {
+                    .results-card {
+                        .cv-preview-split-view {
+                            .split-view-left {
+                                .pdf-viewer-wrapper {
+                                    max-height: 500px;
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }

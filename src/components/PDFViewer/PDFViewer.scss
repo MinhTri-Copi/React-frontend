@@ -1,0 +1,128 @@
+// Import CSS gốc của react-pdf để text layer không bị lệch
+@import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
+
+.pdf-viewer-container {
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    background-color: #f5f5f5;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+
+    .pdf-page-wrapper {
+        position: relative;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        background: white;
+        border-radius: 4px;
+        overflow: visible; // Changed from hidden to visible to allow highlights to show
+        width: 100%;
+        display: flex;
+        justify-content: center;
+
+        .pdf-page {
+            display: block;
+            position: relative;
+            max-width: 100%;
+            height: auto;
+        }
+    }
+
+    .pdf-viewer-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        color: #666;
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        p {
+            margin: 0;
+            font-size: 14px;
+        }
+    }
+
+    .pdf-viewer-error {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        color: #e74c3c;
+        text-align: center;
+
+        i {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        p {
+            margin: 8px 0;
+            font-size: 16px;
+        }
+
+        .error-details {
+            font-size: 14px;
+            color: #c0392b;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+
+        .error-hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 12px;
+            line-height: 1.6;
+        }
+
+        .error-url {
+            font-size: 11px;
+            color: #7f8c8d;
+            margin-top: 8px;
+            word-break: break-all;
+            max-width: 100%;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    }
+
+    .pdf-viewer-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        color: #999;
+        text-align: center;
+
+        i {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        p {
+            margin: 0;
+            font-size: 16px;
+        }
+    }
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
