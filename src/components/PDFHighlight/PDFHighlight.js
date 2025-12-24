@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { getIssueColor, hexToRgba } from '../../utils/colorUtils';
 import './PDFHighlight.scss';
 
 /**
@@ -8,42 +9,7 @@ import './PDFHighlight.scss';
  * @param {Function} onHighlightClick - Callback when highlight is clicked
  */
 const PDFHighlight = ({ highlights = [], activeIssueIndex = null, onHighlightClick }) => {
-    // Get color based on issue index (to match the issue card colors)
-    const getIssueColor = (index) => {
-        // Array of distinct colors (matching CVReview.js getIssueColor)
-        const colors = [
-            '#ff4444', // Red
-            '#ffaa00', // Orange
-            '#44aaff', // Blue
-            '#ff6b9d', // Pink
-            '#9b59b6', // Purple
-            '#1abc9c', // Turquoise
-            '#e74c3c', // Dark Red
-            '#f39c12', // Dark Orange
-            '#3498db', // Dark Blue
-            '#e67e22', // Carrot
-            '#16a085', // Green
-            '#c0392b', // Dark Red 2
-            '#d35400', // Orange 2
-            '#2980b9', // Blue 2
-            '#8e44ad', // Purple 2
-        ];
-        return colors[index % colors.length];
-    };
-
-    // Get color based on severity (fallback)
-    const getColorBySeverity = (severity) => {
-        switch (severity) {
-            case 'high':
-                return '#e74c3c'; // Red
-            case 'medium':
-                return '#f39c12'; // Orange
-            case 'low':
-                return '#f1c40f'; // Yellow
-            default:
-                return '#3498db'; // Blue (default)
-        }
-    };
+    // getIssueColor is now imported from colorUtils.js
 
     // Render highlights using DOM manipulation (necessary because we need to inject into page wrappers)
     const previousHighlightsCountRef = useRef(0);
@@ -122,21 +88,14 @@ const PDFHighlight = ({ highlights = [], activeIssueIndex = null, onHighlightCli
 
             pageHighlights.forEach((highlight, idx) => {
                 const isActive = highlight.issueIndex === activeIssueIndex;
-                // Use severity-based color, fallback to index-based color
-                const severity = highlight.issue?.severity;
-                const color = severity ? getColorBySeverity(severity) : getIssueColor(highlight.issueIndex);
+                // Use index-based color (matches CVReview.js issue cards and CVHighlighter)
+                const color = getIssueColor(highlight.issueIndex);
 
                 const highlightDiv = document.createElement('div');
                 highlightDiv.className = `pdf-highlight ${isActive ? 'active' : ''}`;
                 highlightDiv.setAttribute('data-issue-index', highlight.issueIndex);
                 
-                // Convert hex color to rgba for background
-                const hexToRgba = (hex, alpha) => {
-                    const r = parseInt(hex.slice(1, 3), 16);
-                    const g = parseInt(hex.slice(3, 5), 16);
-                    const b = parseInt(hex.slice(5, 7), 16);
-                    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-                };
+                // hexToRgba is imported from colorUtils.js
 
                 // Ensure valid dimensions
                 const width = Math.max(highlight.width || 20, 20);

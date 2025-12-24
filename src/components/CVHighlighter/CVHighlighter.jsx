@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { normalizeText, findFuzzyLocation } from '../../utils/stringUtils';
+import { getIssueColor, hexToRgba } from '../../utils/colorUtils';
 import './CVHighlighter.scss';
 
 /**
@@ -16,7 +17,7 @@ const CVHighlighter = ({ cvText, issues = [] }) => {
             return [{ text: cvText || '', isIssue: false, issues: null }];
         }
 
-        // Find positions for each issue
+        // Find positions for each issue with precise matching
         const issuePositions = [];
         
         issues.forEach((issue, issueIndex) => {
@@ -25,92 +26,127 @@ const CVHighlighter = ({ cvText, issues = [] }) => {
                 return; // Skip issues without quote
             }
 
-            const position = findFuzzyLocation(cvText, quote);
+            // Try to find the exact quote in CV text
+            let position = findFuzzyLocation(cvText, quote);
+            
             if (position) {
-                issuePositions.push({
-                    start: position.start,
-                    end: position.end,
-                    issue: {
-                        ...issue,
-                        index: issueIndex
+                // Validate and refine position to ensure accuracy
+                // Ensure position is within bounds
+                position.start = Math.max(0, Math.min(position.start, cvText.length));
+                position.end = Math.max(position.start, Math.min(position.end, cvText.length));
+                
+                // Get the actual text at this position
+                const foundText = cvText.substring(position.start, position.end);
+                
+                // Try to refine position by finding exact match boundaries
+                // This helps when fuzzy matching returns a slightly larger range
+                const trimmedQuote = quote.trim();
+                const normalizedFound = normalizeText(foundText);
+                const normalizedQuote = normalizeText(trimmedQuote);
+                
+                // If found text is longer than quote, try to find exact boundaries
+                if (normalizedFound.length > normalizedQuote.length) {
+                    // Try to find the quote within the found text
+                    const quoteIndex = normalizedFound.indexOf(normalizedQuote);
+                    if (quoteIndex !== -1) {
+                        // Adjust position to match exact quote boundaries
+                        // This is approximate but helps reduce over-highlighting
+                        const ratio = normalizedQuote.length / normalizedFound.length;
+                        const adjustment = Math.floor((position.end - position.start) * (1 - ratio) / 2);
+                        position.start = Math.max(0, position.start + adjustment);
+                        position.end = Math.min(cvText.length, position.end - adjustment);
                     }
-                });
+                }
+                
+                // Final validation: ensure we have valid range
+                if (position.start < position.end && position.end <= cvText.length) {
+                    issuePositions.push({
+                        start: position.start,
+                        end: position.end,
+                        issue: {
+                            ...issue,
+                            index: issueIndex
+                        }
+                    });
+                } else {
+                    console.warn(`⚠️ Invalid position for issue ${issueIndex + 1}: start=${position.start}, end=${position.end}`);
+                }
             } else {
                 console.warn(`⚠️ Could not find issue ${issueIndex + 1} in CV text: "${quote.substring(0, 50)}..."`);
             }
         });
 
-        // Sort by start position
-        issuePositions.sort((a, b) => a.start - b.start);
-
-        // Build segments: handle overlapping issues
-        // Strategy: Create a map of character positions to issues
-        const charToIssues = new Map();
-        
-        issuePositions.forEach(pos => {
-            for (let i = pos.start; i < pos.end; i++) {
-                if (!charToIssues.has(i)) {
-                    charToIssues.set(i, []);
-                }
-                charToIssues.get(i).push(pos);
-            }
+        // Sort by start position, then by end position
+        issuePositions.sort((a, b) => {
+            if (a.start !== b.start) return a.start - b.start;
+            return a.end - b.end;
         });
 
-        // Group consecutive characters with same issue set
+        // Build segments: Each issue gets its own exact range, NO merging
+        // This ensures we only highlight the exact text from exact_quote
         const segments = [];
-        let currentStart = 0;
-        let currentIssues = [];
+        
+        if (issuePositions.length === 0) {
+            return [{ text: cvText, isIssue: false, issues: null }];
+        }
 
-        for (let i = 0; i <= cvText.length; i++) {
-            const issuesAtPos = charToIssues.get(i) || [];
-            const issueIds = issuesAtPos.map(p => `${p.issue.index}-${p.start}-${p.end}`).sort();
-            const currentIssueIds = currentIssues.map(p => `${p.issue.index}-${p.start}-${p.end}`).sort();
+        // Create breakpoints from all issue positions (start and end)
+        const breakpoints = new Set([0, cvText.length]);
+        issuePositions.forEach(pos => {
+            // Ensure breakpoints are within bounds
+            const validStart = Math.max(0, Math.min(pos.start, cvText.length));
+            const validEnd = Math.max(validStart, Math.min(pos.end, cvText.length));
+            breakpoints.add(validStart);
+            breakpoints.add(validEnd);
+        });
+        
+        const sortedBreakpoints = Array.from(breakpoints).sort((a, b) => a - b);
+
+        // Build segments between breakpoints
+        // Each segment is either highlighted (if within an issue range) or regular text
+        for (let i = 0; i < sortedBreakpoints.length - 1; i++) {
+            const segmentStart = sortedBreakpoints[i];
+            const segmentEnd = sortedBreakpoints[i + 1];
             
-            // If issue set changed, create a segment
-            if (i === cvText.length || JSON.stringify(issueIds) !== JSON.stringify(currentIssueIds)) {
-                if (i > currentStart) {
-                    segments.push({
-                        text: cvText.substring(currentStart, i),
-                        isIssue: currentIssues.length > 0,
-                        issues: currentIssues.length > 0 ? [...currentIssues] : null
-                    });
-                }
-                currentStart = i;
-                currentIssues = issuesAtPos;
+            // Find all issues that contain this segment
+            // A segment is contained if: segmentStart >= issue.start && segmentEnd <= issue.end
+            const containingIssues = issuePositions.filter(pos => {
+                const validStart = Math.max(0, Math.min(pos.start, cvText.length));
+                const validEnd = Math.max(validStart, Math.min(pos.end, cvText.length));
+                return segmentStart >= validStart && segmentEnd <= validEnd;
+            });
+            
+            const segmentText = cvText.substring(segmentStart, segmentEnd);
+            if (segmentText.length === 0) continue;
+            
+            if (containingIssues.length > 0) {
+                // This segment is within one or more issue ranges - highlight it
+                segments.push({
+                    text: segmentText,
+                    isIssue: true,
+                    issues: containingIssues
+                });
+            } else {
+                // Regular text segment
+                segments.push({
+                    text: segmentText,
+                    isIssue: false,
+                    issues: null
+                });
             }
         }
 
         return segments;
     }, [cvText, issues]);
 
-    // Get color based on severity
-    const getSeverityStyle = (severity) => {
-        switch (severity) {
-            case 'high':
-                return {
-                    backgroundColor: 'rgba(254, 226, 226, 0.8)', // red-100 with opacity
-                    borderBottomColor: '#ef4444', // red-500
-                    color: '#991b1b' // red-800
-                };
-            case 'medium':
-                return {
-                    backgroundColor: 'rgba(254, 249, 195, 0.8)', // yellow-100 with opacity
-                    borderBottomColor: '#eab308', // yellow-500
-                    color: '#854d0e' // yellow-800
-                };
-            case 'low':
-                return {
-                    backgroundColor: 'rgba(219, 234, 254, 0.8)', // blue-100 with opacity
-                    borderBottomColor: '#3b82f6', // blue-500
-                    color: '#1e3a8a' // blue-800
-                };
-            default:
-                return {
-                    backgroundColor: 'rgba(243, 244, 246, 0.8)', // gray-100 with opacity
-                    borderBottomColor: '#6b7280', // gray-500
-                    color: '#1f2937' // gray-800
-                };
-        }
+    // Get style based on issue index (not severity)
+    const getIssueStyle = (issueIndex) => {
+        const color = getIssueColor(issueIndex);
+        return {
+            backgroundColor: hexToRgba(color, 0.2), // 20% opacity for background
+            borderBottom: `3px solid ${color}`, // Solid border with full opacity
+            color: '#1f2937', // Dark text color for readability
+        };
     };
 
     // Get section label in Vietnamese
@@ -142,25 +178,25 @@ const CVHighlighter = ({ cvText, issues = [] }) => {
         <div className="cv-highlighter">
             {segments.map((segment, segmentIndex) => {
                 if (segment.isIssue && segment.issues && segment.issues.length > 0) {
-                    // Handle multiple overlapping issues
+                    // Use primary issue's index for color (first issue in overlapping set)
                     const primaryIssue = segment.issues[0];
-                    const severity = primaryIssue.issue.severity || 'low';
-                    const style = getSeverityStyle(severity);
+                    const issueIndex = primaryIssue.issue.index;
+                    const style = getIssueStyle(issueIndex);
                     
                     // Build tooltip with all suggestions
-                    const tooltip = segment.issues.map(pos => {
+                    const tooltip = segment.issues.map((pos, idx) => {
                         const section = getSectionLabel(pos.issue.section);
-                        return `${section}: ${pos.issue.suggestion}`;
-                    }).join('\n');
+                        const severityLabel = pos.issue.severity ? ` [${pos.issue.severity}]` : '';
+                        return `Vấn đề ${pos.issue.index + 1} - ${section}${severityLabel}: ${pos.issue.suggestion}`;
+                    }).join('\n\n');
 
-                    // If multiple issues overlap, use primary issue's severity
-                    // but indicate multiple issues in tooltip
                     return (
                         <span
                             key={`issue-${segmentIndex}`}
                             className="cv-highlight"
                             style={style}
                             title={tooltip}
+                            data-issue-index={issueIndex}
                         >
                             {segment.text}
                         </span>

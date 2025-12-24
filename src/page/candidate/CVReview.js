@@ -626,24 +626,26 @@ const CVReview = () => {
     };
 
     // Generate unique color for each issue (based on index)
+    // Import color utility (will be imported at top of file)
+    // For now, use inline function that matches colorUtils
     const getIssueColor = (index) => {
-        // Array of distinct colors (bright, visible colors)
+        // Use same palette as colorUtils.js for consistency
         const colors = [
-            '#ff4444', // Red
-            '#ffaa00', // Orange
-            '#44aaff', // Blue
-            '#ff6b9d', // Pink
-            '#9b59b6', // Purple
-            '#1abc9c', // Turquoise
-            '#e74c3c', // Dark Red
-            '#f39c12', // Dark Orange
-            '#3498db', // Dark Blue
-            '#e67e22', // Carrot
-            '#16a085', // Green
-            '#c0392b', // Dark Red 2
-            '#d35400', // Orange 2
-            '#2980b9', // Blue 2
-            '#8e44ad', // Purple 2
+            '#FF6B6B', // Red - Coral
+            '#4ECDC4', // Teal - Turquoise
+            '#45B7D1', // Blue - Sky Blue
+            '#FFA07A', // Orange - Light Salmon
+            '#98D8C8', // Green - Mint
+            '#F7DC6F', // Yellow - Light Yellow
+            '#BB8FCE', // Purple - Lavender
+            '#85C1E2', // Light Blue
+            '#F1948A', // Pink - Salmon Pink
+            '#52BE80', // Green - Emerald
+            '#F8B739', // Orange - Amber
+            '#5DADE2', // Blue - Cornflower
+            '#EC7063', // Red - Light Red
+            '#A569BD', // Purple - Medium Purple
+            '#48C9B0', // Teal - Medium Turquoise
         ];
         return colors[index % colors.length];
     };
@@ -1166,12 +1168,28 @@ const CVReview = () => {
                                                     >
                                                         <div className="issue-header">
                                                             <span className="issue-section">{getSectionLabel(issue.section)}</span>
-                                                            <span className="issue-number" style={{
-                                                                backgroundColor: issueColor,
-                                                                color: '#fff'
-                                                            }}>
-                                                                Vấn đề {index + 1}
-                                                            </span>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                                <span className="issue-number" style={{
+                                                                    backgroundColor: issueColor,
+                                                                    color: '#fff'
+                                                                }}>
+                                                                    Vấn đề {index + 1}
+                                                                </span>
+                                                                {issue.severity && (
+                                                                    <span className="issue-severity-badge" style={{
+                                                                        fontSize: '0.75rem',
+                                                                        padding: '2px 8px',
+                                                                        borderRadius: '4px',
+                                                                        backgroundColor: issue.severity === 'high' ? '#fee2e2' : 
+                                                                                        issue.severity === 'medium' ? '#fef3c7' : '#dbeafe',
+                                                                        color: issue.severity === 'high' ? '#991b1b' : 
+                                                                               issue.severity === 'medium' ? '#854d0e' : '#1e3a8a',
+                                                                        fontWeight: 500
+                                                                    }}>
+                                                                        {getSeverityLabel(issue.severity)}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                         <div className="issue-content">
                                                             <p className="issue-text">
