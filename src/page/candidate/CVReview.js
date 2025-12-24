@@ -1175,20 +1175,6 @@ const CVReview = () => {
                                                                 }}>
                                                                     Vấn đề {index + 1}
                                                                 </span>
-                                                                {issue.severity && (
-                                                                    <span className="issue-severity-badge" style={{
-                                                                        fontSize: '0.75rem',
-                                                                        padding: '2px 8px',
-                                                                        borderRadius: '4px',
-                                                                        backgroundColor: issue.severity === 'high' ? '#fee2e2' : 
-                                                                                        issue.severity === 'medium' ? '#fef3c7' : '#dbeafe',
-                                                                        color: issue.severity === 'high' ? '#991b1b' : 
-                                                                               issue.severity === 'medium' ? '#854d0e' : '#1e3a8a',
-                                                                        fontWeight: 500
-                                                                    }}>
-                                                                        {getSeverityLabel(issue.severity)}
-                                                                    </span>
-                                                                )}
                                                             </div>
                                                         </div>
                                                         <div className="issue-content">

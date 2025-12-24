@@ -18,6 +18,10 @@
         cursor: help;
         transition: all 0.2s ease;
         position: relative;
+        
+        // Ensure proper line breaking with padding/border preserved
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
 
         // Hover effect
         &:hover {

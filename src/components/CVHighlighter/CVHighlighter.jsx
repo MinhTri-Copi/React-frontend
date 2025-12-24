@@ -186,8 +186,7 @@ const CVHighlighter = ({ cvText, issues = [] }) => {
                     // Build tooltip with all suggestions
                     const tooltip = segment.issues.map((pos, idx) => {
                         const section = getSectionLabel(pos.issue.section);
-                        const severityLabel = pos.issue.severity ? ` [${pos.issue.severity}]` : '';
-                        return `Vấn đề ${pos.issue.index + 1} - ${section}${severityLabel}: ${pos.issue.suggestion}`;
+                        return `Vấn đề ${pos.issue.index + 1} - ${section}: ${pos.issue.suggestion}`;
                     }).join('\n\n');
 
                     return (
