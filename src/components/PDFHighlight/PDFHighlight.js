@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import './PDFHighlight.scss';
 
 /**
@@ -46,7 +46,19 @@ const PDFHighlight = ({ highlights = [], activeIssueIndex = null, onHighlightCli
     };
 
     // Render highlights using DOM manipulation (necessary because we need to inject into page wrappers)
+    const previousHighlightsCountRef = useRef(0);
+    
     useEffect(() => {
+        const currentHighlightsCount = highlights?.length || 0;
+        
+        // Only log if highlights count changed
+        if (currentHighlightsCount !== previousHighlightsCountRef.current) {
+            if (currentHighlightsCount > 0) {
+                console.log(`🎨 PDFHighlight: Rendering ${currentHighlightsCount} highlights`);
+            }
+            previousHighlightsCountRef.current = currentHighlightsCount;
+        }
+        
         // Clear existing highlights
         document.querySelectorAll('.pdf-highlight-overlay').forEach(el => el.remove());
 
@@ -71,18 +83,48 @@ const PDFHighlight = ({ highlights = [], activeIssueIndex = null, onHighlightCli
             const pageWrapper = document.querySelector(`.pdf-page-wrapper[data-page-number="${pageNum}"]`);
             
             if (!pageWrapper) {
-                console.warn(`Page wrapper not found for page ${pageNum}`);
+                console.warn(`⚠️ PDFHighlight: Page wrapper not found for page ${pageNum}`);
                 return;
+            }
+
+            // Check if page wrapper has dimensions (PDF must be rendered)
+            const pageRect = pageWrapper.getBoundingClientRect();
+            if (pageRect.width === 0 || pageRect.height === 0) {
+                console.warn(`⚠️ PDFHighlight: Page ${pageNum} wrapper has no dimensions, skipping highlights`);
+                return;
+            }
+
+            // Check if page wrapper has position relative (required for absolute positioning)
+            const computedStyle = window.getComputedStyle(pageWrapper);
+            if (computedStyle.position === 'static') {
+                pageWrapper.style.position = 'relative';
+            }
+
+            // Remove existing overlay for this page if any
+            const existingOverlay = pageWrapper.querySelector('.pdf-highlight-overlay');
+            if (existingOverlay) {
+                existingOverlay.remove();
             }
 
             // Create overlay div
             const overlay = document.createElement('div');
             overlay.className = 'pdf-highlight-overlay';
+            // Ensure overlay is positioned correctly
+            overlay.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 10;
+            `;
 
             pageHighlights.forEach((highlight, idx) => {
                 const isActive = highlight.issueIndex === activeIssueIndex;
-                // Use issue index color to match issue card colors
-                const color = getIssueColor(highlight.issueIndex);
+                // Use severity-based color, fallback to index-based color
+                const severity = highlight.issue?.severity;
+                const color = severity ? getColorBySeverity(severity) : getIssueColor(highlight.issueIndex);
 
                 const highlightDiv = document.createElement('div');
                 highlightDiv.className = `pdf-highlight ${isActive ? 'active' : ''}`;
@@ -96,12 +138,18 @@ const PDFHighlight = ({ highlights = [], activeIssueIndex = null, onHighlightCli
                     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
                 };
 
+                // Ensure valid dimensions
+                const width = Math.max(highlight.width || 20, 20);
+                const height = Math.max(highlight.height || 15, 15);
+                const left = Math.max(highlight.left || 0, 0);
+                const top = Math.max(highlight.top || 0, 0);
+
                 highlightDiv.style.cssText = `
                     position: absolute;
-                    left: ${highlight.left}px;
-                    top: ${highlight.top}px;
-                    width: ${Math.max(highlight.width, 20)}px;
-                    height: ${Math.max(highlight.height, 15)}px;
+                    left: ${left}px;
+                    top: ${top}px;
+                    width: ${width}px;
+                    height: ${height}px;
                     border: 3px solid ${color};
                     background-color: ${hexToRgba(color, 0.2)};
                     border-radius: 3px;
@@ -111,7 +159,7 @@ const PDFHighlight = ({ highlights = [], activeIssueIndex = null, onHighlightCli
                     box-shadow: ${isActive ? `0 0 12px ${hexToRgba(color, 0.5)}` : `0 2px 4px ${hexToRgba(color, 0.3)}`};
                     z-index: ${isActive ? 11 : 10};
                 `;
-                highlightDiv.title = `Vấn đề ${highlight.issueIndex + 1}: ${highlight.issue.suggestion}`;
+                highlightDiv.title = `Vấn đề ${highlight.issueIndex + 1}: ${highlight.issue.suggestion || highlight.issue.original_text || 'Vấn đề'}`;
                 highlightDiv.onclick = (e) => {
                     e.stopPropagation();
                     if (onHighlightClick) {
@@ -139,6 +187,7 @@ const PDFHighlight = ({ highlights = [], activeIssueIndex = null, onHighlightCli
                     font-weight: bold;
                     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                     pointer-events: none;
+                    z-index: 12;
                 `;
 
                 highlightDiv.appendChild(numberBadge);
@@ -148,6 +197,7 @@ const PDFHighlight = ({ highlights = [], activeIssueIndex = null, onHighlightCli
             // Only append if overlay has highlights
             if (overlay.children.length > 0) {
                 pageWrapper.appendChild(overlay);
+                console.log(`✅ Added ${overlay.children.length} highlights to page ${pageNum}`);
             }
         });
 

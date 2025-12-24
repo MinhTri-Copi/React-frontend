@@ -1,0 +1,38 @@
+.cv-highlighter {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .cv-highlight {
+        display: inline;
+        padding: 2px 4px;
+        border-radius: 3px;
+        border-bottom: 3px solid;
+        cursor: help;
+        transition: all 0.2s ease;
+        position: relative;
+
+        // Hover effect
+        &:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+        }
+    }
+
+    // Empty state
+    .cv-highlighter-empty {
+        padding: 2rem;
+        text-align: center;
+        color: #999;
+        font-style: italic;
+    }
+}
+

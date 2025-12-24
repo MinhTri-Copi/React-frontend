@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo, memo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 import './PDFViewer.scss';
@@ -6,6 +6,18 @@ import './PDFViewer.scss';
 // Configure pdfjs worker - DÙNG FILE NỘI BỘ, KHÔNG DÙNG CDN
 // IMPORTANT: Copy pdf.worker.min.js from node_modules/pdfjs-dist/build/ to public/
 pdfjs.GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL || ''}/pdf.worker.min.js`;
+
+// Suppress deprecated API warnings from react-pdf
+const originalWarn = console.warn;
+const suppressedMessages = ['PDFDocumentProxy.fingerprint', 'please use', 'PDFDocumentProxy.fingerprints'];
+console.warn = (...args) => {
+    const message = args.join(' ');
+    if (suppressedMessages.some(msg => message.includes(msg))) {
+        // Suppress this specific warning
+        return;
+    }
+    originalWarn.apply(console, args);
+};
 
 const PDFViewer = ({ fileUrl, onTextLayerReady, onLoadSuccess, onLoadError }) => {
     const [numPages, setNumPages] = useState(null);
@@ -15,20 +27,22 @@ const PDFViewer = ({ fileUrl, onTextLayerReady, onLoadSuccess, onLoadError }) =>
     const [errorDetails, setErrorDetails] = useState(null);
     const textLayerReadyPagesRef = useRef(new Set());
 
+    const previousFileUrlRef = useRef(null);
+    
     // Reset state when fileUrl changes
     useEffect(() => {
-        if (fileUrl) {
+        if (fileUrl && fileUrl !== previousFileUrlRef.current) {
+            previousFileUrlRef.current = fileUrl;
             setLoading(true);
             setError(null);
             setErrorDetails(null);
             setNumPages(null);
             textLayerReadyPagesRef.current.clear();
-            console.log('📄 PDFViewer: Loading PDF from:', fileUrl);
+            console.log('📄 PDFViewer: Loading PDF');
         }
     }, [fileUrl]);
 
     const onDocumentLoadSuccess = useCallback(({ numPages }) => {
-        console.log('✅ PDFViewer: PDF loaded successfully, pages:', numPages);
         setNumPages(numPages);
         setLoading(false);
         setError(null);
@@ -76,18 +90,35 @@ const PDFViewer = ({ fileUrl, onTextLayerReady, onLoadSuccess, onLoadError }) =>
         // Mark this page as ready
         textLayerReadyPagesRef.current.add(pageIndex + 1);
         
-        // Wait a bit for text layer to fully render, then check if all pages are ready
+        // Wait a bit for text layer to fully render, then notify
         setTimeout(() => {
             if (onTextLayerReady) {
-                onTextLayerReady(pageIndex);
-                
-                // Check if all pages have text layers ready
-                if (numPages && textLayerReadyPagesRef.current.size === numPages) {
-                    console.log('✅ All PDF pages have text layers ready');
+                try {
+                    onTextLayerReady(pageIndex);
+                } catch (error) {
+                    console.error('Error in onTextLayerReady callback:', error);
                 }
             }
-        }, 150);
-    }, [onTextLayerReady, numPages]);
+        }, 100); // Reduced delay
+    }, [onTextLayerReady]);
+
+    // Memoize file object to prevent unnecessary re-renders
+    // MUST be called before any early returns (React Hooks rules)
+    const fileObject = useMemo(() => ({
+        url: fileUrl,
+        httpHeaders: {
+            'Accept': 'application/pdf',
+        },
+        withCredentials: false,
+    }), [fileUrl]);
+    
+    // Memoize options to prevent re-renders
+    // MUST be called before any early returns (React Hooks rules)
+    const documentOptions = useMemo(() => ({
+        cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
+        cMapPacked: true,
+        standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/',
+    }), []);
 
     if (error) {
         return (
@@ -130,13 +161,7 @@ const PDFViewer = ({ fileUrl, onTextLayerReady, onLoadSuccess, onLoadError }) =>
                 </div>
             )}
             <Document
-                file={{
-                    url: fileUrl,
-                    httpHeaders: {
-                        'Accept': 'application/pdf',
-                    },
-                    withCredentials: false,
-                }}
+                file={fileObject}
                 onLoadSuccess={onDocumentLoadSuccess}
                 onLoadError={onDocumentLoadError}
                 loading={
@@ -151,17 +176,14 @@ const PDFViewer = ({ fileUrl, onTextLayerReady, onLoadSuccess, onLoadError }) =>
                         <p>Không thể tải file PDF</p>
                     </div>
                 }
-                options={{
-                    cMapUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/cmaps/',
-                    cMapPacked: true,
-                    standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.11.174/standard_fonts/',
-                }}
+                options={documentOptions}
             >
                 {Array.from(new Array(numPages), (el, index) => (
                     <div 
                         key={`page-${index + 1}`} 
                         className="pdf-page-wrapper"
                         data-page-number={index + 1}
+                        style={{ position: 'relative' }}
                     >
                         <Page
                             pageNumber={index + 1}
@@ -178,5 +200,6 @@ const PDFViewer = ({ fileUrl, onTextLayerReady, onLoadSuccess, onLoadError }) =>
     );
 };
 
-export default PDFViewer;
+// Memoize component to prevent unnecessary re-renders
+export default memo(PDFViewer);
 

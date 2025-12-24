@@ -727,37 +727,140 @@ const CVReview = () => {
         textLayerReady
     );
 
-    // Handle text layer ready
+    // Debug: Log issues and highlights when they change (only once per state change)
+    const previousHighlightsCountRef = useRef(0);
+    const previousIssuesCountRef = useRef(0);
+    const issuesLoggedRef = useRef(false);
+    
+    useEffect(() => {
+        if (reviewResult?.issues && reviewResult.issues.length > 0 && !issuesLoggedRef.current) {
+            // Log issues to console for debugging
+            console.group('📋 CV Review Issues:');
+            reviewResult.issues.forEach((issue, index) => {
+                console.log(`Issue ${index + 1}:`, {
+                    section: issue.section,
+                    severity: issue.severity,
+                    exact_quote: issue.exact_quote || null,
+                    original_text: issue.original_text || null,
+                    suggestion: issue.suggestion
+                });
+            });
+            console.groupEnd();
+            issuesLoggedRef.current = true;
+        }
+        
+        const currentHighlightsCount = highlights?.length || 0;
+        const currentIssuesCount = reviewResult?.issues?.length || 0;
+        
+        // Only log if counts actually changed
+        if (currentHighlightsCount !== previousHighlightsCountRef.current || 
+            currentIssuesCount !== previousIssuesCountRef.current) {
+            
+            if (currentHighlightsCount > 0) {
+                console.log(`✅ Found ${currentHighlightsCount} highlights in PDF`);
+            } else if (currentIssuesCount > 0 && textLayerReady && currentHighlightsCount === 0) {
+                // Only log once when we have issues but no highlights
+                console.warn(`⚠️ No highlights found for ${currentIssuesCount} issues. Check if exact_quote matches PDF text.`);
+            }
+            
+            previousHighlightsCountRef.current = currentHighlightsCount;
+            previousIssuesCountRef.current = currentIssuesCount;
+        }
+    }, [highlights?.length, reviewResult?.issues, textLayerReady]);
+    
+    // Reset issues logged flag when reviewResult changes
+    useEffect(() => {
+        issuesLoggedRef.current = false;
+    }, [reviewResult]);
+
+    // Handle text layer ready - simplified and more reliable
     const handleTextLayerReady = useCallback((pageIndex) => {
         // Clear any existing timeout
         if (textLayerTimeoutRef.current) {
             clearTimeout(textLayerTimeoutRef.current);
         }
         
-        // Mark as ready after all pages are loaded
+        // Clear force timeout if text layer is ready
+        if (forceReadyTimeoutRef.current) {
+            clearTimeout(forceReadyTimeoutRef.current);
+            forceReadyTimeoutRef.current = null;
+        }
+        
+        // Set ready after a short delay to ensure text layer is fully rendered
         textLayerTimeoutRef.current = setTimeout(() => {
-            setTextLayerReady(true);
+            const pageWrappers = document.querySelectorAll('.pdf-page-wrapper[data-page-number]');
+            
+            if (pageWrappers.length > 0) {
+                // Check if at least one page has a text layer
+                let hasTextLayer = false;
+                
+                pageWrappers.forEach(wrapper => {
+                    const textLayer = wrapper.querySelector('.react-pdf__Page__textContent');
+                    if (textLayer) {
+                        const spans = textLayer.querySelectorAll('span');
+                        if (spans.length > 0) {
+                            hasTextLayer = true;
+                        }
+                    }
+                });
+                
+                // Set ready if we have text layer
+                if (hasTextLayer) {
+                    setTextLayerReady(true);
+                } else {
+                    // If no text layer but we have pages, still set ready (might be image-based PDF)
+                    setTextLayerReady(true);
+                }
+            } else {
+                // No wrappers yet, but set ready anyway to prevent infinite loading
+                setTextLayerReady(true);
+            }
+            
             textLayerTimeoutRef.current = null;
-        }, 1000);
+        }, 200); // Short delay: 200ms
     }, []);
 
+    // Store force timeout ref for cleanup
+    const forceReadyTimeoutRef = useRef(null);
+    
     // Handle PDF load success
     const handlePDFLoadSuccess = useCallback(() => {
-        // Clear any pending timeout
+        // Clear any pending timeouts
         if (textLayerTimeoutRef.current) {
             clearTimeout(textLayerTimeoutRef.current);
             textLayerTimeoutRef.current = null;
         }
+        if (forceReadyTimeoutRef.current) {
+            clearTimeout(forceReadyTimeoutRef.current);
+            forceReadyTimeoutRef.current = null;
+        }
+        
         // Reset text layer ready state when new PDF loads
         setTextLayerReady(false);
+        
+        // Set ready after 2 seconds maximum as fallback (only if text layer hasn't been set)
+        forceReadyTimeoutRef.current = setTimeout(() => {
+            setTextLayerReady(prev => {
+                if (!prev) {
+                    // Silently set ready as fallback
+                    return true;
+                }
+                return prev;
+            });
+            forceReadyTimeoutRef.current = null;
+        }, 2000);
     }, []);
 
-    // Cleanup timeout on unmount
+    // Cleanup timeouts on unmount
     useEffect(() => {
         return () => {
             if (textLayerTimeoutRef.current) {
                 clearTimeout(textLayerTimeoutRef.current);
                 textLayerTimeoutRef.current = null;
+            }
+            if (forceReadyTimeoutRef.current) {
+                clearTimeout(forceReadyTimeoutRef.current);
+                forceReadyTimeoutRef.current = null;
             }
         };
     }, []);
@@ -1089,16 +1192,34 @@ const CVReview = () => {
                                 {reviewResult && pdfUrl && (
                                     <div className="cv-preview-split-view">
                                         <div className="split-view-left">
-                                            <h4>
-                                                <i className="fas fa-file-pdf"></i>
-                                                CV Preview (PDF)
-                                            </h4>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                                <h4>
+                                                    <i className="fas fa-file-pdf"></i>
+                                                    CV Preview (PDF)
+                                                </h4>
+                                                {reviewResult.issues && reviewResult.issues.length > 0 && textLayerReady && (
+                                                    <div className="highlight-status">
+                                                        {highlights.length > 0 ? (
+                                                            <span style={{ color: '#27ae60' }}>
+                                                                <i className="fas fa-check-circle"></i> Đã tìm thấy {highlights.length}/{reviewResult.issues.length} highlights
+                                                            </span>
+                                                        ) : (
+                                                            <span style={{ color: '#e74c3c', fontSize: '0.9rem' }}>
+                                                                <i className="fas fa-exclamation-triangle"></i> Không tìm thấy highlights
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                             <div className="pdf-viewer-wrapper">
-                                                <PDFViewer
-                                                    fileUrl={pdfUrl}
-                                                    onTextLayerReady={handleTextLayerReady}
-                                                    onLoadSuccess={handlePDFLoadSuccess}
-                                                />
+                                                {pdfUrl && (
+                                                    <PDFViewer
+                                                        key={`pdf-${pdfUrl}`} // Stable key to prevent unnecessary remounts
+                                                        fileUrl={pdfUrl}
+                                                        onTextLayerReady={handleTextLayerReady}
+                                                        onLoadSuccess={handlePDFLoadSuccess}
+                                                    />
+                                                )}
                                                 <PDFHighlight
                                                     highlights={highlights}
                                                     activeIssueIndex={activeIssueIndex}
