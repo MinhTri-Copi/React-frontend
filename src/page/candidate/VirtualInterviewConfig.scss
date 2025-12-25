@@ -1,0 +1,148 @@
+.virtual-interview-config {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
+
+    .config-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        max-width: 800px;
+        margin: 0 auto;
+
+        .config-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: #333;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+
+            .form-label {
+                display: block;
+                font-weight: 500;
+                margin-bottom: 0.75rem;
+                color: #555;
+            }
+
+            .language-options {
+                display: flex;
+                gap: 1rem;
+                margin-bottom: 0.5rem;
+
+                .language-btn {
+                    flex: 1;
+                    padding: 0.75rem 1.5rem;
+                    border: 2px solid #dee2e6;
+                    border-radius: 8px;
+                    background: white;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    font-size: 1rem;
+
+                    &:hover {
+                        border-color: #007bff;
+                        background: #f0f8ff;
+                    }
+
+                    &.active {
+                        border-color: #007bff;
+                        background: #007bff;
+                        color: white;
+                    }
+                }
+            }
+
+            .level-options {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+
+                .level-btn {
+                    padding: 1rem;
+                    border: 2px solid #dee2e6;
+                    border-radius: 8px;
+                    background: white;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    font-size: 0.95rem;
+                    text-align: center;
+
+                    &:hover {
+                        border-color: #007bff;
+                        background: #f0f8ff;
+                    }
+
+                    &.active {
+                        border-color: #007bff;
+                        background: #007bff;
+                        color: white;
+                    }
+                }
+            }
+
+            .topics-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 0.75rem;
+                margin-bottom: 0.5rem;
+
+                .topic-btn {
+                    padding: 0.75rem 1rem;
+                    border: 2px solid #dee2e6;
+                    border-radius: 8px;
+                    background: white;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    font-size: 0.9rem;
+
+                    &:hover {
+                        border-color: #007bff;
+                        background: #f0f8ff;
+                    }
+
+                    &.active {
+                        border-color: #007bff;
+                        background: #007bff;
+                        color: white;
+                    }
+                }
+            }
+
+            .form-text {
+                display: block;
+                margin-top: 0.5rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        .btn-primary {
+            padding: 0.875rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border-radius: 8px;
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .virtual-interview-config {
+        .config-card {
+            padding: 1.5rem;
+
+            .level-options {
+                grid-template-columns: 1fr;
+            }
+
+            .topics-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            }
+        }
+    }
+}
+

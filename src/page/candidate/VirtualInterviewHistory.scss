@@ -1,0 +1,159 @@
+.virtual-interview-history {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f8f9fa;
+
+    .page-title {
+        font-size: 2rem;
+        font-weight: 600;
+        margin-bottom: 2rem;
+        color: #333;
+    }
+
+    .filter-bar {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+
+            .filter-label {
+                font-weight: 500;
+                margin: 0;
+            }
+
+            .form-select {
+                max-width: 200px;
+            }
+        }
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+        p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+    }
+
+    .interview-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+
+        .interview-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+
+            &:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            }
+
+            .card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+
+                .level-badge {
+                    padding: 0.5rem 1rem;
+                    background: #007bff;
+                    color: white;
+                    border-radius: 20px;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                }
+
+                .status-badge {
+                    padding: 0.4rem 0.8rem;
+                    border-radius: 20px;
+                    font-size: 0.8rem;
+                    font-weight: 500;
+
+                    &.status-draft {
+                        background: #6c757d;
+                        color: white;
+                    }
+
+                    &.status-in_progress {
+                        background: #ffc107;
+                        color: #333;
+                    }
+
+                    &.status-completed {
+                        background: #28a745;
+                        color: white;
+                    }
+
+                    &.status-abandoned {
+                        background: #dc3545;
+                        color: white;
+                    }
+                }
+            }
+
+            .card-body {
+                .topics-list {
+                    margin-bottom: 1rem;
+                    color: #555;
+                    font-size: 0.95rem;
+                }
+
+                .card-info {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.5rem;
+
+                    .info-item {
+                        display: flex;
+                        justify-content: space-between;
+                        font-size: 0.9rem;
+
+                        .info-label {
+                            color: #666;
+                            font-weight: 500;
+                        }
+
+                        .score-value {
+                            font-weight: 600;
+                            color: #007bff;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .virtual-interview-history {
+        .interview-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+}
+

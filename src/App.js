@@ -18,6 +18,11 @@ import MyTests from './page/candidate/MyTests';
 import TestTaking from './page/candidate/TestTaking';
 import TestResult from './page/candidate/TestResult';
 import CVReview from './page/candidate/CVReview';
+import VirtualInterviewConfig from './page/candidate/VirtualInterviewConfig';
+import VirtualInterviewTaking from './page/candidate/VirtualInterviewTaking';
+import VirtualInterviewVoice from './page/candidate/VirtualInterviewVoice';
+import VirtualInterviewResult from './page/candidate/VirtualInterviewResult';
+import VirtualInterviewHistory from './page/candidate/VirtualInterviewHistory';
 import HrDashboard from './page/hr/HrDashboard';
 import MeetingRoom from './page/meeting/MeetingRoom';
 import JitsiRoom from './components/JitsiRoom';
@@ -44,6 +49,11 @@ function App() {
           <Route path="/candidate/my-tests" element={<MyTests />} />
           <Route path="/candidate/tests/:submissionId" element={<TestTaking />} />
           <Route path="/candidate/test-results/:submissionId" element={<TestResult />} />
+          <Route path="/candidate/virtual-interview" element={<VirtualInterviewConfig />} />
+          <Route path="/candidate/virtual-interview/:id" element={<VirtualInterviewVoice />} />
+          <Route path="/candidate/virtual-interview/:id/form" element={<VirtualInterviewTaking />} />
+          <Route path="/candidate/virtual-interview/:id/result" element={<VirtualInterviewResult />} />
+          <Route path="/candidate/virtual-interview/history" element={<VirtualInterviewHistory />} />
           <Route path="/candidate/profile" element={<div>Profile Page</div>} />
           <Route path="/candidate/settings" element={<div>Settings Page</div>} />
           

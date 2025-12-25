@@ -145,6 +145,16 @@ const CandidateNav = () => {
                                         <i className="fas fa-magic"></i>
                                         <span>Hỗ trợ CV</span>
                                     </NavLink>
+                                    <NavLink 
+                                        to="/candidate/virtual-interview" 
+                                        className={({ isActive }) => isActive ? "dropdown-item active" : "dropdown-item"}
+                                        onClick={() => {
+                                            setShowOptionsDropdown(false);
+                                        }}
+                                    >
+                                        <i className="fas fa-robot"></i>
+                                        <span>Phỏng vấn ảo</span>
+                                    </NavLink>
                                 </div>
                             )}
                         </div>
